@@ -1,0 +1,267 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Webix brand */
+  --color-indigo: #1a253a;
+  --color-night: #05060c;
+  --color-ink: #0a0d18;
+  --color-sun: #ffda24;
+  --color-signal: #e81a2e;
+  --color-neon: #ff007f;
+  --color-rail: #4d8bff;
+  --color-mist: #c9cfdf;
+
+  --font-display: "Poppins", system-ui, sans-serif;
+  --font-sans: "Open Sans", system-ui, sans-serif;
+  --font-jp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+:root {
+  --radius: 0.875rem;
+  --background: #05060c;
+  --foreground: #eef1f8;
+  --card: #0d1120;
+  --card-foreground: #eef1f8;
+  --popover: #0d1120;
+  --popover-foreground: #eef1f8;
+  --primary: #ffda24;
+  --primary-foreground: #0a0d18;
+  --secondary: #161c30;
+  --secondary-foreground: #eef1f8;
+  --muted: #141a2c;
+  --muted-foreground: #a7aec2;
+  --accent: #ff007f;
+  --accent-foreground: #ffffff;
+  --destructive: #e81a2e;
+  --destructive-foreground: #ffffff;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.16);
+  --ring: #ffda24;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    background-color: var(--color-night);
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--color-night);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: var(--color-neon);
+    color: white;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-sun);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  /* Small tracked label with a lit dot — the "station signage" voice of the UI. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-mist);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--eyebrow-color, var(--color-sun));
+    box-shadow: 0 0 12px var(--eyebrow-color, var(--color-sun));
+  }
+
+  /* Smoked-glass panel that floats in front of the 3D world. */
+  .panel {
+    position: relative;
+    background: linear-gradient(180deg, rgb(13 17 32 / 0.82), rgb(6 8 16 / 0.86));
+    border: 1px solid rgb(255 255 255 / 0.09);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow:
+      0 30px 80px -30px rgb(0 0 0 / 0.8),
+      inset 0 1px 0 rgb(255 255 255 / 0.05);
+  }
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: -1px 18% auto 18%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--panel-accent, var(--color-sun)), transparent);
+    opacity: 0.85;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border-radius: 999px;
+    padding: 0.95rem 1.6rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-ink);
+    background: var(--color-sun);
+    box-shadow:
+      0 0 0 1px rgb(255 218 36 / 0.4),
+      0 10px 40px -10px rgb(255 218 36 / 0.65);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease,
+      background 0.25s ease;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    background: #ffe35c;
+    box-shadow:
+      0 0 0 1px rgb(255 218 36 / 0.6),
+      0 14px 50px -8px rgb(255 218 36 / 0.85);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border-radius: 999px;
+    padding: 0.95rem 1.5rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: white;
+    background: rgb(255 255 255 / 0.04);
+    border: 1px solid rgb(255 255 255 / 0.18);
+    transition:
+      border-color 0.25s ease,
+      background 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+  .btn-ghost:hover {
+    border-color: var(--color-neon);
+    background: rgb(255 0 127 / 0.08);
+    box-shadow: 0 0 30px -8px rgb(255 0 127 / 0.6);
+  }
+
+  .neon-text-pink {
+    color: #ff5aa8;
+    text-shadow:
+      0 0 18px rgb(255 0 127 / 0.55),
+      0 0 2px rgb(255 255 255 / 0.4);
+  }
+  .neon-text-sun {
+    color: var(--color-sun);
+    text-shadow: 0 0 22px rgb(255 218 36 / 0.45);
+  }
+
+  .field {
+    width: 100%;
+    border-radius: 0.75rem;
+    background: rgb(255 255 255 / 0.04);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    color: white;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+  }
+  .field::placeholder {
+    color: rgb(201 207 223 / 0.45);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-sun);
+    background: rgb(255 255 255 / 0.06);
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--color-signal);
+  }
+}
+
+/* Readability scrims behind content where the scene is brightest. */
+.scrim-left {
+  background: linear-gradient(90deg, rgb(5 6 12 / 0.85) 0%, rgb(5 6 12 / 0.45) 45%, transparent 75%);
+}
+.scrim-bottom {
+  background: linear-gradient(0deg, rgb(5 6 12 / 0.95) 0%, rgb(5 6 12 / 0.4) 50%, transparent 100%);
+}
+
+/* Shown when WebGL is unavailable: a painted stand-in for the station. */
+.scene-fallback {
+  background:
+    radial-gradient(60% 50% at 18% 30%, rgb(255 0 127 / 0.22), transparent 70%),
+    radial-gradient(50% 40% at 80% 20%, rgb(255 218 36 / 0.16), transparent 70%),
+    radial-gradient(70% 60% at 60% 90%, rgb(77 139 255 / 0.18), transparent 70%),
+    linear-gradient(180deg, #0b0f22 0%, #05060c 100%);
+}
+
+.no-webgl .webgl-thumb {
+  display: block !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
