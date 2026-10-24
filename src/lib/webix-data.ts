@@ -55,7 +55,7 @@ export const PROJECTS: Project[] = [
     url: "https://styledroppp.myshopify.com/",
     instagram: "https://www.instagram.com/styledrop.eg/",
     image: "/work/styledrop.jpg",
-    accent: "#E81A2E",
+    accent: "#FF007F",
     summary: "A Shopify store for multi-brand fashion, built around new drops and same-day delivery.",
     objective:
       "Launch a Shopify store where shoppers can discover trending pieces across brands quickly — and that the StyleDrop team can run from the Shopify dashboard.",
@@ -115,7 +115,7 @@ export const PROJECTS: Project[] = [
     platform: "Custom build · Vercel",
     url: "https://basic-website-dun.vercel.app/",
     image: "/work/buildcrop.jpg",
-    accent: "#4D8BFF",
+    accent: "#FFDA24",
     summary: "A clean, corporate website for a construction company serving government, commercial and residential projects.",
     objective:
       "Deliver a clear, trustworthy site that introduces the company, outlines its services and invites enquiries.",
@@ -153,48 +153,54 @@ export const PROJECTS: Project[] = [
 export type Service = {
   name: string;
   short: string;
+  /** One line for the platform screen. */
+  line: string;
   description: string;
   items: string[];
-  /** Neon colour of the matching vending machine. */
-  color: string;
+  /** Icon drawn on the service's platform screen. */
+  icon: "monitor" | "bag" | "cube" | "spark";
   jp: string;
 };
 
 export const SERVICES: Service[] = [
   {
-    name: "E-commerce Development",
-    short: "E-commerce",
+    name: "Websites",
+    short: "Websites",
+    line: "Fast, responsive sites designed around your customers.",
     description:
-      "Shopify stores and online shopping experiences that are easy for your team to run and easy for your customers to buy from.",
-    items: ["Shopify store setup & theming", "Product & collection pages", "Checkout and cart experience", "Store migration & cleanup"],
-    color: "#FFDA24",
+      "Marketing and company websites, designed and built end to end — user journeys, interface design and clean, maintainable code.",
+    items: ["UI/UX design & user journeys", "Marketing & company websites", "Responsive, accessible builds", "Performance and SEO foundations"],
+    icon: "monitor",
+    jp: "ウェブ",
+  },
+  {
+    name: "E-commerce",
+    short: "E-commerce",
+    line: "Shopify stores that are easy to run and easy to buy from.",
+    description:
+      "Shopify stores and online shopping experiences — product pages, collections and checkout that your team can manage day to day.",
+    items: ["Shopify store setup & theming", "Product & collection pages", "Cart and checkout experience", "Store migration & cleanup"],
+    icon: "bag",
     jp: "通販",
   },
   {
-    name: "Custom Web Development",
-    short: "Web Development",
+    name: "3D / Interactive web",
+    short: "3D & Interactive",
+    line: "Real-time 3D and motion that make a brand unforgettable.",
     description:
-      "Responsive websites, custom interfaces and interactive experiences built with modern web technology — including real-time 3D like this one.",
-    items: ["Marketing & company websites", "Custom interfaces and components", "Interactive & 3D web experiences", "Performance and accessibility"],
-    color: "#FF007F",
-    jp: "開発",
+      "Interactive and real-time 3D web experiences — like the station you're travelling through right now — built to run in any modern browser.",
+    items: ["Three.js & WebGL experiences", "Scroll-driven storytelling", "Product visualisation", "Interactive campaigns"],
+    icon: "cube",
+    jp: "立体",
   },
   {
-    name: "UI/UX Design",
-    short: "UI/UX Design",
-    description:
-      "User journeys and interface design that make digital products feel intuitive — mapped, prototyped and refined before a line of code.",
-    items: ["User journeys & site structure", "Wireframes and prototypes", "Interface design systems", "Usability reviews"],
-    color: "#4D8BFF",
-    jp: "設計",
-  },
-  {
-    name: "Brand Identity",
-    short: "Brand Identity",
+    name: "Branding",
+    short: "Branding",
+    line: "Visual identities that stay consistent everywhere online.",
     description:
       "Visual direction that keeps your brand consistent online — from logo usage and colour to how every page looks and sounds.",
     items: ["Visual direction", "Logo & identity assets", "Colour and typography systems", "Online brand guidelines"],
-    color: "#E81A2E",
+    icon: "spark",
     jp: "印象",
   },
 ];

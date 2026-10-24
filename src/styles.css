@@ -29,42 +29,50 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Webix brand */
-  --color-indigo: #1a253a;
-  --color-night: #05060c;
-  --color-ink: #0a0d18;
-  --color-sun: #ffda24;
-  --color-signal: #e81a2e;
-  --color-neon: #ff007f;
-  --color-rail: #4d8bff;
-  --color-mist: #c9cfdf;
+  /* Webix brand — the brand board is the source of truth; neon is lighting only. */
+  --color-night: var(--bg-night);
+  --color-indigo: var(--indigo);
+  --color-sun: var(--yellow);
+  --color-neon: var(--pink);
+  --color-signal: var(--red);
+  --color-paper: var(--text);
+  --color-dim: var(--text-muted);
 
-  --font-display: "Poppins", system-ui, sans-serif;
-  --font-sans: "Open Sans", system-ui, sans-serif;
+  --font-sans: "Inter", "Open Sans", system-ui, sans-serif;
+  --font-heading: "Poppins", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
   --font-jp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
 }
 
 :root {
-  --radius: 0.875rem;
-  --background: #05060c;
-  --foreground: #eef1f8;
-  --card: #0d1120;
-  --card-foreground: #eef1f8;
-  --popover: #0d1120;
-  --popover-foreground: #eef1f8;
-  --primary: #ffda24;
-  --primary-foreground: #0a0d18;
-  --secondary: #161c30;
-  --secondary-foreground: #eef1f8;
-  --muted: #141a2c;
-  --muted-foreground: #a7aec2;
-  --accent: #ff007f;
+  --bg-night: #070b14;
+  --indigo: #1a253a;
+  --yellow: #ffda24;
+  --pink: #ff007f;
+  --red: #e81a2e;
+  --text: #f4f1ea;
+  --text-muted: rgba(244, 241, 234, 0.6);
+
+  --radius: 0.75rem;
+  --background: var(--bg-night);
+  --foreground: var(--text);
+  --card: var(--indigo);
+  --card-foreground: var(--text);
+  --popover: #0d1322;
+  --popover-foreground: var(--text);
+  --primary: var(--yellow);
+  --primary-foreground: var(--indigo);
+  --secondary: #121a2b;
+  --secondary-foreground: var(--text);
+  --muted: #121a2b;
+  --muted-foreground: var(--text-muted);
+  --accent: var(--pink);
   --accent-foreground: #ffffff;
-  --destructive: #e81a2e;
+  --destructive: var(--red);
   --destructive-foreground: #ffffff;
-  --border: rgb(255 255 255 / 0.1);
-  --input: rgb(255 255 255 / 0.16);
-  --ring: #ffda24;
+  --border: rgb(244 241 234 / 0.1);
+  --input: rgb(244 241 234 / 0.16);
+  --ring: var(--yellow);
 }
 
 @layer base {
@@ -72,12 +80,12 @@
     border-color: var(--color-border);
   }
   html {
-    background-color: var(--color-night);
+    background-color: var(--bg-night);
     color-scheme: dark;
   }
   body {
-    background-color: var(--color-night);
-    color: var(--color-foreground);
+    background-color: var(--bg-night);
+    color: var(--text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -86,174 +94,163 @@
   h2,
   h3,
   h4 {
-    font-family: var(--font-display);
+    font-family: var(--font-heading);
+    font-weight: 700;
     letter-spacing: -0.02em;
+    line-height: 1.05;
     text-wrap: balance;
   }
   p {
     text-wrap: pretty;
   }
   ::selection {
-    background: var(--color-neon);
-    color: white;
+    background: var(--yellow);
+    color: var(--indigo);
   }
   :focus-visible {
-    outline: 2px solid var(--color-sun);
+    outline: 2px solid var(--yellow);
     outline-offset: 3px;
-    border-radius: 6px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-heading);
   }
 }
 
 @layer components {
-  /* Small tracked label with a lit dot — the "station signage" voice of the UI. */
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-family: var(--font-display);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.22em;
+  /* HUD / station label voice: small uppercase monospace. */
+  .hud {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.6875rem;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--color-mist);
-  }
-  .eyebrow::before {
-    content: "";
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 999px;
-    background: var(--eyebrow-color, var(--color-sun));
-    box-shadow: 0 0 12px var(--eyebrow-color, var(--color-sun));
-  }
-
-  /* Smoked-glass panel that floats in front of the 3D world. */
-  .panel {
-    position: relative;
-    background: linear-gradient(180deg, rgb(13 17 32 / 0.82), rgb(6 8 16 / 0.86));
-    border: 1px solid rgb(255 255 255 / 0.09);
-    border-radius: 1.25rem;
-    backdrop-filter: blur(14px) saturate(1.2);
-    -webkit-backdrop-filter: blur(14px) saturate(1.2);
-    box-shadow:
-      0 30px 80px -30px rgb(0 0 0 / 0.8),
-      inset 0 1px 0 rgb(255 255 255 / 0.05);
-  }
-  .panel::before {
-    content: "";
-    position: absolute;
-    inset: -1px 18% auto 18%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--panel-accent, var(--color-sun)), transparent);
-    opacity: 0.85;
   }
 
   .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    border-radius: 999px;
+    gap: 0.75rem;
     padding: 0.95rem 1.6rem;
-    font-family: var(--font-display);
+    border-radius: 2px;
+    background: var(--yellow);
+    color: var(--indigo);
+    font-family: var(--font-sans);
     font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--color-ink);
-    background: var(--color-sun);
-    box-shadow:
-      0 0 0 1px rgb(255 218 36 / 0.4),
-      0 10px 40px -10px rgb(255 218 36 / 0.65);
+    font-size: 0.8125rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     transition:
-      transform 0.25s ease,
-      box-shadow 0.25s ease,
-      background 0.25s ease;
+      box-shadow 0.3s ease,
+      transform 0.3s ease,
+      background 0.3s ease;
   }
   .btn-primary:hover {
+    background: #ffe252;
+    box-shadow: 0 0 28px -4px rgb(255 218 36 / 0.55);
     transform: translateY(-1px);
-    background: #ffe35c;
-    box-shadow:
-      0 0 0 1px rgb(255 218 36 / 0.6),
-      0 14px 50px -8px rgb(255 218 36 / 0.85);
+  }
+  .btn-primary svg {
+    transition: transform 0.3s ease;
+  }
+  .btn-primary:hover svg {
+    transform: translateX(3px);
   }
 
-  .btn-ghost {
+  .btn-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    border-radius: 999px;
-    padding: 0.95rem 1.5rem;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: white;
-    background: rgb(255 255 255 / 0.04);
-    border: 1px solid rgb(255 255 255 / 0.18);
-    transition:
-      border-color 0.25s ease,
-      background 0.25s ease,
-      box-shadow 0.25s ease;
+    gap: 0.75rem;
+    padding: 0.95rem 1.6rem;
+    border-radius: 2px;
+    border: 1px solid rgb(244 241 234 / 0.85);
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition: background 0.3s ease;
   }
-  .btn-ghost:hover {
-    border-color: var(--color-neon);
-    background: rgb(255 0 127 / 0.08);
-    box-shadow: 0 0 30px -8px rgb(255 0 127 / 0.6);
+  .btn-secondary:hover {
+    background: rgb(244 241 234 / 0.08);
   }
 
-  .neon-text-pink {
-    color: #ff5aa8;
-    text-shadow:
-      0 0 18px rgb(255 0 127 / 0.55),
-      0 0 2px rgb(255 255 255 / 0.4);
-  }
-  .neon-text-sun {
-    color: var(--color-sun);
-    text-shadow: 0 0 22px rgb(255 218 36 / 0.45);
+  /* Dark glass panel used for station copy — never a flat bright box. */
+  .glass {
+    background: linear-gradient(180deg, rgb(26 37 58 / 0.72), rgb(7 11 20 / 0.82));
+    border: 1px solid rgb(244 241 234 / 0.08);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
   }
 
   .field {
     width: 100%;
-    border-radius: 0.75rem;
-    background: rgb(255 255 255 / 0.04);
-    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 2px;
+    background: rgb(7 11 20 / 0.6);
+    border: 1px solid rgb(244 241 234 / 0.16);
     padding: 0.8rem 1rem;
     font-size: 0.95rem;
-    color: white;
-    transition:
-      border-color 0.2s ease,
-      background 0.2s ease;
+    color: var(--text);
+    transition: border-color 0.2s ease;
   }
   .field::placeholder {
-    color: rgb(201 207 223 / 0.45);
+    color: rgb(244 241 234 / 0.38);
   }
   .field:focus {
     outline: none;
-    border-color: var(--color-sun);
-    background: rgb(255 255 255 / 0.06);
+    border-color: var(--yellow);
   }
   .field[aria-invalid="true"] {
-    border-color: var(--color-signal);
+    border-color: var(--red);
   }
 }
 
-/* Readability scrims behind content where the scene is brightest. */
+/* Station copy fades and lifts in when its station is reached. */
+.station-copy {
+  transition:
+    opacity 0.7s ease,
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.station-copy[data-on="false"] {
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
+}
+.station-copy[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Readability scrims behind copy. */
 .scrim-left {
-  background: linear-gradient(90deg, rgb(5 6 12 / 0.85) 0%, rgb(5 6 12 / 0.45) 45%, transparent 75%);
+  background: linear-gradient(90deg, rgb(7 11 20 / 0.82) 0%, rgb(7 11 20 / 0.35) 40%, transparent 65%);
 }
 .scrim-bottom {
-  background: linear-gradient(0deg, rgb(5 6 12 / 0.95) 0%, rgb(5 6 12 / 0.4) 50%, transparent 100%);
+  background: linear-gradient(0deg, rgb(7 11 20 / 0.92) 0%, rgb(7 11 20 / 0.45) 45%, transparent 100%);
 }
 
-/* Shown when WebGL is unavailable: a painted stand-in for the station. */
+/* Painted stand-in for the scene when WebGL is unavailable. */
 .scene-fallback {
   background:
-    radial-gradient(60% 50% at 18% 30%, rgb(255 0 127 / 0.22), transparent 70%),
-    radial-gradient(50% 40% at 80% 20%, rgb(255 218 36 / 0.16), transparent 70%),
-    radial-gradient(70% 60% at 60% 90%, rgb(77 139 255 / 0.18), transparent 70%),
-    linear-gradient(180deg, #0b0f22 0%, #05060c 100%);
+    radial-gradient(55% 45% at 55% 45%, rgb(255 0 127 / 0.14), transparent 70%),
+    radial-gradient(45% 40% at 60% 60%, rgb(255 218 36 / 0.08), transparent 70%),
+    linear-gradient(180deg, #0d1424 0%, #070b14 100%);
 }
 
-.no-webgl .webgl-thumb {
-  display: block !important;
+@keyframes scroll-hint {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(220%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

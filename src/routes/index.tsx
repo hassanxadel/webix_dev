@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SceneLayer } from "@/components/webix/SceneLayer";
-import { Nav } from "@/components/webix/Nav";
-import { About, Hero, Process, Services, Work } from "@/components/webix/Sections";
-import { Contact } from "@/components/webix/Contact";
-import { CaseStudyDialog } from "@/components/webix/CaseStudyDialog";
-import { useScrollStage } from "@/lib/scroll-stage";
+import { SceneLayer } from "@/components/site/SceneLayer";
+import { Navbar } from "@/components/site/Navbar";
+import { LineMap } from "@/components/site/LineMap";
+import { StationSign } from "@/components/site/StationSign";
+import { Hud } from "@/components/site/Hud";
+import { Loader } from "@/components/site/Loader";
+import { Stations } from "@/components/site/Stations";
+import { CaseStudyDialog } from "@/components/site/CaseStudyDialog";
+import { useJourneyTracker } from "@/lib/journey";
 
-const TITLE = "Webix — Websites, E-commerce & Digital Experiences";
+const TITLE = "Webix — Websites, E-commerce & 3D Digital Experiences";
 const DESCRIPTION =
-  "Webix designs and builds modern websites, Shopify stores, UI/UX and brand identities for ambitious brands. Your ideas. Our digital playground.";
+  "Webix designs and builds modern websites, Shopify e-commerce stores, 3D interactive web experiences and brand identities for ambitious brands. Your ideas. Our digital playground.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -17,34 +20,30 @@ export const Route = createFileRoute("/")({
       { name: "description", content: DESCRIPTION },
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
-      { property: "og:image", content: "/brand/webix-wordmark.webp" },
-      { name: "twitter:image", content: "/brand/webix-wordmark.webp" },
+      { property: "og:image", content: "/brand/webix-wordmark.png" },
+      { name: "twitter:image", content: "/brand/webix-wordmark.png" },
     ],
   }),
   component: Page,
 });
 
 function Page() {
-  useScrollStage();
+  useJourneyTracker();
   return (
     <>
-      <a
-        href="#work"
-        className="sr-only z-[60] rounded-full bg-sun px-4 py-2 font-display text-sm font-semibold text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
-      >
-        Skip to content
+      <a href="#work" className="sr-only z-[80] bg-sun px-4 py-2 text-sm font-semibold text-indigo focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        Skip to projects
       </a>
       <SceneLayer />
-      <Nav />
+      <Navbar />
+      <StationSign />
+      <LineMap />
+      <Hud />
       <main className="relative z-10">
-        <Hero />
-        <Work />
-        <Services />
-        <About />
-        <Process />
-        <Contact />
+        <Stations />
       </main>
       <CaseStudyDialog />
+      <Loader />
     </>
   );
 }

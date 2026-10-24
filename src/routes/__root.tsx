@@ -73,7 +73,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "theme-color", content: "#05060c" },
+      { name: "theme-color", content: "#070b14" },
       { title: "Webix — Websites, E-commerce & Digital Experiences" },
       { name: "description", content: "Webix designs and builds modern websites, Shopify stores, UI/UX and brand identities for ambitious brands." },
       { property: "og:title", content: "Webix — Websites, E-commerce & Digital Experiences" },
@@ -90,7 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&family=Open+Sans:wght@400;500;600&family=Poppins:wght@500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Noto+Sans+JP:wght@500;700&family=Poppins:wght@600;700&display=swap",
       },
     ],
   }),
