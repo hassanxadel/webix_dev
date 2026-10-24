@@ -1,25 +1,37 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useJourney } from "@/lib/journey";
 
-/** Fixed full-screen backdrop that will hold the 3D journey; painted fallback without WebGL. */
+// Three.js and the world load as a separate chunk, after the HTML hero is on screen.
+const Experience = lazy(() => import("@/components/three/Experience"));
+
+/** Fixed full-screen 3D backdrop, with a painted fallback when WebGL is unavailable. */
 export function SceneLayer() {
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const ready = useJourney((s) => s.sceneReady);
 
   useEffect(() => {
+    let ok = false;
     try {
       const c = document.createElement("canvas");
-      setWebgl(!!(c.getContext("webgl2") || c.getContext("webgl")));
+      ok = !!(c.getContext("webgl2") || c.getContext("webgl"));
     } catch {
-      setWebgl(false);
+      ok = false;
     }
-    // Phase 1: no 3D yet — the HTML layer is the whole page.
-    document.documentElement.dataset.scene = "ready";
+    setWebgl(ok);
+    // Without WebGL the HTML journey is the whole page; nothing to wait for.
+    if (!ok) document.documentElement.dataset.scene = "ready";
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0" aria-hidden data-webgl={webgl === null ? "pending" : webgl ? "on" : "off"}>
-      <div className={`scene-fallback absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-0" : "opacity-100"}`} />
+    <div className="fixed inset-0 z-0" aria-hidden>
+      <div className={`scene-fallback pointer-events-none absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-0" : "opacity-100"}`} />
+      {webgl && (
+        <div className={`absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-100" : "opacity-0"}`}>
+          <Suspense fallback={null}>
+            <Experience />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 }
