@@ -28,8 +28,9 @@ class NaNGuardEffect extends Effect {
  * Post-processing: selective low-intensity bloom (only emissive neon passes
  * the threshold), fine film grain, vignette, and a touch of chromatic
  * aberration that appears only while the camera is moving fast.
+ * `enabled=false` renders straight to the canvas, keeping it transparent over the hero plate.
  */
-export function Effects() {
+export function Effects({ enabled = true }: { enabled?: boolean }) {
   const guard = useMemo(() => new NaNGuardEffect(), []);
   // Built by hand rather than via <ChromaticAberration ref>: the wrapper serialises its
   // props, and in React 19 `ref` is a prop — a live effect object can't be serialised.
@@ -41,7 +42,7 @@ export function Effects() {
   });
 
   return (
-    <EffectComposer multisampling={4}>
+    <EffectComposer multisampling={4} enabled={enabled}>
       <primitive object={guard} />
       <Bloom mipmapBlur luminanceThreshold={0.9} luminanceSmoothing={0.15} intensity={0.55} radius={0.7} />
       <primitive object={aberration} />

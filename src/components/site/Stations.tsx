@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
-import { ArrowRight, ArrowUpRight, Instagram, Mail, MessageCircle, MousePointer2 } from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { ArrowRight, ArrowUpRight, Instagram, Mail, MessageCircle } from "lucide-react";
 import { JOURNEY_VH, STATIONS, type StationId } from "@/config/stations";
 import { PROCESS, PROJECTS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
-import { journeyStore, travelTo, travelToStation, useJourney } from "@/lib/journey";
+import { journey, journeyStore, travelTo, travelToStation, useJourney } from "@/lib/journey";
+import { HERO, ramp, smooth } from "@/lib/heroPlate";
 import { ContactForm } from "./ContactForm";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -50,7 +51,7 @@ function Kicker({ id }: { id: StationId }) {
   const s = STATIONS.find((x) => x.id === id)!;
   return (
     <p className="hud flex items-center gap-3 text-paper/70">
-      <span className="text-sun">{s.num}</span>
+      <span className="text-sun">Station {s.num}</span>
       <span className="h-px w-6 bg-paper/30" aria-hidden />
       {s.en}
       <span lang="ja" className="font-jp normal-case tracking-[0.08em] text-paper/45">
@@ -60,21 +61,100 @@ function Kicker({ id }: { id: StationId }) {
   );
 }
 
-/* ───────── 01 Departure ───────── */
+/* ───────── 01 Departure (hero) ───────── */
 
+/**
+ * Minimal hero: a two-line headline in the left third, one short sentence in
+ * the right third, and a single action at the bottom centre — the card owns
+ * the middle. Copy scrubs out with scroll (reversible) as the card turns.
+ */
 function Departure() {
+  const left = useRef<HTMLDivElement>(null);
+  const right = useRef<HTMLParagraphElement>(null);
+  const bottom = useRef<HTMLDivElement>(null);
+  const s = STATIONS[0];
+
+  useEffect(() => {
+    let raf = 0;
+    const frame = () => {
+      raf = requestAnimationFrame(frame);
+      const p = journey.progress;
+      const reduced = journeyStore.get().reducedMotion;
+      const k = smooth(ramp(p, [0, HERO.turn[1] * 0.75]));
+      const slide = reduced ? 0 : k * 48;
+      if (left.current) {
+        left.current.style.opacity = String(1 - k);
+        left.current.style.transform = `translate3d(${-slide}px, 0, 0)`;
+      }
+      if (right.current) {
+        right.current.style.opacity = String(1 - k);
+        right.current.style.transform = `translate3d(${slide}px, 0, 0)`;
+      }
+      if (bottom.current) bottom.current.style.opacity = String(1 - smooth(ramp(p, [0, HERO.turn[1] * 0.5])));
+      const hidden = p > HERO.turn[1];
+      [left, right, bottom].forEach((r) => r.current && (r.current.style.visibility = hidden ? "hidden" : "visible"));
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
-    <Station id="departure">
-      <div className="scrim-left pointer-events-none absolute inset-0 -z-10 hidden lg:block" />
-      <div className="scrim-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-2/3 lg:hidden" />
-      <div className="max-w-[34rem] lg:-mt-16">
-        <p className="hud text-paper/70">Webix Software Solutions</p>
-        <h1 id="departure-title" className="mt-5 text-[2.75rem] text-paper sm:text-6xl xl:text-[4.6rem]">
-          Your ideas.
-          <span className="block text-sun">Our digital playground.</span>
-        </h1>
-        <p className="mt-6 max-w-md text-base leading-relaxed text-paper/70 sm:text-lg">
-          We design and build modern websites, e-commerce stores and digital experiences for ambitious brands.
+    <section id={s.id} tabIndex={-1} aria-labelledby="departure-title" className="relative outline-none" style={{ height: `${(s.range[1] - s.range[0]) * JOURNEY_VH}vh` }}>
+      <div className="sticky top-0 h-screen overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 hero-copy-scrim" />
+        <div className="relative mx-auto h-full max-w-[1440px] px-5 sm:px-8 lg:px-12">
+          {/* Left third (top band on phones). */}
+          <div ref={left} className="absolute left-5 right-5 top-24 sm:left-8 lg:left-12 lg:right-auto lg:top-1/2 lg:w-[33%] lg:-translate-y-1/2">
+            <h1 id="departure-title" className="whitespace-nowrap text-[2.6rem] leading-[1.04] text-paper sm:text-6xl lg:text-[2.6rem] xl:text-[2.85rem] 2xl:text-[3.4rem]">
+              Your ideas.
+              <span className="block text-sun">Our playground.</span>
+            </h1>
+          </div>
+
+          {/* Right third (above the action on phones). */}
+          <p ref={right} className="absolute bottom-[14rem] left-5 right-5 text-xl font-medium leading-snug text-paper [text-shadow:0_2px_18px_rgb(7_11_20/0.95)] sm:left-8 lg:bottom-auto lg:left-auto lg:right-12 lg:top-1/2 lg:w-[22%] lg:-translate-y-1/2 lg:text-right lg:text-2xl">
+            We build digital journeys.
+          </p>
+
+          {/* Bottom centre: the one action, and the hint to scroll. */}
+          <div ref={bottom} className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-5">
+            <a
+              href="#vision"
+              className="btn-primary"
+              onClick={(e) => {
+                e.preventDefault();
+                travelToStation("vision");
+              }}
+            >
+              Get Started <ArrowRight size={16} aria-hidden />
+            </a>
+            <span className="hud flex flex-col items-center gap-3 text-paper/60" aria-hidden>
+              Scroll to board
+              <span className="relative h-8 w-px overflow-hidden bg-paper/15">
+                <span className="absolute inset-x-0 top-0 h-1/2 animate-[scroll-hint_2.2s_ease-in-out_infinite] bg-sun" />
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───────── 02 Vision ───────── */
+
+function Vision() {
+  return (
+    <Station id="vision">
+      {/* Phones: the copy sits over the cabin wall, so give it a dark base. */}
+      <div className="scrim-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-3/4 lg:hidden" />
+      <div className="max-w-3xl lg:-mt-24">
+        <Kicker id="vision" />
+        <h2 id="vision-title" className="mt-6 text-[2rem] leading-[1.1] text-paper sm:text-5xl xl:text-[3.6rem]">
+          We design and build modern websites, e-commerce stores and <span className="text-sun">3D digital experiences for ambitious brands.</span>
+        </h2>
+        <p className="mt-7 max-w-lg leading-relaxed text-paper/65">
+          We combine thoughtful design and modern web technology to help businesses present their brands, reach customers, and grow online.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a
@@ -98,55 +178,6 @@ function Departure() {
             Start a project
           </a>
         </div>
-        <p className="hud mt-12 hidden items-center gap-3 text-paper/70 sm:flex">
-          <MousePointer2 size={14} className="rotate-180" aria-hidden />
-          Scroll to board
-          <span className="relative ml-1 h-8 w-px overflow-hidden bg-paper/15" aria-hidden>
-            <span className="absolute inset-x-0 top-0 h-1/2 animate-[scroll-hint_2.2s_ease-in-out_infinite] bg-sun" />
-          </span>
-        </p>
-      </div>
-
-      {/* Featured projects strip, as in the hero mockup. */}
-      <div className="absolute bottom-10 right-24 hidden w-[44rem] xl:block">
-        <p className="hud mb-3 text-paper/55">Featured projects</p>
-        <ul className="grid grid-cols-3 gap-3">
-          {PROJECTS.slice(0, 3).map((p, i) => (
-            <li key={p.slug}>
-              <button
-                type="button"
-                onClick={() => journeyStore.set({ openProject: i })}
-                className="group relative block w-full overflow-hidden border border-paper/10 text-left transition-colors hover:border-sun/60"
-              >
-                <img src={p.image} alt="" width={1280} height={800} loading="lazy" className="aspect-[16/9] w-full object-cover object-top opacity-60 transition-opacity group-hover:opacity-90" />
-                <span className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent" />
-                <span className="absolute bottom-2.5 left-3">
-                  <span className="block text-sm font-semibold text-paper">{p.name}</span>
-                  <span className="hud text-[0.58rem] text-paper/55">{p.platform.includes("Shopify") ? "E-commerce / Shopify" : "Website"}</span>
-                </span>
-                <span className="hud absolute left-3 top-2.5 text-[0.58rem] text-paper/60">{pad2(i + 1)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </Station>
-  );
-}
-
-/* ───────── 02 Vision ───────── */
-
-function Vision() {
-  return (
-    <Station id="vision">
-      <div className="max-w-3xl lg:-mt-24">
-        <Kicker id="vision" />
-        <h2 id="vision-title" className="mt-6 text-[2rem] leading-[1.1] text-paper sm:text-5xl xl:text-[3.6rem]">
-          We design and build modern websites, e-commerce stores and <span className="text-sun">3D digital experiences for ambitious brands.</span>
-        </h2>
-        <p className="mt-7 max-w-lg leading-relaxed text-paper/65">
-          We combine thoughtful design and modern web technology to help businesses present their brands, reach customers, and grow online.
-        </p>
       </div>
     </Station>
   );

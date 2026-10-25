@@ -14,8 +14,6 @@ export const CARD = {
   radius: 0.045,
 } as const;
 
-/** Stamp slots printed on the front, bottom-right, in card UV space (0..1). */
-export const FRONT_SLOTS = STATIONS.map((_, i) => ({ u: 0.565 + i * 0.054, v: 0.135 }));
 /** Station circles on the back's line map, in card UV space. */
 export const BACK_SLOTS = STATIONS.map((_, i) => ({ u: 0.1 + i * (0.8 / (STATIONS.length - 1)), v: 0.47 }));
 
@@ -47,40 +45,6 @@ export function normaliseUVs(g: THREE.BufferGeometry, w: number, h: number) {
   return g;
 }
 
-/**
- * The W mark: four slanted block strokes, as on the brand icon, plus its
- * pixel-stepped cursor arrow. Coordinates in a 10 × 8 box, origin bottom-left.
- */
-export function wMarkShapes() {
-  const w = new THREE.Shape();
-  [
-    [0, 8],
-    [2.15, 8],
-    [3.15, 3.35],
-    [4.15, 8],
-    [5.85, 8],
-    [6.85, 3.35],
-    [7.85, 8],
-    [10, 8],
-    [8.05, 0],
-    [5.95, 0],
-    [5, 4.25],
-    [4.05, 0],
-    [1.95, 0],
-  ].forEach(([x, y], i) => (i ? w.lineTo(x, y) : w.moveTo(x, y)));
-  w.closePath();
-
-  // Cursor arrow, stepped like a pixel cursor, tip pointing up-left into the W.
-  const a = new THREE.Shape();
-  const step = 0.42;
-  const pts: [number, number][] = [[0, 0]];
-  for (let i = 1; i <= 5; i++) pts.push([i * step, -(i - 1) * step], [i * step, -i * step]);
-  pts.push([3 * step, -5 * step], [4.2 * step, -7.6 * step], [3.2 * step, -8 * step], [2 * step, -5.6 * step], [0.6 * step, -6.8 * step], [0, -6.8 * step]);
-  pts.forEach(([x, y], i) => (i ? a.lineTo(8.2 + x, 2.4 + y) : a.moveTo(8.2 + x, 2.4 + y)));
-  a.closePath();
-  return [w, a];
-}
-
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
 const SANS = '"Poppins", "Inter", sans-serif';
 const JP = '"Noto Sans JP", sans-serif';
@@ -110,59 +74,24 @@ function brush(g: CanvasRenderingContext2D, w: number, h: number, alpha: number)
   }
 }
 
-/** Front: brushed navy with silver print — name, line, number, contactless mark, stamp slots. */
+/** Front: brushed navy with a single tiny mark — the W inlay carries the face. */
 export function frontPrint() {
   const W = 2048;
   const H = Math.round(W / 1.5852);
   const [c, g] = canvas(W, H);
   const base = g.createLinearGradient(0, 0, W, H);
-  base.addColorStop(0, "#22304a");
-  base.addColorStop(0.55, "#1a253a");
-  base.addColorStop(1, "#141d30");
+  // Lifted navy: as polished metal it reflects a dark night, so the base must read navy, not black.
+  base.addColorStop(0, "#344a78");
+  base.addColorStop(0.55, "#283a60");
+  base.addColorStop(1, "#1f2e4d");
   g.fillStyle = base;
   g.fillRect(0, 0, W, H);
   brush(g, W, H, 0.03);
 
-  g.fillStyle = "rgba(236,232,224,0.92)";
-  g.font = `500 64px ${MONO}`;
+  g.fillStyle = "rgba(236,232,224,0.7)";
+  g.font = `500 44px ${MONO}`;
   g.textBaseline = "alphabetic";
-  g.fillText("WEBIX PASS", 120, 170);
-  g.fillStyle = "rgba(236,232,224,0.55)";
-  g.font = `500 40px ${MONO}`;
-  const line = "LINE 01  ·  ";
-  g.fillText(line, 122, 236);
-  const jpX = 122 + g.measureText(line).width;
-  g.font = `700 38px ${JP}`;
-  g.fillText("ウェビックス線", jpX, 236);
-
-  // Contactless symbol, top-right.
-  g.strokeStyle = "rgba(236,232,224,0.7)";
-  g.lineWidth = 10;
-  g.lineCap = "round";
-  for (let i = 0; i < 4; i++) {
-    g.beginPath();
-    g.arc(W - 250, 160, 34 + i * 26, -0.75, 0.75);
-    g.stroke();
-  }
-
-  g.fillStyle = "rgba(236,232,224,0.8)";
-  g.font = `500 56px ${MONO}`;
-  g.fillText("WBX · 0001 · 2026", 120, H - 150);
-  g.fillStyle = "rgba(236,232,224,0.45)";
-  g.font = `500 30px ${MONO}`;
-  g.fillText("VALID ON ALL WEBIX SERVICES", 122, H - 95);
-
-  // Stamp slots, bottom-right.
-  g.font = `500 26px ${MONO}`;
-  g.fillStyle = "rgba(236,232,224,0.5)";
-  g.fillText("STAMPS", FRONT_SLOTS[0].u * W - 26, (1 - FRONT_SLOTS[0].v) * H - 62);
-  FRONT_SLOTS.forEach(({ u, v }) => {
-    g.strokeStyle = "rgba(236,232,224,0.45)";
-    g.lineWidth = 3;
-    g.beginPath();
-    g.arc(u * W, (1 - v) * H, 30, 0, Math.PI * 2);
-    g.stroke();
-  });
+  g.fillText("WEBIX PASS", 110, 150);
   return tex(c);
 }
 
@@ -220,8 +149,20 @@ export function backPrint() {
     g.textAlign = "left";
   });
 
+  g.fillStyle = "rgba(236,232,224,0.75)";
+  g.font = `500 46px ${MONO}`;
+  g.fillText("WBX · 0001 · 2026", 142, H - 150);
   g.fillStyle = "rgba(236,232,224,0.4)";
   g.font = `500 28px ${MONO}`;
-  g.fillText("WBX · 0001 · 2026   ·   TAP TO START A PROJECT", 142, H - 110);
+  g.fillText("LINE 01  ·  TAP TO START A PROJECT", 144, H - 98);
+  // Contactless mark.
+  g.strokeStyle = "rgba(236,232,224,0.6)";
+  g.lineWidth = 9;
+  g.lineCap = "round";
+  for (let i = 0; i < 4; i++) {
+    g.beginPath();
+    g.arc(W - 230, 170, 30 + i * 24, -0.75, 0.75);
+    g.stroke();
+  }
   return tex(c);
 }

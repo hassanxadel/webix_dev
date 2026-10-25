@@ -17,8 +17,8 @@ export function StationSign() {
     <div
       aria-hidden
       className="station-copy pointer-events-none fixed right-20 top-24 z-30 hidden w-[19rem] md:block lg:right-28 lg:top-28"
-      // The terminal's form needs the space; its heading names the station instead.
-      data-on={showing === station && s.id !== "terminal"}
+      // Not on the hero (the card's moment) or the terminal (the form needs the space).
+      data-on={showing === station && s.id !== "terminal" && s.id !== "departure"}
     >
       <div key={s.id} className="glass animate-in fade-in duration-700 overflow-hidden rounded-[2px]">
         <div className="flex items-start gap-4 px-5 pb-3 pt-4">

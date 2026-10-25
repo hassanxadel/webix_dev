@@ -3,7 +3,7 @@ import { STATIONS } from "@/config/stations";
 import { useJourney } from "@/lib/journey";
 
 /** Longest we hold the boarding screen; the HTML underneath is always usable. */
-const MAX_WAIT_MS = 4500;
+const MAX_WAIT_MS = 2500;
 
 /**
  * "Boarding…" screen: a thin yellow progress line runs along the Webix Line

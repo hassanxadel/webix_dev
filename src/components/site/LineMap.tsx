@@ -69,8 +69,9 @@ export function LineMap() {
     );
   };
 
+  // The hero is the card's moment: the line map joins from station 02.
   return (
-    <nav aria-label="Webix Line — stations">
+    <nav aria-label="Webix Line — stations" className={`transition-opacity duration-700 ${station === 0 ? "pointer-events-none opacity-0" : "opacity-100"}`} aria-hidden={station === 0 || undefined}>
       {/* Desktop: vertical line on the right edge. */}
       <div className="fixed right-8 top-1/2 z-40 hidden h-[52vh] -translate-y-1/2 md:block lg:right-12">
         <span className="absolute right-[4.5px] top-0 h-full w-px bg-paper/20" aria-hidden />

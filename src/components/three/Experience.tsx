@@ -6,7 +6,6 @@ import { WebixPass, cardState } from "./WebixPass";
 import { CameraRig } from "./CameraRig";
 import { Train } from "./Train";
 import { CanopyLights, Near, Platform, ReflectiveFloor, TrackBed } from "./Platform";
-import { Concourse, TicketGates } from "./TicketGates";
 import { LightShafts, SkyDome, Skyline, Tunnels, Viaduct } from "./Surroundings";
 import { Billboards, DepartureBoard, MicroStops, ServiceScreens, TerminalWall } from "./StationFeatures";
 import { Effects } from "./Effects";
@@ -55,8 +54,8 @@ function CardLights() {
   useFrame(() => {
     camera.matrixWorld.extractBasis(right, up, new THREE.Vector3());
     const s = cardState.scale;
-    pink.current?.position.copy(cardState.position).addScaledVector(right, -1.4 * s).addScaledVector(up, 1.1 * s).add(camera.position.clone().sub(cardState.position).setLength(1.2 * s));
-    yellow.current?.position.copy(cardState.position).addScaledVector(right, 1.5 * s).addScaledVector(up, -0.6 * s).add(camera.position.clone().sub(cardState.position).setLength(1.0 * s));
+    pink.current?.position.copy(cardState.position).addScaledVector(right, 1.5 * s).addScaledVector(up, 0.35 * s).add(camera.position.clone().sub(cardState.position).setLength(0.5 * s));
+    yellow.current?.position.copy(cardState.position).addScaledVector(right, -1.3 * s).addScaledVector(up, -0.9 * s).add(camera.position.clone().sub(cardState.position).setLength(1.0 * s));
     if (pink.current) pink.current.intensity = 2.4 * s;
     if (yellow.current) yellow.current.intensity = 2 * s;
   });
@@ -91,9 +90,6 @@ function World({ low }: { low: boolean }) {
       <TrackBed />
       <Viaduct />
       <Tunnels />
-      <Concourse />
-      <TicketGates />
-      <Platform zone={PLATFORMS.departure} num="01" en="Departure" jp="出発" next="Vision" />
       {/* Later stations mount as the camera approaches; billboards stream their screenshots in. */}
       <Near zone={PLATFORMS.services}>
         <Platform zone={PLATFORMS.services} num="03" en="Services" jp="サービス" prev="Vision" next="Work">
@@ -131,6 +127,8 @@ export default function Experience() {
   const [fonts, setFonts] = useState(false);
   const tier = useJourney((s) => s.tier);
   const low = tier === "low";
+  // During the hero only the card renders, over the photographic plate (transparent canvas).
+  const inHero = useJourney((s) => s.station === 0);
 
   useEffect(() => {
     let alive = true;
@@ -157,18 +155,20 @@ export default function Experience() {
       }}
     >
       <PerformanceMonitor onDecline={() => journeyStore.set({ tier: "low" })} />
-      <color attach="background" args={["#070b14"]} />
+      {!inHero && <color attach="background" args={["#070b14"]} />}
       <fog attach="fog" args={["#0c1222", low ? 18 : 26, low ? 200 : 300]} />
       <hemisphereLight args={["#27314d", "#0a0a10", 0.35]} />
       <Suspense fallback={null}>
         <SceneEnvironment />
-        <World low={low} />
+        <group visible={!inHero}>
+          <World low={low} />
+        </group>
         <WebixPass />
         <CardLights />
         <CameraRig />
         <Ready />
       </Suspense>
-      {!low && <Effects />}
+      {!low && <Effects enabled={!inHero} />}
     </Canvas>
   );
 }

@@ -42,14 +42,14 @@ export function Hud() {
   const s = STATIONS[station];
   const next = STATIONS[station + 1];
   return (
-    <div className="pointer-events-none fixed bottom-8 left-8 z-40 hidden flex-col gap-2 md:flex lg:left-12">
+    <div className={`pointer-events-none fixed bottom-8 left-8 z-40 hidden flex-col gap-2 transition-opacity duration-700 md:flex lg:left-12 ${station === 0 ? "opacity-0" : "opacity-100"}`}>
       <p className="hud text-paper/80">
         <span className="text-sun">Station {s.num}</span> — {s.en}
       </p>
       <p className="hud text-paper/45">{next ? `Next: ${next.en}` : "End of the line"}</p>
       <p className="hud flex items-center gap-4 text-paper/45">
         <Clock />
-        <span className="pointer-events-auto">
+        <span className={station === 0 ? "" : "pointer-events-auto"}>
           <SoundToggle />
         </span>
       </p>

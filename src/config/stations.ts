@@ -29,8 +29,8 @@ export type Station = {
 export const JOURNEY_VH = 1600;
 
 export const STATIONS: Station[] = [
-  { id: "departure", num: "01", en: "Departure", jp: "出発", range: [0, 0.18], content: [0, 0.045], stamp: 0.074, anchor: 0, nav: "home" },
-  { id: "vision", num: "02", en: "Vision", jp: "ビジョン", range: [0.18, 0.32], content: [0.2, 0.295], stamp: 0.205, anchor: 0.235, nav: "about" },
+  { id: "departure", num: "01", en: "Departure", jp: "出発", range: [0, 0.15], content: [0, 0.05], stamp: 0.11, anchor: 0, nav: "home" },
+  { id: "vision", num: "02", en: "Vision", jp: "ビジョン", range: [0.15, 0.32], content: [0.15, 0.295], stamp: 0.16, anchor: 0.2, nav: "about" },
   { id: "services", num: "03", en: "Services", jp: "サービス", range: [0.32, 0.47], content: [0.338, 0.445], stamp: 0.342, anchor: 0.345, nav: "services" },
   { id: "work", num: "04", en: "Work", jp: "実績", range: [0.47, 0.62], content: [0.492, 0.612], stamp: 0.496, anchor: 0.5, nav: "work" },
   { id: "process", num: "05", en: "Process", jp: "プロセス", range: [0.62, 0.75], content: [0.628, 0.728], stamp: 0.634, anchor: 0.634 },

@@ -68,11 +68,6 @@ export function Navbar() {
           ))}
         </ul>
 
-        <p className="hud hidden items-center gap-3 text-paper/70 lg:flex">
-          <span className="h-px w-6 bg-sun" aria-hidden />
-          We build digital experiences
-        </p>
-
         <button
           type="button"
           className="inline-flex h-10 w-10 items-center justify-center border border-paper/20 text-paper md:hidden"

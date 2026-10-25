@@ -39,10 +39,6 @@ export const OPEN_LINE: Zone[] = [
   { z0: -498, z1: -662 },
 ];
 
-export const GATES_Z = 0;
-/** The aisle the visitor walks through, and the reader the card taps. */
-export const GATE_AISLE_X = -0.9;
-export const READER = new THREE.Vector3(-1.6, 1.09, 0.5);
 
 export const SERVICE_SCREEN_Z = [-337, -345, -353, -361];
 export const BILLBOARD_Z = [-438, -448, -458, -468, -478, -488];
@@ -59,9 +55,7 @@ export const TERMINAL_WALL_Z = -806;
  * micro-stops fall out of the same rule.
  */
 const TIMETABLE: [number, number][] = [
-  [0, 95],
-  [0.095, 95],
-  [0.15, -29],
+  [0, -29],
   [0.188, -29],
   [0.335, -369],
   [0.448, -369],
@@ -98,7 +92,6 @@ export const doorZ = (p: number) => trainHead(p) + LINE.doorFromHead;
 /** Door opening 0..1 — open while stopped at a platform the visitor uses. */
 export function doorOpen(p: number) {
   const windows: [number, number][] = [
-    [0.152, 0.19],
     [0.336, 0.45],
     [0.491, 0.615],
     [0.766, 0.85],
@@ -131,14 +124,7 @@ const billboard = (i: number): Key => ({ p: 0.5 + i * 0.0216, pos: [0.2, 1.72, B
  * terminal. Eased segments between these keys give smooth, cut-free motion.
  */
 export const CAMERA_KEYS: Key[] = [
-  { p: 0, pos: [GATE_AISLE_X, 1.62, 4.6], look: [GATE_AISLE_X, 1.45, 0] },
-  { p: 0.04, pos: [GATE_AISLE_X, 1.6, 4.3], look: [GATE_AISLE_X, 1.4, 0] },
-  { p: 0.068, pos: [-1.15, 1.6, 2.5], look: [READER.x, READER.y, READER.z] },
-  { p: 0.095, pos: [GATE_AISLE_X, 1.6, 1.3], look: [GATE_AISLE_X, 1.55, -6] },
-  { p: 0.122, pos: [GATE_AISLE_X, 1.65, -4], look: [3.6, 1.5, -12] },
-  { p: 0.15, pos: [0.6, 1.66, -7.5], look: [LINE.trackX, 1.6, -10.5] },
-  { p: 0.172, pos: [1.9, 1.62, -10], look: [6, 1.6, -10] },
-  { p: 0.19, pos: [3.1, 1.55, 0.4], look: [7, 1.32, -0.6], ride: true },
+  { p: 0, pos: [3.1, 1.55, 0.4], look: [7, 1.32, -0.6], ride: true },
   { p: 0.26, pos: [3.0, 1.55, 0.6], look: [7, 1.3, -1.6], ride: true },
   { p: 0.318, pos: [3.6, 1.6, 0], look: [-1, 1.6, -0.6], ride: true },
   { p: 0.334, pos: [2.2, 1.62, 0], look: [-4, 1.8, 0.5], ride: true },
