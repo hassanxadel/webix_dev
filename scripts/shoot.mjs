@@ -59,7 +59,8 @@ for (const vp of VIEWPORTS) {
           requestAnimationFrame(f);
         }),
     );
-    await page.screenshot({ path: join(outDir, `${vp.name}-${pt.name}.png`) });
+    // Software rendering can take a while to produce a frame on the heavier shots.
+    await page.screenshot({ path: join(outDir, `${vp.name}-${pt.name}.png`), timeout: 180000 });
     console.log(`${vp.name} ${pt.name} p=${pt.p} ~${fps}fps (software GL)`);
   }
   await page.close();

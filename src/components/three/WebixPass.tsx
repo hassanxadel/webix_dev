@@ -19,9 +19,12 @@ export const cardState = {
   idle: 1,
   /** 0 = front, 1 = back. */
   flip: 0,
+  /** Screen-anchored: draw over the world (the visitor is holding it), not behind seats or walls. */
+  overlay: false,
 };
 
 const MAX_TILT = THREE.MathUtils.degToRad(15);
+export const CARD_LAYER = 1;
 const { width: W, height: H, thickness: T, radius: R } = CARD;
 
 /** Device tilt on phones (Android fires without a permission prompt). */
@@ -31,6 +34,8 @@ export function WebixPass() {
   const root = useRef<THREE.Group>(null);
   const tiltGroup = useRef<THREE.Group>(null);
   const flipGroup = useRef<THREE.Group>(null);
+  const frontSide = useRef<THREE.Group>(null);
+  const backSide = useRef<THREE.Group>(null);
   const frontStamps = useRef<THREE.Mesh[]>([]);
   const backStamps = useRef<THREE.Mesh[]>([]);
   const flash = useRef(0);
@@ -63,8 +68,8 @@ export function WebixPass() {
       roughnessMap: frontRoughness(),
       metalness: 1,
       roughness: 0.55,
-      // Brushed metal: highlights stretch along the grain as the card turns.
-      anisotropy: 0.85,
+      // Brushed metal comes from the streaked roughness map. (Anisotropy would be truer, but it
+      // produces NaNs in the wet floor's mirrored render, which bloom then spreads across the frame.)
       clearcoat: 0.25,
       clearcoatRoughness: 0.35,
       envMapIntensity: 1.25,
@@ -83,9 +88,15 @@ export function WebixPass() {
       emissiveIntensity: 0.4,
       clearcoat: 1,
     });
-    const gold = new THREE.MeshPhysicalMaterial({ color: "#ffda24", metalness: 1, roughness: 0.22, anisotropy: 0.6, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 2.4 });
+    const gold = new THREE.MeshPhysicalMaterial({ color: "#ffda24", metalness: 1, roughness: 0.22, clearcoat: 0.5, clearcoatRoughness: 0.15, envMapIntensity: 2.4 });
     const stamp = new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffda24").multiplyScalar(2.2), toneMapped: false });
     return { front, back, core, edge, gold, stamp };
+  }, []);
+
+  // The card lives on its own layer: the main camera renders it, the wet floor's
+  // mirror camera (default layer only) does not — it is held up to the screen, not in the world.
+  useEffect(() => {
+    root.current?.traverse((o) => o.layers.set(CARD_LAYER));
   }, []);
 
   useEffect(() => {
@@ -108,6 +119,10 @@ export function WebixPass() {
     g.position.copy(cardState.position);
     g.rotation.copy(cardState.rotation);
     g.scale.setScalar(cardState.scale);
+
+    // The card is a convex slab with back-face culling, so it orders itself correctly without depth.
+    const depth = !cardState.overlay;
+    if (mats.front.depthTest !== depth) Object.values(mats).forEach((m) => (m.depthTest = depth));
 
     // Pointer (or device) tilt, max 15°, smoothed; touch without orientation gets a slow idle turn.
     const touchIdle = !deviceTilt.active && matchMedia("(hover: none)").matches;
@@ -138,6 +153,10 @@ export function WebixPass() {
       m.visible = s > 0.01;
     };
     frontStamps.current.forEach(pop);
+    // Without depth testing (overlay), only the face turned toward the viewer may draw.
+    const showingBack = Math.cos(flipGroup.current.rotation.y) < 0;
+    if (frontSide.current) frontSide.current.visible = !showingBack;
+    if (backSide.current) backSide.current.visible = showingBack;
     backStamps.current.forEach(pop);
   });
 
@@ -146,18 +165,21 @@ export function WebixPass() {
     <group ref={root}>
       <group ref={tiltGroup}>
         <group ref={flipGroup}>
-          <mesh geometry={geo.body} material={[mats.core, mats.edge]} castShadow />
-          <mesh geometry={geo.face} material={mats.front} position={[0, 0, zFront]} />
-          <mesh geometry={geo.mark} material={mats.gold} position={[0, 0, zFront]} />
+          <mesh geometry={geo.body} material={[mats.core, mats.edge]} renderOrder={20} />
+          <group ref={frontSide}>
+          <mesh geometry={geo.face} material={mats.front} position={[0, 0, zFront]} renderOrder={21} />
+          <mesh geometry={geo.mark} material={mats.gold} position={[0, 0, zFront + 0.0003]} renderOrder={22} />
           {FRONT_SLOTS.map(({ u, v }, i) => (
-            <mesh key={i} ref={(m) => void (frontStamps.current[i] = m!)} geometry={geo.stamp} material={mats.stamp} position={[(u - 0.5) * W, (v - 0.5) * H, zFront + 0.0006]} scale={0.0001} />
+            <mesh key={i} ref={(m) => void (frontStamps.current[i] = m!)} geometry={geo.stamp} material={mats.stamp} renderOrder={23} position={[(u - 0.5) * W, (v - 0.5) * H, zFront + 0.0006]} scale={0.0001} />
           ))}
 
-          <group rotation={[0, Math.PI, 0]}>
-            <mesh geometry={geo.face} material={mats.back} position={[0, 0, zFront]} />
+          </group>
+
+          <group ref={backSide} rotation={[0, Math.PI, 0]}>
+            <mesh geometry={geo.face} material={mats.back} position={[0, 0, zFront]} renderOrder={21} />
             {BACK_SLOTS.map(({ u, v }, i) => (
               <group key={i} position={[(u - 0.5) * W, (v - 0.5) * H, zFront + 0.0006]}>
-                <mesh ref={(m) => void (backStamps.current[i] = m!)} geometry={geo.backStamp} material={mats.stamp} scale={0.0001} />
+                <mesh ref={(m) => void (backStamps.current[i] = m!)} geometry={geo.backStamp} material={mats.stamp} renderOrder={23} scale={0.0001} />
               </group>
             ))}
           </group>

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowRight, ArrowUpRight, Instagram, Mail, MessageCircle, MousePointer2 } from "lucide-react";
 import { JOURNEY_VH, STATIONS, type StationId } from "@/config/stations";
-import { PROCESS, PROJECTS, SERVICES } from "@/lib/webix-data";
+import { PROCESS, PROJECTS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journeyStore, travelTo, travelToStation, useJourney } from "@/lib/journey";
 import { ContactForm } from "./ContactForm";
@@ -195,7 +195,14 @@ function Work() {
           <span className="block text-sun">Real work.</span>
         </h2>
         <img src={p.image} alt={`Screenshot of the ${p.name} website`} width={1280} height={800} loading="lazy" className="mt-5 aspect-[16/9] w-full border border-paper/10 object-cover object-top md:hidden" />
-        <ol className="mt-6 divide-y divide-paper/5">
+        {/* Phones: the screenshot and the current project only — scrolling advances through them. */}
+        <p className="mt-4 flex items-baseline justify-between font-heading text-xl font-semibold text-paper sm:hidden">
+          {p.name}
+          <span className="hud text-paper/45">
+            {pad2(shown + 1)} / {pad2(PROJECTS.length)}
+          </span>
+        </p>
+        <ol className="mt-6 hidden divide-y divide-paper/5 sm:block">
           {PROJECTS.map((proj, i) => (
             <li key={proj.slug}>
               <button
@@ -269,15 +276,6 @@ function Process() {
 
 /* ───────── 06 Results ───────── */
 
-/** Verifiable facts only — every figure is derived from the project list. */
-const STATS = [
-  { label: "Live projects", value: PROJECTS.length },
-  { label: "Shopify stores", value: PROJECTS.filter((p) => p.platform.includes("Shopify")).length },
-  { label: "Custom builds", value: PROJECTS.filter((p) => !p.platform.includes("Shopify")).length },
-  { label: "Industries", value: new Set(PROJECTS.map((p) => p.industry.split(" ")[0])).size },
-];
-export const RESULT_STATS = STATS;
-
 function Results() {
   return (
     <Station id="results">
@@ -288,7 +286,7 @@ function Results() {
           <span className="block text-sun">Real results.</span>
         </h2>
         <dl className="mt-7 grid grid-cols-2 gap-px bg-paper/10">
-          {STATS.map((s) => (
+          {RESULT_STATS.map((s) => (
             <div key={s.label} className="bg-night/85 p-4">
               <dt className="hud text-paper/50">{s.label}</dt>
               <dd className="mt-1 font-mono text-3xl text-sun">{pad2(s.value)}</dd>
