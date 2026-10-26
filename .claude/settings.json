@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./node_modules/**)",
+      "Read(./dist/**)",
+      "Read(./.output/**)",
+      "Read(./.nitro/**)",
+      "Read(./.tanstack/**)",
+      "Read(./.vinxi/**)",
+      "Read(./.remember/**)",
+      "Read(./coverage/**)",
+      "Read(./**/*.min.js)",
+      "Read(./**/*.map)",
+      "Read(./package-lock.json)",
+      "Read(./bun.lockb)",
+      "Read(./src/routeTree.gen.ts)",
+      "Read(./public/**/*.hdr)",
+      "Read(./public/**/*.exr)",
+      "Read(./public/**/*.glb)",
+      "Read(./public/**/*.gltf)",
+      "Read(./public/**/*.png)",
+      "Read(./public/**/*.jpg)",
+      "Read(./public/**/*.webp)",
+      "Read(./public/**/*.avif)",
+      "Read(./public/**/*.mp4)",
+      "Read(./src/assets/**/*.png)",
+      "Read(./src/assets/**/*.jpg)",
+      "Read(./src/assets/**/*.obj)"
+    ]
+  }
+}
