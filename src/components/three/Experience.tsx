@@ -4,8 +4,9 @@ import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei"
 import * as THREE from "three";
 import { WebixPass, cardState } from "./WebixPass";
 import { CameraRig } from "./CameraRig";
-import { ShootingStar, Stars } from "./Stars";
-import { Sky, SpaceObjects } from "./Space";
+import { Stars } from "./Stars";
+import { Dust, HORIZON, Planet, SkyDome, SunLights, Terrain } from "./Space";
+import { Effects } from "./Effects";
 import { journeyStore, useJourney } from "@/lib/journey";
 
 /** Canvas textures use these faces, so wait for them (briefly) before painting. */
@@ -27,7 +28,7 @@ THREE.DefaultLoadingManager.onProgress = (_url, loaded, total) => journeyStore.s
  */
 function SceneEnvironment() {
   return (
-    <Environment files="/hdri/shanghai_bund_1k.hdr" environmentIntensity={0.5} resolution={512}>
+    <Environment files="/hdri/shanghai_bund_1k.hdr" environmentIntensity={0.7} resolution={512}>
       <Lightformer form="rect" color="#ff007f" intensity={2.2} position={[-3, 2.5, 3]} scale={[1.2, 5, 1]} target={[0, 0, 0]} />
       <Lightformer form="rect" color="#ffda24" intensity={3} position={[3.2, 0.5, 2.5]} scale={[1, 4, 1]} target={[0, 0, 0]} />
       <Lightformer form="rect" color="#f4f1ea" intensity={1.4} position={[0, 4, 1]} scale={[6, 0.4, 1]} target={[0, 0, 0]} />
@@ -73,7 +74,7 @@ function Ready() {
   return null;
 }
 
-/** One fixed canvas for the whole site: sky, stars, drifting objects, and the card in front. */
+/** One fixed canvas for the whole site: sky, stars, moon surface, horizon planet, dust, and the card in front. */
 export default function Experience() {
   const [fonts, setFonts] = useState(false);
   const low = useJourney((s) => s.tier) === "low";
@@ -91,19 +92,25 @@ export default function Experience() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      shadows={false}
-      camera={{ fov: 45, near: 0.05, far: 200, position: [0, 0, 0] }}
-      gl={{ antialias: !low, powerPreference: "high-performance", toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1 }}
+      shadows="soft"
+      camera={{ fov: 45, near: 0.05, far: 1000, position: [0, 0, 0] }}
+      // ACES: applied by the renderer on the low tier, by the ToneMapping effect when post-processing runs.
+      gl={{ antialias: !low, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1 }}
       onCreated={(state) => {
         if (import.meta.env.DEV) (window as unknown as { __webix: unknown }).__webix = state;
       }}
     >
       <PerformanceMonitor onDecline={() => journeyStore.set({ tier: "low" })} />
+      <fogExp2 attach="fog" args={[HORIZON, 0.014]} />
       <hemisphereLight args={["#27314d", "#0a0a10", 0.35]} />
-      <Sky />
+      <SunLights low={low} />
+      <SkyDome />
       <Stars low={low} />
-      <ShootingStar />
-      <SpaceObjects low={low} />
+      <Terrain low={low} />
+      <Dust low={low} />
+      <Suspense fallback={null}>
+        <Planet low={low} />
+      </Suspense>
       <Suspense fallback={null}>
         <SceneEnvironment />
         <WebixPass />
@@ -111,6 +118,8 @@ export default function Experience() {
         <CameraRig />
         <Ready />
       </Suspense>
+      {/* Weak GPUs (PerformanceMonitor → tier "low") drop bloom and depth of field. */}
+      {!low && <Effects />}
     </Canvas>
   );
 }

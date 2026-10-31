@@ -232,13 +232,19 @@
 /* The sky, painted in CSS too: shown before WebGL loads and when it is unavailable. */
 .space-sky {
   background:
-    radial-gradient(55% 45% at 50% 52%, #15244d, transparent 70%),
-    radial-gradient(40% 40% at 100% 100%, rgb(255 0 127 / 0.05), transparent 70%),
-    radial-gradient(35% 35% at 0% 0%, rgb(255 218 36 / 0.035), transparent 70%),
-    linear-gradient(180deg, #0b1638 0%, #1a253a 100%);
+    linear-gradient(0deg, transparent 34%, rgb(43 63 122 / 0.35) 36%, transparent 40%),
+    linear-gradient(0deg, #5e636d 0%, #3a4152 30%, #122042 36%, #0a1430 100%);
 }
 
 
+@keyframes scroll-hint-x {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
 @keyframes scroll-hint {
   0% {
     transform: translateY(-100%);

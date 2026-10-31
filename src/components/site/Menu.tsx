@@ -14,10 +14,10 @@ const LINKS: { id: SectionId; label: string }[] = [
 ];
 
 /**
- * Site chrome: a "Menu" button top-left (full-screen overlay with the links)
- * and the Webix W top-right (back to top), on every section. The hero adds
- * the wordmark bottom-left and a scroll hint bottom-right; both fade out as
- * the card glides away.
+ * Site chrome: the Webix W top-left (back to top) and a "Menu" button
+ * top-right (full-screen overlay with the links), on every section. The hero
+ * adds a "Scroll down to discover" hint bottom-left and the wordmark
+ * bottom-right; both fade out as the card glides away.
  */
 export function Menu() {
   const [open, setOpen] = useState(false);
@@ -43,6 +43,17 @@ export function Menu() {
   return (
     <>
       <header className="pointer-events-none fixed inset-x-0 top-0 z-40 flex items-start justify-between p-5 sm:p-8">
+        <a
+          href="#hero"
+          aria-label="Webix — back to top"
+          className="pointer-events-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            travelTo(0);
+          }}
+        >
+          <img src="/brand/webix-w.svg" alt="" width={1000} height={724} className="h-10 w-auto sm:h-11" />
+        </a>
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger className="hud pointer-events-auto flex items-center gap-3 py-2 text-paper/85 transition-colors hover:text-sun">
             <span className="flex flex-col gap-[5px]" aria-hidden>
@@ -56,7 +67,7 @@ export function Menu() {
             <Dialog.Content className="fixed inset-0 z-[61] flex flex-col p-5 outline-none sm:p-8 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0">
               <Dialog.Title className="sr-only">Menu</Dialog.Title>
               <Dialog.Description className="sr-only">Jump to a section of the page.</Dialog.Description>
-              <Dialog.Close className="hud flex w-fit items-center gap-3 py-2 text-paper/85 transition-colors hover:text-sun">
+              <Dialog.Close className="hud ml-auto flex w-fit items-center gap-3 py-2 text-paper/85 transition-colors hover:text-sun">
                 <X size={18} aria-hidden /> Close
               </Dialog.Close>
               <nav aria-label="Main" className="my-auto">
@@ -81,28 +92,16 @@ export function Menu() {
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>
-
-        <a
-          href="#hero"
-          aria-label="Webix — back to top"
-          className="pointer-events-auto"
-          onClick={(e) => {
-            e.preventDefault();
-            travelTo(0);
-          }}
-        >
-          <img src="/brand/webix-w.svg" alt="" width={1000} height={724} className="h-10 w-auto sm:h-12" />
-        </a>
       </header>
 
       <div ref={heroOnly} aria-hidden className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end justify-between p-5 sm:p-8">
-        <img src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[44vw] max-w-[440px] select-none md:w-[25vw]" />
-        <span className="hud mb-2 hidden flex-col items-center gap-3 text-paper/55 sm:flex">
-          Scroll
-          <span className="relative h-10 w-px overflow-hidden bg-paper/15">
-            <span className="absolute inset-x-0 top-0 h-1/2 animate-[scroll-hint_2.2s_ease-in-out_infinite] bg-sun" />
+        <span className="hud mb-1 flex items-center gap-3 text-[0.62rem] text-paper/60">
+          <span className="relative h-px w-10 overflow-hidden bg-paper/20">
+            <span className="absolute inset-y-0 left-0 w-1/2 animate-[scroll-hint-x_2.4s_ease-in-out_infinite] bg-sun" />
           </span>
+          Scroll down to discover
         </span>
+        <img src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[40vw] select-none md:w-[18vw]" />
       </div>
     </>
   );
