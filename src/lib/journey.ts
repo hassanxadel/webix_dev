@@ -1,6 +1,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 import Lenis from "lenis";
-import { JOURNEY_VH, PROCESS_STEPS, SERVICE_STEPS, STATIONS, WORK_WINDOW, stampsAt, stepAt, type StationId } from "@/config/stations";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { JOURNEY_VH, PROCESS_STEPS, SERVICE_STEPS, STATIONS, WORK_WINDOW, WORLD_ON, stampsAt, stepAt, type StationId } from "@/config/stations";
 import { PROJECTS } from "./webix-data";
 
 /**
@@ -13,6 +15,8 @@ export const journey = {
   progress: 0,
   pointerX: 0,
   pointerY: 0,
+  /** Scroll speed, 0..1 (drives streaks and blur: faster scrolling = faster train). */
+  velocity: 0,
 };
 
 export type Tier = "high" | "low";
@@ -25,6 +29,8 @@ type JourneyState = {
   workStep: number;
   processStep: number;
   stamps: number;
+  /** The 3D world is on (from the About blackout onward); before that only the card renders. */
+  world: boolean;
   hoverProject: number | null;
   openProject: number | null;
   reducedMotion: boolean;
@@ -42,6 +48,7 @@ let state: JourneyState = {
   workStep: 0,
   processStep: -1,
   stamps: 0,
+  world: false,
   hoverProject: null,
   openProject: null,
   reducedMotion: false,
@@ -84,7 +91,8 @@ function derive(p: number): Partial<JourneyState> {
   });
   const showing = STATIONS.findIndex((s) => p >= s.content[0] && p <= s.content[1]);
   const [w0, w1] = WORK_WINDOW;
-  const workStep = Math.min(PROJECTS.length - 1, Math.max(0, Math.floor(((p - w0) / (w1 - w0)) * PROJECTS.length)));
+  // Nearest window (matches the snap points).
+  const workStep = Math.min(PROJECTS.length - 1, Math.max(0, Math.round(((p - w0) / (w1 - w0)) * (PROJECTS.length - 1))));
   return {
     station,
     showing,
@@ -92,6 +100,7 @@ function derive(p: number): Partial<JourneyState> {
     workStep,
     processStep: stepAt(PROCESS_STEPS, p),
     stamps: stampsAt(p),
+    world: p >= WORLD_ON,
   };
 }
 
@@ -107,15 +116,32 @@ export function useJourneyTracker() {
     // Lenis eases wheel input into the long, cinematic scroll; reduced motion keeps native scrolling.
     if (!reduced) lenis = new Lenis({ lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9 });
 
-    let raf = 0;
-    const frame = (time: number) => {
-      lenis?.raf(time);
+    // One scroll system: Lenis, driven by GSAP's ticker, with ScrollTrigger kept in sync (for velocity).
+    gsap.registerPlugin(ScrollTrigger);
+    lenis?.on("scroll", ScrollTrigger.update);
+    const tracker = ScrollTrigger.create({ start: 0, end: "max" });
+    gsap.ticker.lagSmoothing(0);
+    let lastScroll = performance.now();
+    let snapping = false;
+    const tick = (seconds: number) => {
+      lenis?.raf(seconds * 1000);
       const p = Math.min(1, Math.max(0, window.scrollY / Math.max(1, journeyPx())));
+      if (p !== journey.progress) lastScroll = performance.now();
       journey.progress = p;
+      journey.velocity = Math.min(1, Math.abs(tracker.getVelocity()) / 4000);
       journeyStore.set(derive(p));
-      raf = requestAnimationFrame(frame);
+      // Work: once the visitor stops, settle on the nearest window.
+      const [w0, w1] = WORK_WINDOW;
+      if (lenis && !snapping && performance.now() - lastScroll > 140 && p > w0 - 0.004 && p < w1 + 0.004) {
+        const n = PROJECTS.length - 1;
+        const target = w0 + (Math.round(((p - w0) / (w1 - w0)) * n) / n) * (w1 - w0);
+        if (Math.abs(target - p) > 0.0004) {
+          snapping = true;
+          lenis.scrollTo(target * journeyPx(), { duration: 0.6, easing: (t) => 1 - Math.pow(1 - t, 3), onComplete: () => (snapping = false) });
+        }
+      }
     };
-    raf = requestAnimationFrame(frame);
+    gsap.ticker.add(tick);
 
     const onPointer = (e: PointerEvent) => {
       journey.pointerX = (e.clientX / window.innerWidth) * 2 - 1;
@@ -125,7 +151,8 @@ export function useJourneyTracker() {
     window.addEventListener("pointermove", onPointer, { passive: true });
     motion.addEventListener("change", onMotion);
     return () => {
-      cancelAnimationFrame(raf);
+      gsap.ticker.remove(tick);
+      tracker.kill();
       lenis?.destroy();
       lenis = null;
       window.removeEventListener("pointermove", onPointer);

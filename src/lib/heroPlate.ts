@@ -5,6 +5,8 @@
  * things are on screen.
  */
 
+import { DEPARTURE } from "@/config/stations";
+
 type Pt = { x: number; y: number };
 export type Plate = {
   src: string;
@@ -66,17 +68,11 @@ export function plateToViewport(plate: Plate, p: Pt, vw: number, vh: number) {
   return { x: ox + p.x * s, y: oy + p.y * s };
 }
 
-/** Hero scroll range (fraction of the journey) and its three beats. */
+/** Hero → Work departure beats (fractions of the journey); defined in config/stations.ts. */
 export const HERO = {
-  end: 0.15,
-  /** Beat 1: copy out, card turns to 3/4. */
-  turn: [0, 0.054] as [number, number],
-  /** Beat 2: card glides to the reader; plate blurs and pushes in. */
-  glide: [0.054, 0.11] as [number, number],
-  /** The tap. */
-  tap: 0.11,
-  /** Beat 3: card settles to the right third; Vision copy arrives. */
-  settle: [0.126, 0.15] as [number, number],
+  end: DEPARTURE.end,
+  /** Copy out, card turns to 3/4. */
+  turn: DEPARTURE.copyOut,
 };
 
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));

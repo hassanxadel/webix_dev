@@ -338,3 +338,137 @@
     linear-gradient(90deg, rgb(7 11 20 / 0.6) 0%, rgb(7 11 20 / 0) 33%, rgb(7 11 20 / 0) 66%, rgb(7 11 20 / 0.72) 100%),
     linear-gradient(0deg, rgb(7 11 20 / 0.6) 0%, rgb(7 11 20 / 0) 28%);
 }
+
+/* ───────── Departure streaks ───────── */
+.streak {
+  background: linear-gradient(90deg, transparent, var(--c) 30%, color-mix(in srgb, var(--c) 40%, white) 70%, transparent);
+  border-radius: 999px;
+  mix-blend-mode: screen;
+  box-shadow: 0 0 10px var(--c);
+  transform-origin: 0 50%;
+  will-change: transform, opacity;
+}
+
+/* ───────── Shinkansen cabin (Work) ─────────
+   A warm-grey moulded wall in bays; each bay holds one rounded window:
+   plastic surround → rubber gasket → double glazing (city lights outside,
+   the project screenshot, a reflection, the blind's lip at the top). */
+.cabin {
+  background: #14161b;
+}
+.cabin-bay {
+  position: relative;
+  flex: none;
+  width: var(--pitch);
+  height: 100%;
+  background:
+    /* luggage rack shadow and rail */
+    linear-gradient(180deg, transparent calc(var(--wy) - var(--win-h) / 2 - 76px), rgb(0 0 0 / 0.5) calc(var(--wy) - var(--win-h) / 2 - 70px), #2b2f37 calc(var(--wy) - var(--win-h) / 2 - 64px), #3a3f48 calc(var(--wy) - var(--win-h) / 2 - 60px), transparent calc(var(--wy) - var(--win-h) / 2 - 58px)),
+    /* sill */
+    linear-gradient(180deg, transparent calc(var(--wy) + var(--win-h) / 2 + 26px), #2f333b calc(var(--wy) + var(--win-h) / 2 + 26px), #23262d calc(var(--wy) + var(--win-h) / 2 + 40px), rgb(0 0 0 / 0.55) calc(var(--wy) + var(--win-h) / 2 + 42px), transparent calc(var(--wy) + var(--win-h) / 2 + 60px)),
+    /* panel seam between bays */
+    linear-gradient(90deg, rgb(0 0 0 / 0.55) 0 1px, rgb(255 255 255 / 0.04) 1px 2px, transparent 2px),
+    /* moulded panel shading */
+    radial-gradient(120% 70% at 50% var(--wy), #2a2d33 0%, #1d2025 55%, #121418 100%);
+}
+.cabin-window {
+  position: absolute;
+  left: calc((var(--pitch) - var(--win)) / 2 - 18px);
+  top: calc(var(--wy) - var(--win-h) / 2 - 18px);
+  width: calc(var(--win) + 36px);
+  height: calc(var(--win-h) + 36px);
+  padding: 18px;
+  border-radius: 46px;
+  background: linear-gradient(180deg, #4a4e57, #33363d 40%, #2a2c32);
+  box-shadow:
+    inset 0 2px 1px rgb(255 255 255 / 0.12),
+    inset 0 -3px 6px rgb(0 0 0 / 0.5),
+    0 12px 30px rgb(0 0 0 / 0.45);
+}
+.cabin-glass {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 30px;
+  background: #05070c;
+  box-shadow:
+    0 0 0 5px #0b0c0f,
+    inset 0 0 22px rgb(0 0 0 / 0.8);
+}
+.cabin-city {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 140px, rgb(255 0 127 / 0.55) 140px 141px, transparent 141px 410px, rgb(255 218 36 / 0.5) 410px 412px, transparent 412px 700px),
+    repeating-linear-gradient(90deg, transparent 0 60px, rgb(244 241 234 / 0.25) 60px 61px, transparent 61px 230px),
+    linear-gradient(180deg, #0a0f1c 0%, #121a2e 55%, #1c1420 100%);
+  background-position: var(--cityx, 0) 0, calc(var(--cityx, 0) * 0.5) 0, 0 0;
+  filter: blur(calc(1px + var(--burst, 0) * 3px));
+}
+.cabin-shot {
+  position: absolute;
+  inset: 9%;
+  width: 82%;
+  height: 82%;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 6px;
+  box-shadow: 0 0 40px rgb(255 0 127 / 0.18);
+  opacity: calc(1 - var(--burst, 0) * 0.35);
+}
+.cabin-reflection {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 0 30%, rgb(255 255 255 / 0.07) 38%, transparent 46%, transparent 60%, rgb(255 255 255 / 0.04) 66%, transparent 72%),
+    radial-gradient(80% 60% at 30% 110%, rgb(255 218 36 / 0.08), transparent 70%);
+  opacity: calc(0.8 + var(--burst, 0) * 0.2);
+}
+.cabin-blind {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 7%;
+  background: linear-gradient(180deg, #3b3e45, #2b2d33 70%, rgb(0 0 0 / 0.6));
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.5);
+}
+.cabin-shade {
+  /* the left third (card side) and top/bottom fall into shadow, keeping focus on the window */
+  background:
+    linear-gradient(90deg, rgb(7 11 20 / 0.55) 0%, rgb(7 11 20 / 0) 34%),
+    linear-gradient(180deg, rgb(7 11 20 / 0.5) 0%, transparent 22%, transparent 72%, rgb(7 11 20 / 0.7) 100%);
+}
+@media (max-width: 767px) {
+  .cabin-window {
+    padding: 10px;
+    left: calc((var(--pitch) - var(--win)) / 2 - 10px);
+    top: calc(var(--wy) - var(--win-h) / 2 - 10px);
+    width: calc(var(--win) + 20px);
+    height: calc(var(--win-h) + 20px);
+    border-radius: 30px;
+  }
+  .cabin-glass {
+    border-radius: 20px;
+  }
+  .cabin-city {
+    filter: blur(calc(1px + var(--burst, 0) * 1.5px));
+  }
+  .cabin-shade {
+    background: linear-gradient(180deg, rgb(7 11 20 / 0.6) 0%, transparent 30%, transparent 70%, rgb(7 11 20 / 0.75) 100%);
+  }
+}
+
+/* Work: each project's caption cross-fades in as its window arrives. */
+@keyframes work-info-in {
+  from {
+    opacity: 0;
+    transform: translate3d(14px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.work-info-in {
+  animation: work-info-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

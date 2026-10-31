@@ -1,7 +1,9 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import gsap from "gsap";
 import { ArrowRight, ArrowUpRight, Instagram, Mail, MessageCircle } from "lucide-react";
-import { JOURNEY_VH, STATIONS, type StationId } from "@/config/stations";
-import { PROCESS, PROJECTS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
+import { BLACKOUT, DEPARTURE, JOURNEY_VH, STATIONS, stationIndex, type StationId } from "@/config/stations";
+import { WORK } from "@/config/projects";
+import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToStation, useJourney } from "@/lib/journey";
 import { HERO, ramp, smooth } from "@/lib/heroPlate";
@@ -101,7 +103,6 @@ function Departure() {
   return (
     <section id={s.id} tabIndex={-1} aria-labelledby="departure-title" className="relative outline-none" style={{ height: `${(s.range[1] - s.range[0]) * JOURNEY_VH}vh` }}>
       <div className="sticky top-0 h-screen overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 hero-copy-scrim" />
         <div className="relative mx-auto h-full max-w-[1440px] px-5 sm:px-8 lg:px-12">
           {/* Left third (top band on phones). */}
           <div ref={left} className="absolute left-5 right-5 top-24 sm:left-8 lg:left-12 lg:right-auto lg:top-1/2 lg:w-[33%] lg:-translate-y-1/2">
@@ -141,13 +142,11 @@ function Departure() {
   );
 }
 
-/* ───────── 02 Vision ───────── */
+/* ───────── 03 About (vision) ───────── */
 
 function Vision() {
   return (
     <Station id="vision">
-      {/* Phones: the copy sits over the cabin wall, so give it a dark base. */}
-      <div className="scrim-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-3/4 lg:hidden" />
       <div className="max-w-3xl lg:-mt-24">
         <Kicker id="vision" />
         <h2 id="vision-title" className="mt-6 text-[2rem] leading-[1.1] text-paper sm:text-5xl xl:text-[3.6rem]">
@@ -183,7 +182,7 @@ function Vision() {
   );
 }
 
-/* ───────── 03 Services ───────── */
+/* ───────── 04 Services ───────── */
 
 function Services() {
   const step = useJourney((s) => s.serviceStep);
@@ -210,65 +209,123 @@ function Services() {
   );
 }
 
-/* ───────── 04 Work ───────── */
+/* ───────── 02 Work ───────── */
 
-function Work() {
-  const step = useJourney((s) => s.workStep);
-  const hover = useJourney((s) => s.hoverProject);
-  const shown = hover ?? step;
-  const p = PROJECTS[shown];
+/** Project info under the current window: number, name, type, one line, tech tags, action. */
+function WorkInfo({ i }: { i: number }) {
+  const w = WORK[i];
   return (
-    <Station id="work">
-      <div className="glass w-full max-w-md p-6 sm:p-8">
-        <Kicker id="work" />
-        <h2 id="work-title" className="mt-5 text-3xl text-paper sm:text-4xl">
-          Real brands.
-          <span className="block text-sun">Real work.</span>
-        </h2>
-        <img src={p.image} alt={`Screenshot of the ${p.name} website`} width={1280} height={800} loading="lazy" className="mt-5 aspect-[16/9] w-full border border-paper/10 object-cover object-top md:hidden" />
-        {/* Phones: the screenshot and the current project only — scrolling advances through them. */}
-        <p className="mt-4 flex items-baseline justify-between font-heading text-xl font-semibold text-paper sm:hidden">
-          {p.name}
-          <span className="hud text-paper/45">
-            {pad2(shown + 1)} / {pad2(PROJECTS.length)}
+    <div className="work-info-in">
+      <p className="hud flex items-center gap-3 text-paper/55">
+        <span className="font-mono text-sun">
+          {pad2(i + 1)} / {pad2(WORK.length)}
+        </span>
+        <span className="h-px w-6 bg-paper/25" aria-hidden />
+        <span className="font-mono">{w.type}</span>
+      </p>
+      <h3 className="mt-2 font-heading text-2xl font-bold text-paper sm:text-3xl">{w.name}</h3>
+      <p className="mt-2 line-clamp-2 max-w-xl text-sm leading-relaxed text-paper/65 md:line-clamp-1">{w.description}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {w.tech.map((t) => (
+          <span key={t} className="hud border border-paper/15 px-2 py-1 text-[0.6rem] text-paper/60">
+            {t}
           </span>
-        </p>
-        <ol className="mt-6 hidden divide-y divide-paper/5 sm:block">
-          {PROJECTS.map((proj, i) => (
-            <li key={proj.slug}>
-              <button
-                type="button"
-                aria-current={i === shown ? "true" : undefined}
-                onClick={() => journeyStore.set({ openProject: i })}
-                onMouseEnter={() => journeyStore.set({ hoverProject: i })}
-                onMouseLeave={() => journeyStore.set({ hoverProject: null })}
-                onFocus={() => journeyStore.set({ hoverProject: i })}
-                onBlur={() => journeyStore.set({ hoverProject: null })}
-                className="flex w-full items-center gap-4 py-2.5 text-left"
-              >
-                <span className={`hud ${i === shown ? "text-sun" : "text-paper/35"}`}>{pad2(i + 1)}</span>
-                <span className={`flex-1 font-medium transition-colors ${i === shown ? "text-paper" : "text-paper/55"}`}>{proj.name}</span>
-                <span className="hud hidden text-[0.58rem] text-paper/40 sm:inline">{proj.platform.includes("Shopify") ? "Shopify" : "Custom"}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-6 flex flex-wrap gap-2.5">
-          <button type="button" className="btn-primary !px-5 !py-3" onClick={() => journeyStore.set({ openProject: shown })}>
-            Case study <ArrowRight size={15} aria-hidden />
-          </button>
-          <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-secondary !px-5 !py-3">
-            Live site <ArrowUpRight size={15} aria-hidden />
-            <span className="sr-only">(opens {p.name} in a new tab)</span>
-          </a>
-          {p.instagram && (
-            <a href={p.instagram} target="_blank" rel="noopener noreferrer" className="btn-secondary !px-3 !py-3" aria-label={`${p.name} on Instagram (opens in a new tab)`}>
-              <Instagram size={15} aria-hidden />
-            </a>
-          )}
+        ))}
+        <button type="button" className="btn-primary ml-auto !px-5 !py-2.5" onClick={() => journeyStore.set({ openProject: w.index })}>
+          View project <ArrowRight size={15} aria-hidden />
+        </button>
+        <a href={w.url} target="_blank" rel="noopener noreferrer" className="btn-secondary !px-3 !py-2.5" aria-label={`${w.name} live site (opens in a new tab)`}>
+          <ArrowUpRight size={15} aria-hidden />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Work: the projects seen through the cabin windows (drawn by BackgroundLayer).
+ * This section is the scroll spacer plus a fixed caption layer; title and info
+ * scrub in during the arrival and out into the About blackout. Reduced motion
+ * gets a plain vertical list instead.
+ */
+function Work() {
+  const s = STATIONS[stationIndex("work")];
+  const step = useJourney((st) => st.workStep);
+  const reduced = useJourney((st) => st.reducedMotion);
+  const head = useRef<HTMLDivElement>(null);
+  const info = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (reduced) return;
+    const tick = () => {
+      const p = journey.progress;
+      const out = 1 - smooth(ramp(p, [BLACKOUT[0], (BLACKOUT[0] + BLACKOUT[1]) / 2]));
+      const h = smooth(ramp(p, [DEPARTURE.arrive[0] + 0.01, DEPARTURE.arrive[1]])) * out;
+      const k = smooth(ramp(p, DEPARTURE.settle)) * out;
+      // Fast scrolling between windows: the caption smears a little with the train.
+      const v = journey.velocity;
+      if (head.current) {
+        head.current.style.opacity = String(h);
+        head.current.style.transform = `translate3d(${(1 - h) * 24}px, 0, 0)`;
+        head.current.style.visibility = h > 0.01 ? "visible" : "hidden";
+      }
+      if (info.current) {
+        info.current.style.opacity = String(k * (1 - Math.min(0.5, v * 0.8)));
+        info.current.style.transform = `translate3d(${(1 - k) * 24 - v * 18}px, 0, 0)`;
+        info.current.style.visibility = k > 0.01 ? "visible" : "hidden";
+      }
+    };
+    gsap.ticker.add(tick);
+    return () => gsap.ticker.remove(tick);
+  }, [reduced]);
+
+  const height = `${(s.range[1] - s.range[0]) * JOURNEY_VH}vh`;
+  if (reduced) {
+    return (
+      <section id="work" tabIndex={-1} aria-labelledby="work-title" className="relative outline-none" style={{ height }}>
+        <div className="mx-auto max-w-[1440px] px-5 py-28 sm:px-8 md:pl-[36%] lg:pr-32">
+          <Kicker id="work" />
+          <h2 id="work-title" className="mt-5 text-3xl text-paper sm:text-4xl">
+            Real brands. <span className="text-sun">Real work.</span>
+          </h2>
+          <ol className="mt-10 space-y-14">
+            {WORK.map((w, i) => (
+              <li key={w.id}>
+                <img src={w.image} alt={`Screenshot of the ${w.name} website`} width={1280} height={800} loading="lazy" className="aspect-[16/9] w-full border border-paper/10 object-cover object-top" />
+                <div className="mt-5">
+                  <WorkInfo i={i} />
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      id="work"
+      tabIndex={-1}
+      aria-labelledby="work-title"
+      className="relative outline-none"
+      style={{ height }}
+      onFocusCapture={() => {
+        if (journeyStore.get().station !== 1) travelTo(s.anchor);
+      }}
+    >
+      <div className="pointer-events-none fixed inset-0 z-10">
+        <div ref={head} className="invisible absolute left-5 right-5 top-20 opacity-0 sm:left-8 md:left-[36%] md:top-24 md:right-12">
+          <Kicker id="work" />
+          <h2 id="work-title" className="mt-4 hidden text-3xl text-paper md:block lg:text-4xl">
+            Real brands. <span className="text-sun">Real work.</span>
+          </h2>
+        </div>
+        <div ref={info} aria-live="polite" className="pointer-events-auto invisible absolute bottom-6 left-5 right-5 opacity-0 sm:left-8 sm:right-8 md:bottom-[6vh] md:left-[45.5%] md:right-auto md:w-[42%]">
+          <WorkInfo key={step} i={step} />
         </div>
       </div>
-    </Station>
+    </section>
   );
 }
 
@@ -374,9 +431,9 @@ export function Stations() {
   return (
     <>
       <Departure />
+      <Work />
       <Vision />
       <Services />
-      <Work />
       <Process />
       <Results />
       <Terminal />

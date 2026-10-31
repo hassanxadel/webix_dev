@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { BILLBOARD_Z, BOARD_Z, LINE, MICRO_STOPS_Z, SERVICE_SCREEN_Z, TERMINAL_WALL_Z } from "./world";
 import { BRAND, makeDepartureBoard, neonLine, serviceScreen, stopSign } from "./worldArt";
 import { PROCESS, PROJECTS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
-import { PROCESS_STEPS, SERVICE_STEPS, STATIONS } from "@/config/stations";
+import { LEGACY_PROCESS_STEPS as PROCESS_STEPS, LEGACY_RESULTS_STAMP, LEGACY_SERVICE_STEPS as SERVICE_STEPS, toLegacy } from "@/config/stations";
 import { journey, journeyStore } from "@/lib/journey";
 
 const WALL = LINE.wallX + 0.07;
@@ -18,7 +18,7 @@ const frameMat = new THREE.MeshPhysicalMaterial({ color: "#2b303b", metalness: 0
 export function ServiceScreens() {
   const mats = useMemo(() => SERVICES.map((s, i) => new THREE.MeshBasicMaterial({ map: serviceScreen(s, i), toneMapped: false, color: new THREE.Color(0.06, 0.06, 0.06) })), []);
   useFrame((_, dt) => {
-    const p = journey.progress;
+    const p = toLegacy(journey.progress); // the world runs on its original timeline
     mats.forEach((m, i) => {
       const on = p >= SERVICE_STEPS[i] - 0.004;
       m.color.setScalar(damp(m.color.r, on ? 0.95 : 0.06, dt, 3));
@@ -132,7 +132,7 @@ export function MicroStops() {
   const slab = useMemo(() => new THREE.MeshStandardMaterial({ color: "#1c212b", roughness: 0.85 }), []);
   const strip = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color("#fff3dc").multiplyScalar(2), toneMapped: false }), []);
   useFrame((_, dt) => {
-    const p = journey.progress;
+    const p = toLegacy(journey.progress); // the world runs on its original timeline
     mats.forEach((m, i) => m.color.setScalar(damp(m.color.r, Math.abs(p - PROCESS_STEPS[i]) < 0.016 ? 1 : 0.3, dt, 5)));
   });
   return (
@@ -171,11 +171,11 @@ export function MicroStops() {
 
 export function DepartureBoard() {
   const board = useMemo(() => makeDepartureBoard(RESULT_STATS.map((s) => ({ label: s.label, value: String(s.value).padStart(2, "0") }))), []);
-  const start = STATIONS[5].stamp;
+  const start = LEGACY_RESULTS_STAMP;
   const frame = useRef(0);
   const last = useRef("idle");
   useFrame(() => {
-    const p = journey.progress;
+    const p = toLegacy(journey.progress); // the world runs on its original timeline
     const rows = RESULT_STATS.map((_, r) => Math.min(1, Math.max(0, (p - start - r * 0.004) / 0.012)));
     const state = rows.every((r) => r >= 1) ? "done" : rows.every((r) => r <= 0) ? "idle" : "flipping";
     // Redraw while flipping (throttled), and once whenever the board settles or resets.

@@ -13,12 +13,13 @@ Concept: a Japanese bullet-train line. Scroll = a journey through 7 stations. He
 
 ## File map
 - `src/routes/index.tsx` — page composition; `src/routes/__root.tsx` — head, fonts, meta.
-- `src/config/stations.ts` — **single source of truth**: 7 stations (range, content window, stamp, anchor), JOURNEY_VH=1600, step timings.
-- `src/lib/journey.ts` — scroll progress store (`journey` mutable + `journeyStore`), Lenis, `travelTo*`.
+- `src/config/stations.ts` — **single source of truth**: 7 stations (range, content window, stamp, anchor), JOURNEY_VH=1900, DEPARTURE beats, WORK_WINDOW, BLACKOUT/WORLD_ON, `toLegacy`/`fromLegacy` (3D world keeps its original timeline).
+- `src/config/projects.ts` — Work windows data (derived from webix-data; tech tags = platform only, TODO real stacks).
+- `src/lib/journey.ts` — scroll progress store (`journey` mutable + `journeyStore`), Lenis driven by gsap.ticker + ScrollTrigger (velocity), Work snap per window, `travelTo*`.
 - `src/lib/heroPlate.ts` — hero photo plates, points of interest (reader, stripe, lights), cover math, HERO beat timings.
 - `src/lib/webix-data.ts` — projects (6, real screenshots), services (4), process (4), RESULT_STATS (derived, no invented numbers).
 - `src/lib/site-config.ts` — contact details (**placeholders**: email / WhatsApp / Instagram). `src/lib/inquiry.ts` — form schema + message.
-- `src/components/site/` — HTML layer: `Stations.tsx` (all 7 sections; hero = `Departure`), `HeroPlate.tsx`, `SceneLayer.tsx`,
+- `src/components/site/` — HTML layer: `Stations.tsx` (all 7 sections; hero = `Departure`), `BackgroundLayer.tsx` (plate → departure run → Shinkansen cabin windows → blackout), `SceneLayer.tsx`,
   `Navbar`, `LineMap`, `StationSign`, `Hud` (+SoundToggle), `Loader`, `ContactForm`, `CaseStudyDialog`.
 - `src/components/three/` — WebGL (lazy chunk):
   - `Experience.tsx` — Canvas, HDRI env, CardLights, World, tiers, Effects.
@@ -43,24 +44,26 @@ Concept: a Japanese bullet-train line. Scroll = a journey through 7 stations. He
 ## Stations (progress 0→1 of page scroll; details in `src/config/stations.ts`)
 | # | id | EN / JP | Message | Visual | Status |
 |---|----|---------|---------|--------|--------|
-| 01 | departure | Departure / 出発 | "Your ideas. / Our playground." + "We build digital journeys." + Get Started | Photo plate + card; scroll-out: 3/4 turn → tap photo's gate reader → settle right | **v2 done**, awaiting review |
-| 02 | vision | Vision / ビジョン | Who Webix is + CTAs (Explore our work / Start a project) | Inside the train, skyline through windows; card right third | built v1 (procedural) |
-| 03 | services | Services / サービス | Websites · E-commerce · 3D/Interactive · Branding | 4 platform screens light in sequence | built v1 |
-| 04 | work | Work / 実績 | 6 projects, case study dialog + live links | Billboards with real screenshots (hover/click) | built v1 |
+| 01 | departure | Departure / 出発 | "Your ideas. / Our playground." + "We build digital journeys." + Get Started | Photo plate + card; pinned 240vh departure: 3/4 turn → plate slides/blurs, streaks, tunnel → cabin | **v3**, awaiting review |
+| 02 | work | Work / 実績 | 6 projects through train windows; info + View project (case study) | HTML/CSS cabin windows (right ⅔), card left ⅓, snap per window, yellow edge pulse | **v2**, awaiting review |
+| 03 | vision | About / ビジョン | Who Webix is + CTAs | 3D world fades in after a blackout; card right third | built v1 (procedural) |
+| 04 | services | Services / サービス | Websites · E-commerce · 3D/Interactive · Branding | 4 platform screens light in sequence | built v1 |
 | 05 | process | Process / プロセス | Discover → Design → Build → Launch | Express line, 4 micro-stop signs | built v1 |
 | 06 | results | Results / 実績数値 | Derived stats only; testimonials = dev-only placeholder | Split-flap board | built v1 |
 | 07 | terminal | Terminal / 終点 | "Your stop. Let's build it." + payoff + contact form | Doors open, neon 終点; card flips to back with 7 stamps | built v1 |
 v1 stations use procedural geometry; the user's realism bar now rejects that look — expect reworks section by section.
 
 ## Decisions already made (do not revisit)
-- Hero: photographic plate background + **only the card in WebGL** (canvas transparent, world hidden, post-processing off during hero).
+- Hero + Work: HTML background layer under a transparent canvas + **only the card in WebGL**. The 3D world, scene bg and post-processing switch on only at WORLD_ON, inside the full-black BLACKOUT before About, then a dimmer quad fades it in (never toggle at a visible frame).
+- One card, one writer: CameraRig computes the target pose as a pure function of progress and damps `cardState.position/quaternion/scale` with maath. Tilt is a separate offset (18° hero, ~10° elsewhere via `cardState.tilt`).
+- One scroll system: Lenis on gsap.ticker; per-frame DOM writes via gsap.ticker, no layout reads, no React state per frame.
 - The W is the **traced logo SVG** `public/brand/webix-w.svg` (layers: face/rim/side) → enamel inlay (navy face recessed, gold rim, pink-red depth). Never redraw it.
 - Hero copy stays minimal (headline, one ≤5-word sentence, one action). No eyebrow/paragraph/HUD/line map/sign on the hero.
 - No procedural / cartoonish / low-poly geometry in new work. Realism from photos, lighting, materials.
 - Zero budget: free/OSS libraries, Google Fonts, CC0 assets only. No invented testimonials or stats.
 - Card draws over the world via a depth-clear mesh (renderOrder 19); card on layer 1 (excluded from floor reflections).
 - No `anisotropy` on materials (NaN under mirrored renders + bloom). Keep puddle roughness ≥ ~0.27.
-- Navbar: logo left, links right, no tagline. Nav ABOUT → station 02.
+- Navbar: logo left, links right, no tagline. Nav order Home · Work · About · Services · Contact (page order).
 
 ## Working rules
 1. No screenshots or browser captures. Don't open images unless the user attaches one and asks. The user checks visuals.

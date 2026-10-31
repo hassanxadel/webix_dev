@@ -7,10 +7,11 @@ import { CameraRig } from "./CameraRig";
 import { Train } from "./Train";
 import { CanopyLights, Near, Platform, ReflectiveFloor, TrackBed } from "./Platform";
 import { LightShafts, SkyDome, Skyline, Tunnels, Viaduct } from "./Surroundings";
-import { Billboards, DepartureBoard, MicroStops, ServiceScreens, TerminalWall } from "./StationFeatures";
+import { DepartureBoard, MicroStops, ServiceScreens, TerminalWall } from "./StationFeatures";
 import { Effects } from "./Effects";
 import { PLATFORMS } from "./world";
-import { journeyStore, useJourney } from "@/lib/journey";
+import { journey, journeyStore, useJourney } from "@/lib/journey";
+import { WORLD_FADE } from "@/config/stations";
 
 /** Canvas textures use these faces, so wait for them (briefly) before painting. */
 async function loadFonts() {
@@ -68,6 +69,35 @@ function CardLights() {
   );
 }
 
+/**
+ * Fades the world in from black after the switch (drawn over the world, under the card).
+ * A full-screen triangle-pair in clip space; opacity is a pure function of progress.
+ */
+function Dimmer() {
+  const mat = useRef<THREE.ShaderMaterial>(null);
+  const mesh = useRef<THREE.Mesh>(null);
+  useFrame(() => {
+    const [a, b] = WORLD_FADE;
+    const k = Math.min(1, Math.max(0, (journey.progress - a) / (b - a)));
+    if (mat.current) mat.current.uniforms.uDim.value = 1 - k * k * (3 - 2 * k);
+    if (mesh.current) mesh.current.visible = k < 1;
+  });
+  return (
+    <mesh ref={mesh} renderOrder={18} frustumCulled={false}>
+      <planeGeometry args={[2, 2]} />
+      <shaderMaterial
+        ref={mat}
+        transparent
+        depthTest={false}
+        depthWrite={false}
+        uniforms={{ uDim: { value: 1 } }}
+        vertexShader="void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }"
+        fragmentShader="uniform float uDim; void main(){ gl_FragColor = vec4(0.0, 0.0, 0.0, uDim); }"
+      />
+    </mesh>
+  );
+}
+
 /** Mounted once everything inside Suspense has loaded: tells the page the scene is live. */
 function Ready() {
   useEffect(() => {
@@ -92,15 +122,8 @@ function World({ low }: { low: boolean }) {
       <Tunnels />
       {/* Later stations mount as the camera approaches; billboards stream their screenshots in. */}
       <Near zone={PLATFORMS.services}>
-        <Platform zone={PLATFORMS.services} num="03" en="Services" jp="サービス" prev="Vision" next="Work">
+        <Platform zone={PLATFORMS.services} num="04" en="Services" jp="サービス" prev="About" next="Process">
           <ServiceScreens />
-        </Platform>
-      </Near>
-      <Near zone={PLATFORMS.work}>
-        <Platform zone={PLATFORMS.work} num="04" en="Work" jp="実績" prev="Services" next="Process">
-          <Suspense fallback={null}>
-            <Billboards />
-          </Suspense>
         </Platform>
       </Near>
       {/* Cheap enough to keep mounted: four short platforms and their signs. */}
@@ -127,8 +150,9 @@ export default function Experience() {
   const [fonts, setFonts] = useState(false);
   const tier = useJourney((s) => s.tier);
   const low = tier === "low";
-  // During the hero only the card renders, over the photographic plate (transparent canvas).
-  const inHero = useJourney((s) => s.station === 0);
+  // Until About, only the card renders (transparent canvas) over the HTML background layer.
+  // The world switches on while that layer is fully black, so the swap is never seen.
+  const world = useJourney((s) => s.world);
 
   useEffect(() => {
     let alive = true;
@@ -155,20 +179,21 @@ export default function Experience() {
       }}
     >
       <PerformanceMonitor onDecline={() => journeyStore.set({ tier: "low" })} />
-      {!inHero && <color attach="background" args={["#070b14"]} />}
+      {world && <color attach="background" args={["#070b14"]} />}
       <fog attach="fog" args={["#0c1222", low ? 18 : 26, low ? 200 : 300]} />
       <hemisphereLight args={["#27314d", "#0a0a10", 0.35]} />
       <Suspense fallback={null}>
         <SceneEnvironment />
-        <group visible={!inHero}>
+        <group visible={world}>
           <World low={low} />
         </group>
+        {world && <Dimmer />}
         <WebixPass />
         <CardLights />
         <CameraRig />
         <Ready />
       </Suspense>
-      {!low && <Effects enabled={!inHero} />}
+      {!low && <Effects enabled={world} />}
     </Canvas>
   );
 }

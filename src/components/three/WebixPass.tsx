@@ -5,6 +5,7 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { BACK_SLOTS, CARD, backPrint, frontPrint, frontRoughness, normaliseUVs, roundedRect } from "./cardArt";
 import { journey, journeyStore } from "@/lib/journey";
 import { beep } from "@/lib/sound";
+import { DEPARTURE } from "@/config/stations";
 
 /**
  * Where the card is and how it behaves this frame. The card rig writes it;
@@ -12,7 +13,7 @@ import { beep } from "@/lib/sound";
  */
 export const cardState = {
   position: new THREE.Vector3(0, 1.5, 0),
-  rotation: new THREE.Euler(0, 0, 0),
+  quaternion: new THREE.Quaternion(),
   scale: 1,
   /** 0..1 — how strongly the card follows the pointer / device tilt. */
   tilt: 1,
@@ -25,6 +26,17 @@ export const cardState = {
 };
 
 const MAX_TILT = THREE.MathUtils.degToRad(18);
+const EDGE_PINK = new THREE.Color("#ff007f");
+const EDGE_YELLOW = new THREE.Color("#ffda24");
+
+/** Light strobes on the edge while the train runs (departure 20–85%), stronger with scroll speed. */
+function smoothPassing(p: number, t: number) {
+  const [a] = DEPARTURE.run;
+  const b = DEPARTURE.arrive[1];
+  if (p <= a || p >= b) return 0;
+  const env = Math.sin(((p - a) / (b - a)) * Math.PI);
+  return env * (0.35 + journey.velocity) * Math.max(0, Math.sin(t * 23 + p * 400)) ** 6 * 2.2;
+}
 export const CARD_LAYER = 1;
 const { width: W, height: H, thickness: T, radius: R } = CARD;
 const Z_FRONT = T / 2 + 0.0004;
@@ -97,6 +109,8 @@ export function WebixPass() {
   const backStamps = useRef<THREE.Mesh[]>([]);
   const flash = useRef(0);
   const lastStamps = useRef(0);
+  const lastWork = useRef(-1);
+  const pulse = useRef(0);
 
   const geo = useMemo(() => {
     const bevel = 0.0025;
@@ -163,14 +177,14 @@ export function WebixPass() {
   useFrame(({ clock }, dt) => {
     const g = root.current;
     if (!g || !tiltGroup.current || !flipGroup.current) return;
-    const { reducedMotion, stamps } = journeyStore.get();
+    const { reducedMotion, stamps, workStep, station } = journeyStore.get();
     const t = clock.elapsedTime;
 
     g.position.copy(cardState.position);
-    g.rotation.copy(cardState.rotation);
+    g.quaternion.copy(cardState.quaternion);
     g.scale.setScalar(cardState.scale);
 
-    // Pointer (or device) tilt, max 18°, damped (~0.08 per frame at 60 fps); touch gets a gentle sway.
+    // Pointer (or device) tilt, max 18° in the hero (scaled by cardState.tilt elsewhere), damped (~0.08 per frame at 60 fps); touch gets a gentle sway.
     const touchSway = !deviceTilt.active && matchMedia("(hover: none)").matches;
     const px = deviceTilt.active ? deviceTilt.y : touchSway ? Math.sin(t * 0.35) * 0.55 : journey.pointerX;
     const py = deviceTilt.active ? deviceTilt.x : touchSway ? Math.sin(t * 0.27) * 0.3 : journey.pointerY;
@@ -194,7 +208,15 @@ export function WebixPass() {
     }
     lastStamps.current = stamps;
     flash.current = Math.max(0, flash.current - dt * 2.2);
-    mats.edge.emissiveIntensity = 0.4 + flash.current * 3.5;
+    // Each project change in Work: a yellow pulse along the edge.
+    const inWork = station === 1 && journey.progress >= DEPARTURE.end;
+    if (inWork && lastWork.current !== -1 && workStep !== lastWork.current && !reducedMotion) pulse.current = 1;
+    lastWork.current = inWork ? workStep : -1;
+    pulse.current = Math.max(0, pulse.current - dt * 1.8);
+    // Passing lights during the departure run flicker across the edge.
+    const passing = reducedMotion ? 0 : smoothPassing(journey.progress, t);
+    mats.edge.emissive.copy(EDGE_PINK).lerp(EDGE_YELLOW, pulse.current);
+    mats.edge.emissiveIntensity = 0.4 + flash.current * 3.5 + pulse.current * 2.4 + passing;
     backStamps.current.forEach((m, i) => {
       if (!m) return;
       const s = m.scale.x + ((i < stamps ? 1 : 0) - m.scale.x) * (1 - Math.exp(-dt * 9));

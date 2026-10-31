@@ -6,14 +6,14 @@ import { travelTo, useJourney } from "@/lib/journey";
 const LINKS: { id: NavId; label: string }[] = [
   { id: "home", label: "Home" },
   { id: "work", label: "Work" },
-  { id: "services", label: "Services" },
   { id: "about", label: "About" },
+  { id: "services", label: "Services" },
   { id: "contact", label: "Contact" },
 ];
 
 const anchorFor = (id: NavId) => STATIONS.find((s) => s.nav === id)!;
 
-/** The nav link that owns the current station (Process and Results belong to Work). */
+/** The nav link that owns the current station (in page order; Process and Results belong to Services). */
 function activeNav(station: number): NavId {
   for (let i = station; i >= 0; i--) {
     const nav = STATIONS[i].nav;
