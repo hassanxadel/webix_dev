@@ -51,7 +51,7 @@ export function ContactForm() {
   if (sent)
     return (
       <div role="status" className="py-10 text-center">
-        <p className="hud text-sun">Ticket issued</p>
+        <p className="hud text-sun">All set</p>
         <h3 className="mt-4 text-2xl text-paper">Your message is ready to send.</h3>
         <p className="mx-auto mt-3 max-w-sm text-paper/65">
           {sent === "whatsapp" ? "We opened WhatsApp with your project details filled in — just press send." : "We opened your email app with your project details filled in — just press send."}

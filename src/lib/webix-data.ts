@@ -153,13 +153,10 @@ export const PROJECTS: Project[] = [
 export type Service = {
   name: string;
   short: string;
-  /** One line for the platform screen. */
+  /** One line for the Services panel. */
   line: string;
   description: string;
   items: string[];
-  /** Icon drawn on the service's platform screen. */
-  icon: "monitor" | "bag" | "cube" | "spark";
-  jp: string;
 };
 
 export const SERVICES: Service[] = [
@@ -170,8 +167,6 @@ export const SERVICES: Service[] = [
     description:
       "Marketing and company websites, designed and built end to end — user journeys, interface design and clean, maintainable code.",
     items: ["UI/UX design & user journeys", "Marketing & company websites", "Responsive, accessible builds", "Performance and SEO foundations"],
-    icon: "monitor",
-    jp: "ウェブ",
   },
   {
     name: "E-commerce",
@@ -180,18 +175,14 @@ export const SERVICES: Service[] = [
     description:
       "Shopify stores and online shopping experiences — product pages, collections and checkout that your team can manage day to day.",
     items: ["Shopify store setup & theming", "Product & collection pages", "Cart and checkout experience", "Store migration & cleanup"],
-    icon: "bag",
-    jp: "通販",
   },
   {
     name: "3D / Interactive web",
     short: "3D & Interactive",
     line: "Real-time 3D and motion that make a brand unforgettable.",
     description:
-      "Interactive and real-time 3D web experiences — like the station you're travelling through right now — built to run in any modern browser.",
+      "Interactive and real-time 3D web experiences — like the one you're scrolling through right now — built to run in any modern browser.",
     items: ["Three.js & WebGL experiences", "Scroll-driven storytelling", "Product visualisation", "Interactive campaigns"],
-    icon: "cube",
-    jp: "立体",
   },
   {
     name: "Branding",
@@ -200,16 +191,14 @@ export const SERVICES: Service[] = [
     description:
       "Visual direction that keeps your brand consistent online — from logo usage and colour to how every page looks and sounds.",
     items: ["Visual direction", "Logo & identity assets", "Colour and typography systems", "Online brand guidelines"],
-    icon: "spark",
-    jp: "印象",
   },
 ];
 
 export const PROCESS = [
-  { name: "Discover", jp: "発見", text: "We learn how your business works, who your customers are and what the website needs to achieve." },
-  { name: "Design", jp: "設計", text: "We set the visual direction and shape the user experience, then refine it with you before building." },
-  { name: "Build", jp: "構築", text: "We develop the site, test it across devices and refine every detail until it feels right." },
-  { name: "Launch", jp: "出発", text: "We deliver the finished experience, go live and make sure your team is ready to run it." },
+  { name: "Discover", text: "We learn how your business works, who your customers are and what the website needs to achieve." },
+  { name: "Design", text: "We set the visual direction and shape the user experience, then refine it with you before building." },
+  { name: "Build", text: "We develop the site, test it across devices and refine every detail until it feels right." },
+  { name: "Launch", text: "We deliver the finished experience, go live and make sure your team is ready to run it." },
 ] as const;
 
 /** Results: verifiable facts only — every figure is derived from the project list above. */

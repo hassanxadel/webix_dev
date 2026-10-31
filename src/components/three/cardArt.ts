@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { STATIONS } from "@/config/stations";
 
 /**
  * Artwork for the Webix Pass, generated in code: the W mark (traced from the
@@ -13,9 +12,6 @@ export const CARD = {
   thickness: 0.0125,
   radius: 0.045,
 } as const;
-
-/** Station circles on the back's line map, in card UV space. */
-export const BACK_SLOTS = STATIONS.map((_, i) => ({ u: 0.1 + i * (0.8 / (STATIONS.length - 1)), v: 0.47 }));
 
 export function roundedRect(w: number, h: number, r: number) {
   const s = new THREE.Shape();
@@ -47,7 +43,6 @@ export function normaliseUVs(g: THREE.BufferGeometry, w: number, h: number) {
 
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
 const SANS = '"Poppins", "Inter", sans-serif';
-const JP = '"Noto Sans JP", sans-serif';
 
 function canvas(w: number, h: number) {
   const c = document.createElement("canvas");
@@ -104,7 +99,7 @@ export function frontRoughness() {
   return tex(c, false);
 }
 
-/** Back: matte navy with the printed Webix Line map and seven stamp circles. */
+/** Back: matte navy with the Webix name, serial and a contactless mark. */
 export function backPrint() {
   const W = 2048;
   const H = Math.round(W / 1.5852);
@@ -115,46 +110,14 @@ export function backPrint() {
 
   g.fillStyle = "rgba(236,232,224,0.9)";
   g.font = `600 70px ${SANS}`;
-  g.fillText("Webix Line", 140, 200);
-  g.fillStyle = "rgba(236,232,224,0.5)";
-  g.font = `500 32px ${MONO}`;
-  g.fillText("7 STATIONS  ·  STAMP EACH STOP", 142, 256);
-
-  const y = (1 - BACK_SLOTS[0].v) * H;
-  const x0 = BACK_SLOTS[0].u * W;
-  const x1 = BACK_SLOTS[BACK_SLOTS.length - 1].u * W;
-  g.fillStyle = "#ffda24";
-  g.fillRect(x0, y - 7, x1 - x0, 14);
-  g.fillStyle = "#ff007f";
-  g.fillRect(x0, y + 12, x1 - x0, 4);
-
-  STATIONS.forEach((s, i) => {
-    const x = BACK_SLOTS[i].u * W;
-    g.fillStyle = "#172236";
-    g.beginPath();
-    g.arc(x, y, 64, 0, Math.PI * 2);
-    g.fill();
-    g.strokeStyle = "rgba(236,232,224,0.85)";
-    g.lineWidth = 6;
-    g.stroke();
-    g.textAlign = "center";
-    g.fillStyle = "rgba(236,232,224,0.85)";
-    g.font = `500 30px ${MONO}`;
-    g.fillText(s.num, x, y + 140);
-    g.font = `600 30px ${SANS}`;
-    g.fillText(s.en, x, y + 186);
-    g.fillStyle = "rgba(236,232,224,0.5)";
-    g.font = `500 28px ${JP}`;
-    g.fillText(s.jp, x, y - 96);
-    g.textAlign = "left";
-  });
+  g.fillText("Webix", 140, 200);
 
   g.fillStyle = "rgba(236,232,224,0.75)";
   g.font = `500 46px ${MONO}`;
   g.fillText("WBX · 0001 · 2026", 142, H - 150);
   g.fillStyle = "rgba(236,232,224,0.4)";
   g.font = `500 28px ${MONO}`;
-  g.fillText("LINE 01  ·  TAP TO START A PROJECT", 144, H - 98);
+  g.fillText("YOUR IDEAS  ·  OUR PLAYGROUND", 144, H - 98);
   // Contactless mark.
   g.strokeStyle = "rgba(236,232,224,0.6)";
   g.lineWidth = 9;

@@ -1,28 +1,25 @@
 # Status
 
 ## Current state
-- "The Pass" journey is live end to end: 7 stations, Lenis scroll, line map, station signs, HUD, Boarding loader.
-- Order is now Hero 01 → Work 02 → About 03 → Services 04 → Process 05 → Results 06 → Terminal 07.
-- Hero → Work: pinned bullet-train departure (plate slide + directional blur, streaks, tunnel, ≤2px shake) into a Shinkansen cabin; Work = 6 project windows with snap. Persistent damped card; world switches on unseen in a blackout before About.
-- Stations 03–07 are v1: procedural 3D world (train, platforms, tunnels, skyline). Functional, but below the new realism bar.
-- Build passes; production console clean. Local `main` is 4+ commits ahead of `origin/main` (not pushed).
+- Site redesigned to a minimal space theme (2026-10-31): dark-blue sky, twinkling stars, 5 clay objects, one persistent card.
+- Order: Hero → Work → About → Services → Process → Results → Contact. Menu overlay + W top-right on every section.
+- Train/station theme fully removed (world, plates, signs, line map, HUD, sound, JP labels, post-processing).
+- Build and type-check pass. Visuals not yet reviewed by the user. Local `main` is ahead of `origin/main` (not pushed).
 - Archive branch `archive/synthwave-lens` holds the earlier synthwave/lens version.
 
 ## Next up
-- User reviews Hero → Work in the browser (desktop, phone, reduced motion); then push.
-- Rework stations one at a time to the hero's quality bar (photo plates / real assets, not procedural geometry). Likely start with 02 Vision.
+- User reviews the space redesign in the browser (desktop, phone, reduced motion); tune object positions, star density, panel layout; then push.
 
 ## Known issues
 - `src/lib/site-config.ts` contact details are placeholders.
-- Hero plate is 1376 px wide → slightly soft on ≥1440 px screens (a 2560 px export would fix it).
-- Ken Burns can shift the photo's reader up to ~20 px from the card's tap target.
-- Vision's in-train interior (procedural) looks flat/beige; enamel W face reads grey-navy.
-- Unused legacy files in `src/assets/` (Room.png, chest.*, Gemini_*, bedroom.jpg, space.jpg) ~25 MB — candidates for deletion.
-- Work tech tags show only the platform (e.g. "Custom build", "Vercel", "Shopify") — TODO real stacks in `src/config/projects.ts`.
-- Departure/Work tuning (streak density, window size, card poses) not yet seen by the user.
+- Work tech tags show only the platform — TODO real stacks in `src/config/projects.ts`.
+- Contact copy still says "Your stop." / "…make a train station feel real…" — kept as content; replace if the user wants new lines.
+- Card back print (never shown now) still exists in `cardArt.ts`.
+- Space objects can sit near the edge of a panel on some aspect ratios (they never move into the card).
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-10-31 · all · space redesign: sky + stars + clay objects, Menu/W/wordmark hero, glass panels, train theme removed · (this commit)
 - 2026-10-31 · 01→02 · persistent card, departure transition, Work through train windows, reorder · (this commit)
 - 2026-10-26 · repo · CLAUDE.md, STATUS.md, read-deny rules, screenshot tooling removed · (this commit)
 - 2026-10-25 · 01 hero · photo plate + card-only WebGL, traced W enamel inlay, minimal copy, reader-tap scroll-out · 221f1b6

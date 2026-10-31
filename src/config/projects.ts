@@ -1,5 +1,5 @@
 /**
- * Work — one train window per project, in order. Derived from the real project
+ * Work — one floating panel per project, in order. Derived from the real project
  * list in lib/webix-data.ts; nothing here is invented.
  */
 import { PROJECTS } from "@/lib/webix-data";

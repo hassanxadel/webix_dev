@@ -41,7 +41,6 @@
   --font-sans: "Inter", "Open Sans", system-ui, sans-serif;
   --font-heading: "Poppins", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
-  --font-jp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
 }
 
 :root {
@@ -121,7 +120,7 @@
 }
 
 @layer components {
-  /* HUD / station label voice: small uppercase monospace. */
+  /* Small label voice: uppercase monospace. */
   .hud {
     font-family: var(--font-mono);
     font-weight: 500;
@@ -182,12 +181,14 @@
     background: rgb(244 241 234 / 0.08);
   }
 
-  /* Dark glass panel used for station copy — never a flat bright box. */
+  /* Floating glass panel: dark-blue translucent, 1px border, soft radius — never a flat bright box. */
   .glass {
-    background: linear-gradient(180deg, rgb(26 37 58 / 0.72), rgb(7 11 20 / 0.82));
-    border: 1px solid rgb(244 241 234 / 0.08);
-    backdrop-filter: blur(14px) saturate(1.2);
-    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    background: rgb(26 37 58 / 0.55);
+    border: 1px solid rgb(244 241 234 / 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 24px 60px rgb(5 10 25 / 0.35);
   }
 
   .field {
@@ -212,37 +213,31 @@
   }
 }
 
-/* Station copy fades and lifts in when its station is reached. */
-.station-copy {
+/* Section copy fades and lifts in when its section is reached. */
+.section-copy {
   transition:
     opacity 0.7s ease,
     transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.station-copy[data-on="false"] {
+.section-copy[data-on="false"] {
   opacity: 0;
   transform: translateY(18px);
   pointer-events: none;
 }
-.station-copy[data-on="true"] {
+.section-copy[data-on="true"] {
   opacity: 1;
   transform: none;
 }
 
-/* Readability scrims behind copy. */
-.scrim-left {
-  background: linear-gradient(90deg, rgb(7 11 20 / 0.82) 0%, rgb(7 11 20 / 0.35) 40%, transparent 65%);
-}
-.scrim-bottom {
-  background: linear-gradient(0deg, rgb(7 11 20 / 0.92) 0%, rgb(7 11 20 / 0.45) 45%, transparent 100%);
+/* The sky, painted in CSS too: shown before WebGL loads and when it is unavailable. */
+.space-sky {
+  background:
+    radial-gradient(55% 45% at 50% 52%, #15244d, transparent 70%),
+    radial-gradient(40% 40% at 100% 100%, rgb(255 0 127 / 0.05), transparent 70%),
+    radial-gradient(35% 35% at 0% 0%, rgb(255 218 36 / 0.035), transparent 70%),
+    linear-gradient(180deg, #0b1638 0%, #1a253a 100%);
 }
 
-/* Painted stand-in for the scene when WebGL is unavailable. */
-.scene-fallback {
-  background:
-    radial-gradient(55% 45% at 55% 45%, rgb(255 0 127 / 0.14), transparent 70%),
-    radial-gradient(45% 40% at 60% 60%, rgb(255 218 36 / 0.08), transparent 70%),
-    linear-gradient(180deg, #0d1424 0%, #070b14 100%);
-}
 
 @keyframes scroll-hint {
   0% {
@@ -263,202 +258,7 @@
   }
 }
 
-/* ───────── Hero plate ───────── */
-@keyframes hero-kenburns {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.05);
-  }
-}
-.hero-kenburns {
-  animation: hero-kenburns 20s ease-in-out infinite alternate;
-  transform-origin: 50% 55%;
-}
-/* A soft pink highlight travelling along the train's stripe. */
-@keyframes hero-sweep {
-  0%,
-  55% {
-    background-position: 140% 0;
-  }
-  100% {
-    background-position: -40% 0;
-  }
-}
-.hero-sweep {
-  background: linear-gradient(90deg, transparent 0%, rgb(255 0 127 / 0) 35%, rgb(255 120 190 / 0.9) 50%, rgb(255 0 127 / 0) 65%, transparent 100%);
-  background-size: 50% 100%;
-  background-repeat: no-repeat;
-  mix-blend-mode: screen;
-  filter: blur(2px);
-  opacity: 0.55;
-  animation: hero-sweep 7s ease-in-out infinite;
-}
-@keyframes hero-bokeh {
-  0%,
-  100% {
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.32;
-  }
-}
-.hero-bokeh {
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgb(255 236 200 / 0.9), transparent 70%);
-  mix-blend-mode: screen;
-  filter: blur(6px);
-  animation: hero-bokeh 5.5s ease-in-out infinite;
-}
-.hero-reader {
-  transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse, rgb(255 218 36 / 0.85), rgb(255 218 36 / 0.25) 45%, transparent 70%);
-  mix-blend-mode: screen;
-  filter: blur(4px);
-}
-.hero-vignette {
-  background: radial-gradient(120% 90% at 50% 50%, transparent 45%, rgb(7 11 20 / 0.55) 80%, rgb(7 11 20 / 0.85) 100%);
-}
-.hero-grain {
-  opacity: 0.09;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero-kenburns,
-  .hero-sweep,
-  .hero-bokeh {
-    animation: none;
-  }
-}
-/* Readability for hero copy: darkens only the outer thirds, never the card's middle. */
-.hero-copy-scrim {
-  background:
-    linear-gradient(90deg, rgb(7 11 20 / 0.6) 0%, rgb(7 11 20 / 0) 33%, rgb(7 11 20 / 0) 66%, rgb(7 11 20 / 0.72) 100%),
-    linear-gradient(0deg, rgb(7 11 20 / 0.6) 0%, rgb(7 11 20 / 0) 28%);
-}
-
-/* ───────── Departure streaks ───────── */
-.streak {
-  background: linear-gradient(90deg, transparent, var(--c) 30%, color-mix(in srgb, var(--c) 40%, white) 70%, transparent);
-  border-radius: 999px;
-  mix-blend-mode: screen;
-  box-shadow: 0 0 10px var(--c);
-  transform-origin: 0 50%;
-  will-change: transform, opacity;
-}
-
-/* ───────── Shinkansen cabin (Work) ─────────
-   A warm-grey moulded wall in bays; each bay holds one rounded window:
-   plastic surround → rubber gasket → double glazing (city lights outside,
-   the project screenshot, a reflection, the blind's lip at the top). */
-.cabin {
-  background: #14161b;
-}
-.cabin-bay {
-  position: relative;
-  flex: none;
-  width: var(--pitch);
-  height: 100%;
-  background:
-    /* luggage rack shadow and rail */
-    linear-gradient(180deg, transparent calc(var(--wy) - var(--win-h) / 2 - 76px), rgb(0 0 0 / 0.5) calc(var(--wy) - var(--win-h) / 2 - 70px), #2b2f37 calc(var(--wy) - var(--win-h) / 2 - 64px), #3a3f48 calc(var(--wy) - var(--win-h) / 2 - 60px), transparent calc(var(--wy) - var(--win-h) / 2 - 58px)),
-    /* sill */
-    linear-gradient(180deg, transparent calc(var(--wy) + var(--win-h) / 2 + 26px), #2f333b calc(var(--wy) + var(--win-h) / 2 + 26px), #23262d calc(var(--wy) + var(--win-h) / 2 + 40px), rgb(0 0 0 / 0.55) calc(var(--wy) + var(--win-h) / 2 + 42px), transparent calc(var(--wy) + var(--win-h) / 2 + 60px)),
-    /* panel seam between bays */
-    linear-gradient(90deg, rgb(0 0 0 / 0.55) 0 1px, rgb(255 255 255 / 0.04) 1px 2px, transparent 2px),
-    /* moulded panel shading */
-    radial-gradient(120% 70% at 50% var(--wy), #2a2d33 0%, #1d2025 55%, #121418 100%);
-}
-.cabin-window {
-  position: absolute;
-  left: calc((var(--pitch) - var(--win)) / 2 - 18px);
-  top: calc(var(--wy) - var(--win-h) / 2 - 18px);
-  width: calc(var(--win) + 36px);
-  height: calc(var(--win-h) + 36px);
-  padding: 18px;
-  border-radius: 46px;
-  background: linear-gradient(180deg, #4a4e57, #33363d 40%, #2a2c32);
-  box-shadow:
-    inset 0 2px 1px rgb(255 255 255 / 0.12),
-    inset 0 -3px 6px rgb(0 0 0 / 0.5),
-    0 12px 30px rgb(0 0 0 / 0.45);
-}
-.cabin-glass {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 30px;
-  background: #05070c;
-  box-shadow:
-    0 0 0 5px #0b0c0f,
-    inset 0 0 22px rgb(0 0 0 / 0.8);
-}
-.cabin-city {
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 140px, rgb(255 0 127 / 0.55) 140px 141px, transparent 141px 410px, rgb(255 218 36 / 0.5) 410px 412px, transparent 412px 700px),
-    repeating-linear-gradient(90deg, transparent 0 60px, rgb(244 241 234 / 0.25) 60px 61px, transparent 61px 230px),
-    linear-gradient(180deg, #0a0f1c 0%, #121a2e 55%, #1c1420 100%);
-  background-position: var(--cityx, 0) 0, calc(var(--cityx, 0) * 0.5) 0, 0 0;
-  filter: blur(calc(1px + var(--burst, 0) * 3px));
-}
-.cabin-shot {
-  position: absolute;
-  inset: 9%;
-  width: 82%;
-  height: 82%;
-  object-fit: cover;
-  object-position: top;
-  border-radius: 6px;
-  box-shadow: 0 0 40px rgb(255 0 127 / 0.18);
-  opacity: calc(1 - var(--burst, 0) * 0.35);
-}
-.cabin-reflection {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(115deg, transparent 0 30%, rgb(255 255 255 / 0.07) 38%, transparent 46%, transparent 60%, rgb(255 255 255 / 0.04) 66%, transparent 72%),
-    radial-gradient(80% 60% at 30% 110%, rgb(255 218 36 / 0.08), transparent 70%);
-  opacity: calc(0.8 + var(--burst, 0) * 0.2);
-}
-.cabin-blind {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 7%;
-  background: linear-gradient(180deg, #3b3e45, #2b2d33 70%, rgb(0 0 0 / 0.6));
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.5);
-}
-.cabin-shade {
-  /* the left third (card side) and top/bottom fall into shadow, keeping focus on the window */
-  background:
-    linear-gradient(90deg, rgb(7 11 20 / 0.55) 0%, rgb(7 11 20 / 0) 34%),
-    linear-gradient(180deg, rgb(7 11 20 / 0.5) 0%, transparent 22%, transparent 72%, rgb(7 11 20 / 0.7) 100%);
-}
-@media (max-width: 767px) {
-  .cabin-window {
-    padding: 10px;
-    left: calc((var(--pitch) - var(--win)) / 2 - 10px);
-    top: calc(var(--wy) - var(--win-h) / 2 - 10px);
-    width: calc(var(--win) + 20px);
-    height: calc(var(--win-h) + 20px);
-    border-radius: 30px;
-  }
-  .cabin-glass {
-    border-radius: 20px;
-  }
-  .cabin-city {
-    filter: blur(calc(1px + var(--burst, 0) * 1.5px));
-  }
-  .cabin-shade {
-    background: linear-gradient(180deg, rgb(7 11 20 / 0.6) 0%, transparent 30%, transparent 70%, rgb(7 11 20 / 0.75) 100%);
-  }
-}
-
-/* Work: each project's caption cross-fades in as its window arrives. */
+/* Panels that swap in place (menu overlay) ease in. */
 @keyframes work-info-in {
   from {
     opacity: 0;

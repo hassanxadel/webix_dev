@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
-import { BACK_SLOTS, CARD, backPrint, frontPrint, frontRoughness, normaliseUVs, roundedRect } from "./cardArt";
+import { CARD, backPrint, frontPrint, frontRoughness, normaliseUVs, roundedRect } from "./cardArt";
 import { journey, journeyStore } from "@/lib/journey";
-import { beep } from "@/lib/sound";
-import { DEPARTURE } from "@/config/stations";
 
 /**
  * Where the card is and how it behaves this frame. The card rig writes it;
@@ -21,7 +19,7 @@ export const cardState = {
   idle: 1,
   /** 0 = front, 1 = back. */
   flip: 0,
-  /** Held up to the screen: draw over the world (never hidden behind seats or walls). */
+  /** Draw over the background (never hidden behind the space objects). */
   overlay: true,
 };
 
@@ -29,14 +27,6 @@ const MAX_TILT = THREE.MathUtils.degToRad(18);
 const EDGE_PINK = new THREE.Color("#ff007f");
 const EDGE_YELLOW = new THREE.Color("#ffda24");
 
-/** Light strobes on the edge while the train runs (departure 20–85%), stronger with scroll speed. */
-function smoothPassing(p: number, t: number) {
-  const [a] = DEPARTURE.run;
-  const b = DEPARTURE.arrive[1];
-  if (p <= a || p >= b) return 0;
-  const env = Math.sin(((p - a) / (b - a)) * Math.PI);
-  return env * (0.35 + journey.velocity) * Math.max(0, Math.sin(t * 23 + p * 400)) ** 6 * 2.2;
-}
 export const CARD_LAYER = 1;
 const { width: W, height: H, thickness: T, radius: R } = CARD;
 const Z_FRONT = T / 2 + 0.0004;
@@ -106,9 +96,6 @@ export function WebixPass() {
   const flipGroup = useRef<THREE.Group>(null);
   const frontSide = useRef<THREE.Group>(null);
   const backSide = useRef<THREE.Group>(null);
-  const backStamps = useRef<THREE.Mesh[]>([]);
-  const flash = useRef(0);
-  const lastStamps = useRef(0);
   const lastWork = useRef(-1);
   const pulse = useRef(0);
 
@@ -124,7 +111,7 @@ export function WebixPass() {
     });
     body.translate(0, 0, -(T - bevel * 2) / 2);
     const face = normaliseUVs(new THREE.ShapeGeometry(roundedRect(W - 0.004, H - 0.004, R - 0.002), 18), W, H);
-    return { body, face, backStamp: new THREE.CircleGeometry(0.042, 48) };
+    return { body, face };
   }, []);
 
   const mats = useMemo(() => {
@@ -153,8 +140,7 @@ export function WebixPass() {
       emissiveIntensity: 0.4,
       clearcoat: 1,
     });
-    const stamp = new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffda24").multiplyScalar(2.2), toneMapped: false });
-    return { front, back, core, edge, stamp };
+    return { front, back, core, edge };
   }, []);
 
   // The card lives on its own layer: the main camera renders it, the wet floor's
@@ -177,7 +163,7 @@ export function WebixPass() {
   useFrame(({ clock }, dt) => {
     const g = root.current;
     if (!g || !tiltGroup.current || !flipGroup.current) return;
-    const { reducedMotion, stamps, workStep, station } = journeyStore.get();
+    const { reducedMotion, workStep, section } = journeyStore.get();
     const t = clock.elapsedTime;
 
     g.position.copy(cardState.position);
@@ -201,28 +187,13 @@ export function WebixPass() {
     if (frontSide.current) frontSide.current.visible = !showingBack;
     if (backSide.current) backSide.current.visible = showingBack;
 
-    // A new stamp: pop it in, flash the edge, beep.
-    if (stamps > lastStamps.current) {
-      flash.current = 1;
-      beep();
-    }
-    lastStamps.current = stamps;
-    flash.current = Math.max(0, flash.current - dt * 2.2);
     // Each project change in Work: a yellow pulse along the edge.
-    const inWork = station === 1 && journey.progress >= DEPARTURE.end;
+    const inWork = section === 1;
     if (inWork && lastWork.current !== -1 && workStep !== lastWork.current && !reducedMotion) pulse.current = 1;
     lastWork.current = inWork ? workStep : -1;
     pulse.current = Math.max(0, pulse.current - dt * 1.8);
-    // Passing lights during the departure run flicker across the edge.
-    const passing = reducedMotion ? 0 : smoothPassing(journey.progress, t);
     mats.edge.emissive.copy(EDGE_PINK).lerp(EDGE_YELLOW, pulse.current);
-    mats.edge.emissiveIntensity = 0.4 + flash.current * 3.5 + pulse.current * 2.4 + passing;
-    backStamps.current.forEach((m, i) => {
-      if (!m) return;
-      const s = m.scale.x + ((i < stamps ? 1 : 0) - m.scale.x) * (1 - Math.exp(-dt * 9));
-      m.scale.setScalar(Math.max(0.0001, s));
-      m.visible = s > 0.01;
-    });
+    mats.edge.emissiveIntensity = 0.4 + pulse.current * 2.4;
   });
 
   return (
@@ -241,11 +212,6 @@ export function WebixPass() {
           </group>
           <group ref={backSide} rotation={[0, Math.PI, 0]}>
             <mesh geometry={geo.face} material={mats.back} position={[0, 0, Z_FRONT]} renderOrder={21} />
-            {BACK_SLOTS.map(({ u, v }, i) => (
-              <group key={i} position={[(u - 0.5) * W, (v - 0.5) * H, Z_FRONT + 0.0006]}>
-                <mesh ref={(m) => void (backStamps.current[i] = m!)} geometry={geo.backStamp} material={mats.stamp} renderOrder={23} scale={0.0001} />
-              </group>
-            ))}
           </group>
         </group>
       </group>

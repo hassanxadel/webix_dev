@@ -1,61 +1,45 @@
 import { useEffect, useSyncExternalStore } from "react";
 import Lenis from "lenis";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { JOURNEY_VH, PROCESS_STEPS, SERVICE_STEPS, STATIONS, WORK_WINDOW, WORLD_ON, stampsAt, stepAt, type StationId } from "@/config/stations";
+import { PAGE_VH, SECTIONS, WORK_WINDOW, type SectionId } from "@/config/sections";
 import { PROJECTS } from "./webix-data";
 
 /**
  * Journey state, in two layers:
  * - `journey` is mutable and read every frame by the 3D scene (no React renders).
- * - `journeyStore` holds discrete values the HTML reacts to (current station, steps, UI state).
+ * - `journeyStore` holds discrete values the HTML reacts to (current section, work step, UI state).
  */
 export const journey = {
   /** Scroll progress 0..1 of the whole page. */
   progress: 0,
   pointerX: 0,
   pointerY: 0,
-  /** Scroll speed, 0..1 (drives streaks and blur: faster scrolling = faster train). */
-  velocity: 0,
 };
 
 export type Tier = "high" | "low";
 
 type JourneyState = {
-  station: number;
-  /** Station whose copy is currently on screen, or −1 between stations. */
+  section: number;
+  /** Section whose panel is currently on screen, or −1 between sections. */
   showing: number;
-  serviceStep: number;
   workStep: number;
-  processStep: number;
-  stamps: number;
-  /** The 3D world is on (from the About blackout onward); before that only the card renders. */
-  world: boolean;
-  hoverProject: number | null;
   openProject: number | null;
   reducedMotion: boolean;
   tier: Tier;
   sceneReady: boolean;
   /** 0..1, reported by the 3D chunk while its assets load. */
   loadProgress: number;
-  sound: boolean;
 };
 
 let state: JourneyState = {
-  station: 0,
+  section: 0,
   showing: 0,
-  serviceStep: -1,
   workStep: 0,
-  processStep: -1,
-  stamps: 0,
-  world: false,
-  hoverProject: null,
   openProject: null,
   reducedMotion: false,
   tier: "high",
   sceneReady: false,
   loadProgress: 0,
-  sound: false,
 };
 
 const listeners = new Set<() => void>();
@@ -81,27 +65,19 @@ export function useJourney<T>(selector: (s: JourneyState) => T): T {
   );
 }
 
-/** Height of the scrollable journey in pixels (progress 0..1 maps onto it). */
-const journeyPx = () => (window.innerHeight * JOURNEY_VH) / 100;
+/** Height of the scrollable page in pixels (progress 0..1 maps onto it). */
+const journeyPx = () => (window.innerHeight * PAGE_VH) / 100;
 
 function derive(p: number): Partial<JourneyState> {
-  let station = 0;
-  STATIONS.forEach((s, i) => {
-    if (p >= s.range[0]) station = i;
+  let section = 0;
+  SECTIONS.forEach((s, i) => {
+    if (p >= s.range[0]) section = i;
   });
-  const showing = STATIONS.findIndex((s) => p >= s.content[0] && p <= s.content[1]);
+  const showing = SECTIONS.findIndex((s) => p >= s.content[0] && p <= s.content[1]);
   const [w0, w1] = WORK_WINDOW;
-  // Nearest window (matches the snap points).
+  // Nearest project (matches the snap points).
   const workStep = Math.min(PROJECTS.length - 1, Math.max(0, Math.round(((p - w0) / (w1 - w0)) * (PROJECTS.length - 1))));
-  return {
-    station,
-    showing,
-    serviceStep: stepAt(SERVICE_STEPS, p),
-    workStep,
-    processStep: stepAt(PROCESS_STEPS, p),
-    stamps: stampsAt(p),
-    world: p >= WORLD_ON,
-  };
+  return { section, showing, workStep };
 }
 
 let lenis: Lenis | null = null;
@@ -116,10 +92,7 @@ export function useJourneyTracker() {
     // Lenis eases wheel input into the long, cinematic scroll; reduced motion keeps native scrolling.
     if (!reduced) lenis = new Lenis({ lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9 });
 
-    // One scroll system: Lenis, driven by GSAP's ticker, with ScrollTrigger kept in sync (for velocity).
-    gsap.registerPlugin(ScrollTrigger);
-    lenis?.on("scroll", ScrollTrigger.update);
-    const tracker = ScrollTrigger.create({ start: 0, end: "max" });
+    // One scroll system: Lenis, driven by GSAP's ticker (the same ticker every per-frame DOM writer uses).
     gsap.ticker.lagSmoothing(0);
     let lastScroll = performance.now();
     let snapping = false;
@@ -128,9 +101,8 @@ export function useJourneyTracker() {
       const p = Math.min(1, Math.max(0, window.scrollY / Math.max(1, journeyPx())));
       if (p !== journey.progress) lastScroll = performance.now();
       journey.progress = p;
-      journey.velocity = Math.min(1, Math.abs(tracker.getVelocity()) / 4000);
       journeyStore.set(derive(p));
-      // Work: once the visitor stops, settle on the nearest window.
+      // Work: once the visitor stops, settle on the nearest project.
       const [w0, w1] = WORK_WINDOW;
       if (lenis && !snapping && performance.now() - lastScroll > 140 && p > w0 - 0.004 && p < w1 + 0.004) {
         const n = PROJECTS.length - 1;
@@ -152,7 +124,6 @@ export function useJourneyTracker() {
     motion.addEventListener("change", onMotion);
     return () => {
       gsap.ticker.remove(tick);
-      tracker.kill();
       lenis?.destroy();
       lenis = null;
       window.removeEventListener("pointermove", onPointer);
@@ -161,7 +132,7 @@ export function useJourneyTracker() {
   }, []);
 }
 
-/** Travel to a point on the line — the camera, train and card follow the scroll. */
+/** Scroll to a point on the page — the card follows the scroll. */
 export function travelTo(progress: number) {
   const y = progress * journeyPx();
   const distance = Math.abs(window.scrollY - y) / window.innerHeight;
@@ -172,4 +143,4 @@ export function travelTo(progress: number) {
   }
 }
 
-export const travelToStation = (id: StationId) => travelTo(STATIONS.find((s) => s.id === id)!.anchor);
+export const travelToSection = (id: SectionId) => travelTo(SECTIONS.find((s) => s.id === id)!.anchor);

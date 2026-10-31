@@ -1,11 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useJourney } from "@/lib/journey";
-import { BackgroundLayer } from "./BackgroundLayer";
 
 // Three.js and the world load as a separate chunk, after the HTML hero is on screen.
 const Experience = lazy(() => import("@/components/three/Experience"));
 
-/** Fixed full-screen 3D backdrop, with a painted fallback when WebGL is unavailable. */
+/** Fixed full-screen space backdrop: the CSS sky (instant, and the no-WebGL fallback) under the one canvas. */
 export function SceneLayer() {
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const ready = useJourney((s) => s.sceneReady);
@@ -25,9 +24,7 @@ export function SceneLayer() {
 
   return (
     <div className="fixed inset-0 z-0" aria-hidden>
-      <div className={`scene-fallback pointer-events-none absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-0" : "opacity-100"}`} />
-      {/* Plate, departure run and cabin windows sit under the (transparent) canvas, so the 3D card floats over them. */}
-      <BackgroundLayer />
+      <div className="space-sky pointer-events-none absolute inset-0" />
       {webgl && (
         <div className={`absolute inset-0 transition-opacity duration-1000 ${ready ? "opacity-100" : "opacity-0"}`}>
           <Suspense fallback={null}>

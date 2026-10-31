@@ -1,11 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SceneLayer } from "@/components/site/SceneLayer";
-import { Navbar } from "@/components/site/Navbar";
-import { LineMap } from "@/components/site/LineMap";
-import { StationSign } from "@/components/site/StationSign";
-import { Hud } from "@/components/site/Hud";
+import { Menu } from "@/components/site/Menu";
 import { Loader } from "@/components/site/Loader";
-import { Stations } from "@/components/site/Stations";
+import { Sections } from "@/components/site/Sections";
 import { CaseStudyDialog } from "@/components/site/CaseStudyDialog";
 import { useJourneyTracker } from "@/lib/journey";
 
@@ -35,12 +32,9 @@ function Page() {
         Skip to projects
       </a>
       <SceneLayer />
-      <Navbar />
-      <StationSign />
-      <LineMap />
-      <Hud />
+      <Menu />
       <main className="relative z-10">
-        <Stations />
+        <Sections />
       </main>
       <CaseStudyDialog />
       <Loader />
