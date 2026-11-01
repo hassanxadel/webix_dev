@@ -17,8 +17,8 @@ const P = (nx: number, ny: number, d: number, scale: number, rx = 0, ry = 0, rz 
 const POSES = {
   // Hero: centre, floating above the Earth's limb. Work: small in the top-right corner, out of the showcase's way.
   // After Work: left third on desktop (angled toward the panels), top on phones.
-  wide: { hero: P(0, 0.08, 2.6, 1.12), work: P(0.8, 0.7, 2.6, 0.4, 0.05, -0.35, 0, 0.5, 0.6), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8) },
-  tall: { hero: P(0, 0.1, 2.6, 0.8), work: P(0.62, 0.8, 2.6, 0.3, 0.05, -0.3, 0, 0.5, 0.6), side: P(0, 0.7, 2.4, 0.42, 0.04, 0.3, 0, 0.55, 0.8) },
+  wide: { hero: P(0, -0.1, 2.6, 0.82), work: P(0.8, 0.7, 2.6, 0.4, 0.05, -0.35, 0, 0.5, 0.6), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8) },
+  tall: { hero: P(0, -0.04, 2.6, 0.69), work: P(0.62, 0.8, 2.6, 0.3, 0.05, -0.3, 0, 0.5, 0.6), side: P(0, 0.7, 2.4, 0.42, 0.04, 0.3, 0, 0.55, 0.8) },
 };
 
 /** Camera framing: looking slightly up, so the Earth's limb fills the lower ~35–40% of the frame. */

@@ -23,10 +23,12 @@ the Moon to the right, Hubble drifting far above, NASA's real star sky behind wi
 - `src/components/three/` — WebGL (lazy chunk):
   - `Experience.tsx` — the one Canvas: SunLights, SunDisc (god-rays source), SunGlare, Stars, StarMap, Earth, Moon, Hubble, HDRI env
     (card reflections only), card, CameraRig, Effects.
-  - `Stars.tsx` — `StarMap` (NASA Deep Star Map on an inverted sphere, lifted onto navy) + `Stars` (one Points layer: core + halo,
-    spikes on the brightest 3%, 0.05→1 twinkle, scintillation, 3 parallax shells).
-  - `Space.tsx` — Earth (day/night/city lights/ocean specular shader, cloud shell, scattering atmosphere shell), Moon, Hubble (glb),
-    SunLights, SunDisc, SunGlare, screen anchoring. `textures.ts` — `useProgressiveTexture` (2K first, 4K swapped in later).
+  - `Stars.tsx` — `StarMap` (NASA Deep Star Map on navy + noise nebula wisps, faint pink nebula top-right, golden glow at the sunrise,
+    3 small galaxies) + `Stars` (one Points layer: 0.4–0.9 s twinkle per star, halo grows with brightness, 2% sparkles, spikes on the
+    brightest 3%, 5% pink / 8% warm tints) + `ShootingStar` (every 6–12 s).
+  - `Space.tsx` — Earth (backlit: night cap + thin day crescent, exposure `EARTH_EXPOSURE`, cloud shell, thin atmosphere rim with a
+    gold/pink sunrise edge), Moon (LRO colour + normal map, ~50 s ellipse drift), Hubble (glb re-materialised as PBR, ~40 s pass,
+    2-axis tumble), SunLights, SunDisc, SunGlare, `useAnchor` (screen anchoring + depth-scaled cursor parallax). `textures.ts` — `useProgressiveTexture` (2K first, 4K swapped in later).
   - `Effects.tsx` — NaN guard, god rays, bloom, edge-only chromatic aberration, ACES, vignette, grain (`lite` drops rays/aberration).
   - `WebixPass.tsx` — the card (+ `WInlay` from SVG) and `cardState`. `cardArt.ts` — card dims and printed front/back textures.
   - `CameraRig.tsx` — camera framing + idle drift + mouse parallax; the card's single writer (screen-anchored poses, maath damping).
@@ -49,9 +51,9 @@ the Moon to the right, Hubble drifting far above, NASA's real star sky behind wi
 ## Sections (progress 0→1 of page scroll; details in `src/config/sections.ts`)
 | id | Content | Layout |
 |----|---------|--------|
-| hero | nothing but chrome | Card centre above the Earth limb · W top-left · Menu top-right · scroll hint bottom-left · wordmark bottom-right |
+| hero | h1 "We launch brands into orbit." + one subline | Headline top centre · card slightly below centre (~29% width desktop, ~60% phone) · W top-left · Menu top-right · scroll hint bottom-left · wordmark bottom-right |
 | work | 6 projects (image, n/6, type, line, tags, View project → case study, live link) | Panels slide in/out per project, snap; reduced motion = vertical list |
-| about | "Your ideas. Our playground." (h1) + "We build digital journeys." + vision copy + Get Started / Explore our work | Glass panel |
+| about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work | Glass panel |
 | services | 4 services | Glass panel |
 | process | Discover → Design → Build → Launch | Glass panel |
 | results | Derived stats; testimonials = dev-only placeholder | Glass panel |
@@ -60,15 +62,15 @@ During Work the card shrinks into the top-right corner (~35%); from About on it 
 
 ## Decisions already made (do not revisit)
 - Theme: photoreal space from real imagery (NASA Blue/Black Marble, CGI Moon Kit, Deep Star Maps, 3D Resources). No procedural stand-ins, clay objects or cartoon sprites. The train theme is gone; don't bring back stations, signage, HUD or Japanese labels.
-- Lighting: the Earth is lit from the sunrise point behind its left limb (day crescent + night side with city lights); the near objects (Moon, Hubble, card) share a key from the left (`SUN_DIR`) plus blue Earth-shine from below.
-- Reduced motion (incl. Windows "Animation effects: Off", which the owner's PC has) keeps a slower twinkle and a smaller card float; never fully static.
+- Lighting: the Earth is backlit by the sunrise behind its left limb (`EARTH_SUN`, 112° from the sub-camera point): mostly night with city lights, a thin day crescent, a thin crisp rim. Never a bright slab: Earth exposure ~0.7, bloom threshold ≥ 0.85. The near objects (Moon, Hubble, card) share a key from the left (`SUN_DIR`) plus blue Earth-shine from below.
+- Reduced motion (incl. Windows "Animation effects: Off", which the owner's PC has) slows ambient motion to ×0.3 (twinkle, shooting star, Moon, Hubble) and shrinks the card float; never fully static.
 - One fixed canvas for the whole site; the card never unmounts. The sky is drawn in the canvas (opaque) with a CSS copy underneath as the instant / no-WebGL fallback.
 - The card's look is final: geometry, materials, traced-W enamel inlay, pink edge, cursor tilt. Float: ±0.06 over ~5 s. It keeps the HDRI env map (plus a blue Lightformer below for the Earth-glow reflection; env never shown as background) and the scene's sun key + Earth-shine. The old pink/yellow CardLights are gone.
 - One card, one writer: CameraRig computes the target pose as a pure function of progress and damps `cardState.position/quaternion/scale` with maath. Tilt is a separate offset (18° hero, ~10° elsewhere via `cardState.tilt`).
 - The Moon uses envMapIntensity 0 and Hubble 0.5, so the city HDRI (there for the card) doesn't tint them.
 - One scroll system: Lenis on gsap.ticker; per-frame DOM writes via gsap.ticker, no layout reads, no React state per frame.
 - The W is the **traced logo SVG** `public/brand/webix-w.svg`. Never redraw it. The wordmark is the logo image, never set in a font.
-- Hero has no copy: card, W, wordmark, Menu, scroll hint only.
+- Hero copy is only the headline + one muted subline (it is the page h1). Nothing else: card, W, wordmark, Menu, scroll hint.
 - Zero budget: free/OSS libraries, Google Fonts, CC0 assets only. No invented testimonials or stats.
 - Card draws over everything via a depth-clear mesh (renderOrder 19); card on layer 1.
 - No `anisotropy` on card materials (NaN artefacts).

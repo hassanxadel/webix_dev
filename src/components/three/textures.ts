@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { useLoader } from "@react-three/fiber";
+import { useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
+/** "color" maps are sRGB; "data" maps (normal, specular, clouds, displacement) stay linear. */
 export type TexKind = "color" | "data";
 
-function prepare(t: THREE.Texture, kind: TexKind) {
+function prepare(t: THREE.Texture, kind: TexKind, anisotropy: number) {
   t.colorSpace = kind === "color" ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-  t.anisotropy = 8; // clamped to the GPU's maximum by three
+  t.anisotropy = anisotropy;
   return t;
 }
 
@@ -16,7 +17,9 @@ function prepare(t: THREE.Texture, kind: TexKind) {
  * texture to use right now; it changes once, when the large one arrives.
  */
 export function useProgressiveTexture(low: string, high: string | null, kind: TexKind = "color") {
-  const base = prepare(useLoader(THREE.TextureLoader, low), kind);
+  // Full anisotropic filtering: the Earth and Moon are seen at grazing angles.
+  const aniso = useThree((s) => s.gl.capabilities.getMaxAnisotropy());
+  const base = prepare(useLoader(THREE.TextureLoader, low), kind, aniso);
   const [tex, setTex] = useState<THREE.Texture>(base);
 
   useEffect(() => {
@@ -27,7 +30,7 @@ export function useProgressiveTexture(low: string, high: string | null, kind: Te
       new THREE.TextureLoader()
         .loadAsync(high)
         .then((t) => {
-          loaded = prepare(t, kind);
+          loaded = prepare(t, kind, aniso);
           if (alive) setTex(loaded);
           else loaded.dispose();
         })
@@ -38,7 +41,7 @@ export function useProgressiveTexture(low: string, high: string | null, kind: Te
       window.clearTimeout(id);
       loaded?.dispose();
     };
-  }, [high, kind]);
+  }, [high, kind, aniso]);
 
   return tex;
 }

@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { journeyStore } from "@/lib/journey";
+import { journey, journeyStore } from "@/lib/journey";
 import { useProgressiveTexture } from "./textures";
 
 const deg = THREE.MathUtils.degToRad;
@@ -17,8 +17,21 @@ const EARTH_R = 100;
 const EARTH_POS = dir(-22, -64).multiplyScalar(116);
 /** The sun is rising just behind the limb near the left edge. */
 const GLARE_POS = dir(-30, -4.2).multiplyScalar(400);
-/** Sunlight on the Earth comes from that sunrise: a day crescent along the left limb, night (city lights) toward us. */
-const EARTH_SUN = GLARE_POS.clone().sub(EARTH_POS).normalize();
+/**
+ * Sunlight on the Earth comes from that sunrise, from behind: 112 degrees away
+ * from the point under the camera, so the visible cap is night (city lights)
+ * with only a thin day crescent along the limb on the sunrise side.
+ */
+const EARTH_SUN = (() => {
+  const c = EARTH_POS.clone().negate().normalize();
+  const g = GLARE_POS.clone().sub(EARTH_POS).normalize();
+  const u = g.sub(c.clone().multiplyScalar(g.dot(c))).normalize();
+  return c.multiplyScalar(Math.cos(deg(112))).addScaledVector(u, Math.sin(deg(112))).normalize();
+})();
+/** Exposure for the Earth only (city lights still reach bloom). */
+const EARTH_EXPOSURE = 0.7;
+/** Where the sunrise is, seen from the camera (sky tint). */
+export const GLARE_DIR = GLARE_POS.clone().normalize();
 /**
  * The same sun as a key light for the near objects (Moon, Hubble, card):
  * from the left, slightly toward the viewer, so their faces catch it.
@@ -54,20 +67,21 @@ export function Earth({ low }: { low: boolean }) {
 
   const mats = useMemo(() => {
     const sun = { value: EARTH_SUN };
-    const glare = { value: EARTH_SUN };
+    const glare = { value: GLARE_POS.clone().sub(EARTH_POS).normalize() };
+    const exposure = { value: EARTH_EXPOSURE };
     const centre = { value: EARTH_POS };
     return {
       surface: new THREE.ShaderMaterial({
-        uniforms: { uDay: { value: null }, uNight: { value: null }, uSpec: { value: null }, uSun: sun, uAtmo: { value: new THREE.Color("#3f7dff") } },
+        uniforms: { uDay: { value: null }, uNight: { value: null }, uSpec: { value: null }, uSun: sun, uExposure: exposure, uAtmo: { value: new THREE.Color("#3f7dff") } },
         vertexShader: earthVertex,
         fragmentShader: /* glsl */ `
-          uniform sampler2D uDay, uNight, uSpec; uniform vec3 uSun, uAtmo;
+          uniform sampler2D uDay, uNight, uSpec; uniform vec3 uSun, uAtmo; uniform float uExposure;
           varying vec2 vUv; varying vec3 vN; varying vec3 vW;
           void main() {
             vec3 N = normalize(vN);
             vec3 V = normalize(cameraPosition - vW);
             float l = dot(N, uSun);
-            float dayMix = smoothstep(-0.16, 0.22, l);
+            float dayMix = smoothstep(-0.06, 0.2, l);
             vec3 day = texture2D(uDay, vUv).rgb;
             vec3 lit = day * (0.02 + 1.05 * max(l, 0.0));
             vec3 nightTex = texture2D(uNight, vUv).rgb;
@@ -75,22 +89,25 @@ export function Earth({ low }: { low: boolean }) {
             vec3 lights = vec3(1.0, 0.74, 0.4) * city * 2.4 * (1.0 - dayMix);
             vec3 H = normalize(uSun + V);
             float spec = pow(max(dot(N, H), 0.0), 80.0) * texture2D(uSpec, vUv).r * smoothstep(0.0, 0.35, l) * 1.8;
-            float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-            vec3 c = mix(day * 0.012, lit, dayMix) + lights + vec3(1.0, 0.95, 0.86) * spec;
-            c += uAtmo * fres * (0.1 + 1.1 * smoothstep(-0.25, 0.45, l));
+            // The camera skims the Earth, so most of the cap is seen at a grazing angle:
+            // keep the haze to a thin band right at the limb, not the whole surface.
+            float fres = pow(1.0 - max(dot(N, V), 0.0), 8.0);
+            vec3 c = mix(day * 0.008, lit, dayMix) + vec3(1.0, 0.95, 0.86) * spec;
+            c += uAtmo * fres * (0.04 + 0.5 * smoothstep(-0.15, 0.45, l));
+            c = c * uExposure + lights;
             gl_FragColor = vec4(c, 1.0);
             #include <colorspace_fragment>
           }`,
       }),
       clouds: new THREE.ShaderMaterial({
-        uniforms: { uClouds: { value: null }, uSun: sun },
+        uniforms: { uClouds: { value: null }, uSun: sun, uExposure: exposure },
         vertexShader: earthVertex,
         fragmentShader: /* glsl */ `
-          uniform sampler2D uClouds; uniform vec3 uSun; varying vec2 vUv; varying vec3 vN;
+          uniform sampler2D uClouds; uniform vec3 uSun; uniform float uExposure; varying vec2 vUv; varying vec3 vN;
           void main() {
             float l = dot(normalize(vN), uSun);
-            float a = texture2D(uClouds, vUv).r * mix(0.12, 0.9, smoothstep(-0.2, 0.25, l));
-            gl_FragColor = vec4(vec3(0.02 + 0.95 * max(l, 0.0)), a);
+            float a = texture2D(uClouds, vUv).r * mix(0.06, 0.85, smoothstep(-0.1, 0.25, l));
+            gl_FragColor = vec4(vec3(0.01 + 0.9 * max(l, 0.0)) * uExposure, a);
             #include <colorspace_fragment>
           }`,
         transparent: true,
@@ -98,7 +115,15 @@ export function Earth({ low }: { low: boolean }) {
       }),
       // Scattering shell: glows just outside the limb, fades outward; strongest toward the sunrise.
       atmosphere: new THREE.ShaderMaterial({
-        uniforms: { uSun: sun, uGlare: glare, uCentre: centre, uDeep: { value: new THREE.Color("#2f6bff") }, uBright: { value: new THREE.Color("#d6e8ff") } },
+        uniforms: {
+          uSun: sun,
+          uGlare: glare,
+          uCentre: centre,
+          uDeep: { value: new THREE.Color("#2f6bff") },
+          uBright: { value: new THREE.Color("#d6e8ff") },
+          uGold: { value: new THREE.Color("#ffd27a") },
+          uPink: { value: new THREE.Color("#ff007f") },
+        },
         vertexShader: /* glsl */ `
           varying vec3 vNv; varying vec3 vW;
           void main() {
@@ -107,13 +132,18 @@ export function Earth({ low }: { low: boolean }) {
             gl_Position = projectionMatrix * viewMatrix * w;
           }`,
         fragmentShader: /* glsl */ `
-          uniform vec3 uSun, uGlare, uCentre, uDeep, uBright; varying vec3 vNv; varying vec3 vW;
+          uniform vec3 uSun, uGlare, uCentre, uDeep, uBright, uGold, uPink; varying vec3 vNv; varying vec3 vW;
           void main() {
             vec3 n = normalize(vW - uCentre);
             float edge = smoothstep(0.0, -0.19, vNv.z);            // 1 at the limb → 0 at the shell's edge
-            float lit = 0.25 + 0.75 * smoothstep(-0.4, 0.5, dot(n, uSun));
+            float lit = 0.2 + 0.8 * smoothstep(-0.2, 0.5, dot(n, uSun));
             float sunrise = pow(max(dot(n, uGlare), 0.0), 24.0);
-            vec3 c = mix(uDeep, uBright, pow(edge, 6.0)) * pow(edge, 2.2) * lit * 1.6 + uBright * sunrise * pow(edge, 3.0) * 3.0;
+            // Thin and crisp: a tight bright line at the limb over a fast-fading blue glow.
+            float line = pow(edge, 10.0);
+            vec3 glow = mix(uDeep, uBright, line) * (pow(edge, 3.0) * 0.55 + line * 0.5) * lit;
+            // Where it meets the sunrise the rim turns gold, with a faint pink fringe on its outer edge.
+            vec3 rise = mix(uBright, uGold, 0.55) * line + uPink * pow(edge, 2.0) * (1.0 - line) * 0.25;
+            vec3 c = glow + rise * sunrise * 1.4;
             gl_FragColor = vec4(c, 1.0);
             #include <colorspace_fragment>
           }`,
@@ -161,51 +191,101 @@ export function Earth({ low }: { low: boolean }) {
 
 /* ───────── screen anchoring (relative to the base framing, so parallax still shows) ───────── */
 
-function useAnchor(nx: number, ny: number, d: number) {
+/**
+ * Places a point at screen coords (nx, ny ∈ −1..1) at distance d, in the base
+ * framing (so the camera's own sway still parallaxes it), plus a cursor
+ * parallax that is stronger for nearer objects.
+ */
+function useAnchor(d: number) {
   const { camera, size } = useThree();
   const out = useRef(new THREE.Vector3());
-  return () => {
+  const par = useRef(new THREE.Vector2());
+  return (nx: number, ny: number, dt: number) => {
+    const k = 1 - Math.exp(-dt * 1.5);
+    par.current.x += (-journey.pointerX - par.current.x) * k;
+    par.current.y += (journey.pointerY - par.current.y) * k;
+    const depth = 20 / d;
     const halfH = Math.tan(deg((camera as THREE.PerspectiveCamera).fov / 2));
     const halfW = halfH * (size.width / size.height);
-    // Direction in the base camera frame, then pitched up by BASE_PITCH.
-    return out.current.set(nx * halfW, ny * halfH, -1).normalize().applyAxisAngle(new THREE.Vector3(1, 0, 0), BASE_PITCH).multiplyScalar(d);
+    const x = nx + par.current.x * 0.02 * depth;
+    const y = ny + par.current.y * 0.015 * depth;
+    return out.current.set(x * halfW, y * halfH, -1).normalize().applyAxisAngle(AXIS_X, BASE_PITCH).multiplyScalar(d);
   };
 }
+const AXIS_X = new THREE.Vector3(1, 0, 0);
+/** Ambient motion clock: reduced motion slows it (×0.3), never stops it. */
+const motionStep = (dt: number) => dt * (journeyStore.get().reducedMotion ? 0.3 : 1);
 
 /* ───────── Moon ───────── */
 
-/** NASA SVS CGI Moon Kit (LRO colour + elevation as bump), right side, lit by the shared sun. */
+/**
+ * NASA SVS CGI Moon Kit: LRO colour with a normal map built from its
+ * elevation data, so craters show relief along the terminator. Lit by the
+ * shared sun key. Drifts on a small ellipse (~50 s), bobs gently and turns
+ * slowly, always to the right of the card and below the headline.
+ */
 export function Moon({ low }: { low: boolean }) {
   const map = useProgressiveTexture("/space/moon-2k.webp", null);
-  const bump = useProgressiveTexture("/space/moon-bump-1k.webp", null, "data");
+  const normal = useProgressiveTexture("/space/moon-normal-2k.webp", null, "data");
   const mesh = useRef<THREE.Mesh>(null);
-  const place = useAnchor(low ? 0.55 : 0.72, low ? 0.42 : -0.12, 60);
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, bumpScale: 2.2, envMapIntensity: 0 }), []);
+  const t = useRef(0);
+  const place = useAnchor(60);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, normalScale: new THREE.Vector2(1, 1) }), []);
   useEffect(() => {
     mat.map = map;
-    mat.bumpMap = bump;
+    mat.normalMap = normal;
     mat.needsUpdate = true;
-  }, [map, bump, mat]);
+  }, [map, normal, mat]);
   useFrame((_, dt) => {
     const m = mesh.current;
     if (!m) return;
-    m.position.copy(place());
-    if (!journeyStore.get().reducedMotion) m.rotation.y += (dt * Math.PI * 2) / 1200;
+    const s = motionStep(dt);
+    t.current += s;
+    const a = (t.current * Math.PI * 2) / 50;
+    // Phones: below-right of the card, clear of the headline.
+    const [cx, cy] = low ? [0.55, -0.42] : [0.72, -0.1];
+    m.position.copy(place(cx + Math.cos(a) * 0.035, cy + Math.sin(a) * 0.028 + Math.sin(t.current * 0.7) * 0.012, dt));
+    m.rotation.y += (s * Math.PI * 2) / 240;
   });
   return (
     <mesh ref={mesh} material={mat} rotation={[0.1, 2.4, 0]}>
-      <sphereGeometry args={[low ? 4.5 : 6.8, 96, 64]} />
+      <sphereGeometry args={[low ? 4.5 : 6.8, 128, 96]} />
     </mesh>
   );
 }
 
 /* ───────── Hubble ───────── */
 
-/** NASA 3D Resources Hubble (public domain), small and distant, drifting and turning very slowly. */
+/** Average colour of a texture's image (8×8), or null when it can't be read. */
+function averageColor(tex: THREE.Texture | null) {
+  const img = tex?.image as CanvasImageSource | undefined;
+  if (!img) return null;
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 8;
+    const g = c.getContext("2d")!;
+    g.drawImage(img, 0, 0, 8, 8);
+    const d = g.getImageData(0, 0, 8, 8).data;
+    let r = 0, gr = 0, b = 0;
+    for (let i = 0; i < d.length; i += 4) [r, gr, b] = [r + d[i], gr + d[i + 1], b + d[i + 2]];
+    return { r, g: gr, b };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * NASA 3D Resources Hubble (public domain). Re-materialised as proper PBR:
+ * the body is foil-wrapped metal; blue-dominant parts (the solar panels) are
+ * dark blue glass with a slight specular, so they catch the sun as it turns.
+ * Crosses the upper area on a ~40 s pass, reversing smoothly at each end,
+ * tumbling slowly on two axes.
+ */
 export function Hubble() {
   const { scene } = useGLTF("/space/hubble.glb", false);
   const group = useRef<THREE.Group>(null);
-  const place = useAnchor(-0.52, 0.6, 34);
+  const t = useRef(0);
+  const place = useAnchor(34);
   const model = useMemo(() => {
     const m = scene.clone(true);
     const box = new THREE.Box3().setFromObject(m);
@@ -213,21 +293,29 @@ export function Hubble() {
     m.position.copy(box.getCenter(new THREE.Vector3()).multiplyScalar(-s));
     m.scale.setScalar(s);
     m.traverse((o) => {
-      const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
-      if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.5;
+      const mesh = o as THREE.Mesh;
+      const src = mesh.material as THREE.MeshStandardMaterial | undefined;
+      if (!mesh.isMesh || !src || !("metalness" in src)) return;
+      const mat = src.clone();
+      const avg = averageColor(mat.map);
+      const panel = avg !== null && avg.b > avg.r * 1.15 && avg.b >= avg.g;
+      mat.metalness = panel ? 0.35 : 0.85;
+      mat.roughness = panel ? 0.28 : 0.38;
+      mat.envMapIntensity = panel ? 0.4 : 0.6;
+      if (panel) mat.color.set("#2a3f8f");
+      mesh.material = mat;
     });
     return m;
   }, [scene]);
-  useFrame(({ clock }, dt) => {
+  useFrame((_, dt) => {
     const g = group.current;
     if (!g) return;
-    const reduced = journeyStore.get().reducedMotion;
-    const t = reduced ? 0 : clock.elapsedTime;
-    g.position.copy(place()).add(new THREE.Vector3(Math.sin(t * 0.02) * 1.2, Math.sin(t * 0.015) * 0.5, 0));
-    if (!reduced) {
-      g.rotation.y += (dt * Math.PI * 2) / 160;
-      g.rotation.z = Math.sin(t * 0.05) * 0.15;
-    }
+    const s = motionStep(dt);
+    t.current += s;
+    const a = (t.current * Math.PI * 2) / 80; // one way ≈ 40 s
+    g.position.copy(place(-0.25 + Math.sin(a) * 0.6, 0.36 + Math.cos(a) * 0.05 + Math.sin(t.current * 0.4) * 0.012, dt));
+    g.rotation.x += (s * Math.PI * 2) / 90;
+    g.rotation.y += (s * Math.PI * 2) / 60;
   });
   return (
     <group ref={group} rotation={[0.3, 0.8, 0.2]}>
@@ -265,20 +353,21 @@ export function SunGlare() {
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        uniforms: { uCore: { value: new THREE.Color("#ffffff") }, uHalo: { value: new THREE.Color("#7fb4ff") } },
+        uniforms: { uCore: { value: new THREE.Color("#fff6e4") }, uHalo: { value: new THREE.Color("#9cc1ff") }, uGold: { value: new THREE.Color("#ffda24") } },
         vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: /* glsl */ `
-          uniform vec3 uCore, uHalo; varying vec2 vUv;
+          uniform vec3 uCore, uHalo, uGold; varying vec2 vUv;
           void main() {
             vec2 p = (vUv - 0.5) * 2.0;
             float r = length(p);
-            float core = exp(-r * r * 900.0) * 9.0 + exp(-r * r * 90.0) * 1.2;
-            float halo = exp(-r * 9.0) * 0.55;
+            float core = exp(-r * r * 900.0) * 9.0 + exp(-r * r * 90.0) * 1.0;
+            float halo = exp(-r * 16.0) * 0.32;
+            float warm = exp(-r * 7.0) * 0.07; // faint golden glow (5-8%) around the sunrise
             // Flare along the limb (tilted with it) and a fainter cross streak.
             vec2 q = mat2(0.985, 0.17, -0.17, 0.985) * p;
             float streak = exp(-abs(q.y) * 220.0) * exp(-abs(q.x) * 2.6) * 2.2;
             float cross = exp(-abs(q.x) * 160.0) * exp(-abs(q.y) * 7.0) * 0.35;
-            vec3 c = uCore * (core + streak) + uHalo * (halo + cross);
+            vec3 c = uCore * (core + streak) + uHalo * (halo + cross) + uGold * warm;
             gl_FragColor = vec4(c, 1.0);
             #include <colorspace_fragment>
           }`,
@@ -292,7 +381,7 @@ export function SunGlare() {
   useFrame(({ camera }) => mesh.current?.quaternion.copy(camera.quaternion));
   return (
     <mesh ref={mesh} position={GLARE_POS} material={mat} renderOrder={15}>
-      <planeGeometry args={[260, 260]} />
+      <planeGeometry args={[180, 180]} />
     </mesh>
   );
 }

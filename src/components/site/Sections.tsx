@@ -1,7 +1,7 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
 import { ArrowRight, ArrowUpRight, Instagram, Mail, MessageCircle } from "lucide-react";
-import { PAGE_VH, SECTIONS, WORK_WINDOW, sectionIndex, type SectionId } from "@/config/sections";
+import { HERO_GLIDE, PAGE_VH, SECTIONS, WORK_WINDOW, sectionIndex, type SectionId } from "@/config/sections";
 import { WORK } from "@/config/projects";
 import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
@@ -54,10 +54,47 @@ function Label({ id }: { id: SectionId }) {
   return <p className="hud text-sun">{SECTIONS[sectionIndex(id)].label}</p>;
 }
 
-/* ───────── Hero: only the card (centre), the W, the wordmark and the menu (see Menu.tsx) ───────── */
+/* ───────── Hero: the headline (top centre) over the card; W, Menu, wordmark and hint live in Menu.tsx ───────── */
 
 function Hero() {
-  return <section id="hero" aria-label="Webix" className="relative" style={{ height: heightOf("hero") }} />;
+  const ready = useJourney((s) => s.sceneReady);
+  const [shown, setShown] = useState(false);
+  const fade = useRef<HTMLDivElement>(null);
+
+  // Arrives with the scene (or after the loader's own timeout, so it never waits on WebGL).
+  useEffect(() => {
+    if (ready) setShown(true);
+    const t = window.setTimeout(() => setShown(true), 2600);
+    return () => window.clearTimeout(t);
+  }, [ready]);
+
+  // Leaves on scroll with the rest of the hero chrome.
+  useEffect(() => {
+    const tick = () => {
+      const el = fade.current;
+      if (!el) return;
+      const k = Math.min(1, Math.max(0, (journey.progress - HERO_GLIDE[0] * 0.6) / (HERO_GLIDE[0] * 0.8)));
+      el.style.opacity = String(1 - k);
+      el.style.transform = `translate3d(0, ${-k * 24}px, 0)`;
+      el.style.visibility = k >= 1 ? "hidden" : "visible";
+    };
+    gsap.ticker.add(tick);
+    return () => gsap.ticker.remove(tick);
+  }, []);
+
+  return (
+    <section id="hero" aria-labelledby="hero-title" className="relative" style={{ height: heightOf("hero") }}>
+      {/* Below the W and the Menu at every width (they end at ~60 px / ~76 px). */}
+      <div ref={fade} className="pointer-events-none fixed inset-x-0 top-[84px] z-30 px-5 sm:top-[92px] sm:px-8">
+        <div className="hero-headline mx-auto max-w-4xl text-center" data-in={shown}>
+          <h1 id="hero-title" className="font-heading text-[clamp(2.5rem,5.2vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.02em] text-paper [text-wrap:balance]">
+            We launch brands into <span className="hero-orbit">orbit.</span>
+          </h1>
+          <p className="mt-3 text-sm text-paper/60 sm:text-base">Websites, stores and 3D experiences by Webix.</p>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 /* ───────── Work: one floating panel per project, sliding in as the last slides out ───────── */
@@ -174,13 +211,13 @@ function About() {
     <Section id="about">
       <div className="glass w-full max-w-2xl p-6 sm:p-9">
         <Label id="about" />
-        <h1 id="about-title" className="mt-4 text-[2.2rem] leading-[1.05] text-paper sm:text-5xl">
+        <h2 id="about-title" className="mt-4 text-[2.2rem] leading-[1.05] text-paper sm:text-5xl">
           Your ideas. <span className="block text-sun">Our playground.</span>
-        </h1>
-        <p className="mt-3 text-lg font-medium text-paper/85">We build digital journeys.</p>
-        <h2 className="mt-7 text-xl leading-snug text-paper sm:text-2xl">
-          We design and build modern websites, e-commerce stores and <span className="text-sun">3D digital experiences for ambitious brands.</span>
         </h2>
+        <p className="mt-3 text-lg font-medium text-paper/85">We build digital journeys.</p>
+        <p className="mt-7 font-heading text-xl font-semibold leading-snug text-paper sm:text-2xl">
+          We design and build modern websites, e-commerce stores and <span className="text-sun">3D digital experiences for ambitious brands.</span>
+        </p>
         <p className="mt-4 max-w-lg leading-relaxed text-paper/65">
           We combine thoughtful design and modern web technology to help businesses present their brands, reach customers, and grow online.
         </p>

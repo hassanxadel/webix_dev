@@ -3,11 +3,29 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { journey, journeyStore } from "@/lib/journey";
 import { useProgressiveTexture } from "./textures";
+import { GLARE_DIR } from "./Space";
+
+const deg = THREE.MathUtils.degToRad;
+const dir = (az: number, el: number) => new THREE.Vector3(Math.sin(deg(az)) * Math.cos(deg(el)), Math.sin(deg(el)), -Math.cos(deg(az)) * Math.cos(deg(el)));
+/** Ambient clock: reduced motion slows it (×0.3), never stops it. */
+const speed = () => (journeyStore.get().reducedMotion ? 0.3 : 1);
+
+/** Three faint distant galaxies high in the sky: centre direction, long axis, size (radians). */
+const GALAXIES = [
+  { c: dir(-12, 27), axis: new THREE.Vector3(1, 0.35, 0), a: 0.016, b: 0.005 },
+  { c: dir(38, 17), axis: new THREE.Vector3(0.6, 1, 0), a: 0.011, b: 0.004 },
+  { c: dir(-48, 40), axis: new THREE.Vector3(1, -0.5, 0), a: 0.009, b: 0.0045 },
+].map((g) => {
+  const t1 = g.axis.clone().sub(g.c.clone().multiplyScalar(g.axis.dot(g.c))).normalize();
+  return { c: g.c, t1, t2: g.c.clone().cross(t1).normalize(), ab: new THREE.Vector2(g.a, g.b) };
+});
 
 /**
  * NASA SVS Deep Star Maps 2020 (public domain) on a huge inverted sphere:
- * the real Milky Way and thousands of real faint stars, darkened and lifted
- * onto deep navy (#050B1E–#0A1430) so the sky is never pure black.
+ * the real Milky Way and thousands of real faint stars, darkened onto deep
+ * navy (#050B1E–#0A1430), never pure black. Over it, at very low opacity:
+ * noise-shaped nebula wisps (a faint pink one high on the right), a warm
+ * golden glow around the sunrise, and three small distant galaxies.
  */
 export function StarMap({ low }: { low: boolean }) {
   const map = useProgressiveTexture("/space/stars-2k.webp", low ? null : "/space/stars-4k.webp");
@@ -15,24 +33,64 @@ export function StarMap({ low }: { low: boolean }) {
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        uniforms: { uMap: { value: null }, uNavyTop: { value: new THREE.Color("#0a1430") }, uNavyLow: { value: new THREE.Color("#050b1e") } },
+        defines: { OCTAVES: low ? 3 : 5 },
+        uniforms: {
+          uMap: { value: null },
+          uNavyTop: { value: new THREE.Color("#0a1430") },
+          uNavyLow: { value: new THREE.Color("#050b1e") },
+          uPink: { value: new THREE.Color("#ff007f") },
+          uGold: { value: new THREE.Color("#ffda24") },
+          uBlue: { value: new THREE.Color("#4a6cff") },
+          uPinkDir: { value: dir(34, 30) },
+          uSunDir: { value: GLARE_DIR },
+          uGalC: { value: GALAXIES.map((g) => g.c) },
+          uGalT1: { value: GALAXIES.map((g) => g.t1) },
+          uGalT2: { value: GALAXIES.map((g) => g.t2) },
+          uGalAB: { value: GALAXIES.map((g) => g.ab) },
+        },
         vertexShader: /* glsl */ `
-          varying vec2 vUv; varying float vY;
-          void main() { vUv = uv; vY = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-        fragmentShader: /* glsl */ `
-          uniform sampler2D uMap; uniform vec3 uNavyTop, uNavyLow; varying vec2 vUv; varying float vY;
+          varying vec2 vUv; varying vec3 vDir;
           void main() {
+            vUv = uv;
+            vDir = normalize((modelMatrix * vec4(position, 1.0)).xyz);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }`,
+        fragmentShader: /* glsl */ `
+          uniform sampler2D uMap;
+          uniform vec3 uNavyTop, uNavyLow, uPink, uGold, uBlue, uPinkDir, uSunDir;
+          uniform vec3 uGalC[3]; uniform vec3 uGalT1[3]; uniform vec3 uGalT2[3]; uniform vec2 uGalAB[3];
+          varying vec2 vUv; varying vec3 vDir;
+          float hash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+          float noise(vec3 p) {
+            vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+            return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+                       mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+          }
+          float fbm(vec3 p) { float s = 0.0, a = 0.5; for (int i = 0; i < OCTAVES; i++) { s += a * noise(p); p *= 2.07; a *= 0.5; } return s; }
+          void main() {
+            vec3 d = normalize(vDir);
+            vec3 navy = mix(uNavyLow, uNavyTop, smoothstep(-0.2, 0.6, d.y));
             vec3 sky = texture2D(uMap, vUv).rgb;
-            vec3 navy = mix(uNavyLow, uNavyTop, smoothstep(-0.2, 0.6, vY));
-            // Darken the map's grey floor, keep its stars and Milky Way.
             vec3 c = navy + max(sky - 0.012, 0.0) * 0.85;
+            // Nebula wisps: a faint pink one high on the right (6–10%), cold blue ones elsewhere (~3%).
+            float wisp = smoothstep(0.42, 0.85, fbm(d * 3.2 + vec3(4.0, 1.0, 7.0)));
+            float pinkZone = smoothstep(0.75, 0.15, distance(d, uPinkDir));
+            c += uPink * wisp * pinkZone * 0.09 + uBlue * wisp * (1.0 - pinkZone) * smoothstep(0.0, 0.4, d.y) * 0.03;
+            // The sun reads slightly golden: a warm glow around the sunrise (5–8%).
+            c += uGold * pow(max(dot(d, uSunDir), 0.0), 14.0) * 0.07;
+            // Distant galaxies: soft elliptical smudges with a brighter core.
+            for (int i = 0; i < 3; i++) {
+              vec3 q = d - uGalC[i];
+              float e = pow(dot(q, uGalT1[i]) / uGalAB[i].x, 2.0) + pow(dot(q, uGalT2[i]) / uGalAB[i].y, 2.0);
+              c += vec3(0.92, 0.88, 1.0) * (exp(-e) * 0.05 + exp(-e * 9.0) * 0.06);
+            }
             gl_FragColor = vec4(c, 1.0);
             #include <colorspace_fragment>
           }`,
         side: THREE.BackSide,
         depthWrite: false,
       }),
-    [],
+    [low],
   );
   useEffect(() => {
     mat.uniforms.uMap.value = map;
@@ -51,54 +109,60 @@ export function StarMap({ low }: { low: boolean }) {
 }
 
 /**
- * Twinkling stars on top of the map: one THREE.Points, one draw call. Each
- * star is a bright core with a soft Gaussian halo; the brightest ~3% add
- * faint 4-ray diffraction spikes. Small and medium stars swing from full
- * brightness to almost nothing (0.05 → 1) on their own 1–4 s rhythm; bright
- * ones pulse slower and gentler, with a slight white ↔ pale blue ↔ warm
- * scintillation. Three shells give three parallax rates. Reduced motion only
- * slows the twinkle; it never stops.
+ * Twinkling stars over the map: one THREE.Points, one draw call. Each star is
+ * a crisp core in a soft halo; the halo grows and shrinks with brightness.
+ * Fast shimmer: every star has its own 0.4–0.9 s cycle and phase (never in
+ * sync), swinging small and medium stars from 1.0 to ~0.05; bright stars
+ * pulse slower. ~2% sparkle now and then (brighter, ×1.5 size); the brightest
+ * ~3% carry faint diffraction spikes. Tints: ~5% pink, ~8% warm yellow, the
+ * rest white with a slight white / pale blue / warm scintillation.
  */
 const vertex = /* glsl */ `
   attribute float aSize;
-  attribute float aMag;   // 0 faint … 1 brightest
-  attribute vec4 aTw;     // phase, angular speed, spikes flag, layer 0..1
+  attribute float aMag;    // 0 faint … 1 brightest
+  attribute vec4 aTw;      // phase, angular speed, layer 0..1, seed
+  attribute vec2 aFlags;   // spikes, sparkle
+  attribute vec3 aTint;
   uniform float uTime;
-  uniform float uSlow;
   uniform vec2 uShift;
   uniform float uDpr;
   varying float vBright;
+  varying float vScale;
   varying vec3 vColor;
   varying float vSpikes;
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    mv.xy += uShift * (0.3 + aTw.w) * -mv.z;
+    mv.xy += uShift * (0.3 + aTw.z) * -mv.z;
     gl_Position = projectionMatrix * mv;
-    float speed = aTw.y * mix(1.0, 0.45, aMag) * uSlow;
-    float s = 0.62 * sin(uTime * speed + aTw.x) + 0.38 * sin(uTime * speed * 2.37 + aTw.x * 3.1);
+    float w = aTw.y * mix(1.0, 0.5, aMag);                    // bright stars pulse slower
+    float s = 0.65 * sin(uTime * w + aTw.x) + 0.35 * sin(uTime * w * 2.37 + aTw.x * 3.1);
     float tw = clamp(0.5 + 0.5 * s, 0.0, 1.0);
-    float floorB = mix(0.05, 0.55, aMag);           // small stars nearly vanish, bright ones only breathe
-    vBright = mix(floorB, 1.0, tw * tw) * (0.35 + 0.65 * aMag) * 1.6;
-    float hue = sin(uTime * speed * 0.6 + aTw.x * 2.0);
-    vColor = mix(vec3(1.0), hue > 0.0 ? vec3(0.72, 0.84, 1.0) : vec3(1.0, 0.9, 0.72), abs(hue) * 0.45);
-    vSpikes = aTw.z;
-    gl_PointSize = aSize * uDpr;
+    float b = mix(mix(0.05, 0.45, aMag), 1.0, tw * tw);
+    // Sparkle: in random 3 s slots, a chosen star flares for about a second.
+    float slot = floor(uTime / 3.0 + aTw.w * 7.0);
+    float lucky = step(0.6, fract(sin(slot * 12.9898 + aTw.w * 78.233) * 43758.5453)) * aFlags.y;
+    float flare = lucky * sin(clamp(fract(uTime / 3.0 + aTw.w * 7.0) * 3.0, 0.0, 1.0) * 3.14159);
+    vBright = b * (0.35 + 0.65 * aMag) * 1.7 * (1.0 + 0.9 * flare);
+    vScale = (0.55 + 0.45 * b) * (1.0 + 0.5 * flare);          // the halo breathes with brightness
+    float hue = sin(uTime * w * 0.6 + aTw.x * 2.0);
+    vec3 scint = hue > 0.0 ? vec3(0.75, 0.86, 1.0) : vec3(1.0, 0.9, 0.74);
+    vColor = mix(aTint, aTint * scint, abs(hue) * 0.45);
+    vSpikes = aFlags.x;
+    gl_PointSize = aSize * vScale * uDpr;
   }
 `;
 const fragment = /* glsl */ `
   varying float vBright;
+  varying float vScale;
   varying vec3 vColor;
   varying float vSpikes;
   void main() {
     vec2 d = gl_PointCoord - 0.5;
     float r = length(d) * 2.0;
-    float core = exp(-r * r * 60.0);
+    float core = exp(-r * r * 60.0 * vScale * vScale);         // the core keeps its pixel size
     float halo = exp(-r * r * 7.0) * 0.35;
     float a = core + halo;
-    if (vSpikes > 0.5) {
-      float spikes = (exp(-abs(d.x) * 90.0) + exp(-abs(d.y) * 90.0)) * smoothstep(1.0, 0.0, r);
-      a += spikes * 0.35;
-    }
+    if (vSpikes > 0.5) a += (exp(-abs(d.x) * 90.0) + exp(-abs(d.y) * 90.0)) * smoothstep(1.0, 0.0, r) * 0.35;
     if (a < 0.003) discard;
     gl_FragColor = vec4(vColor * vBright * a, 1.0);
     #include <colorspace_fragment>
@@ -112,6 +176,11 @@ function build(count: number) {
   const size = new Float32Array(count);
   const mag = new Float32Array(count);
   const tw = new Float32Array(count * 4);
+  const flags = new Float32Array(count * 2);
+  const tint = new Float32Array(count * 3);
+  const pink = new THREE.Color("#ffa3d1");
+  const warm = new THREE.Color("#ffe39a");
+  const white = new THREE.Color("#ffffff");
   const mags = Array.from({ length: count }, () => Math.pow(rnd(), 5));
   const spikeCut = [...mags].sort((a, b) => b - a)[Math.floor(count * 0.03)];
   const radii = [300, 340, 380];
@@ -124,15 +193,20 @@ function build(count: number) {
     const m = mags[i];
     mag[i] = m;
     const spikes = m > spikeCut ? 1 : 0;
-    size[i] = spikes ? 26 + m * 18 : 5 + m * 16;
-    const period = 1 + rnd() * 3; // 1–4 s
-    tw.set([rnd() * Math.PI * 2, (Math.PI * 2) / period, spikes, 1 - layer / 2], i * 4);
+    size[i] = spikes ? 28 + m * 18 : 6 + m * 18;
+    const period = 0.4 + rnd() * 0.5; // 0.4–0.9 s, per star
+    tw.set([rnd() * Math.PI * 2, (Math.PI * 2) / period, 1 - layer / 2, rnd()], i * 4);
+    flags.set([spikes, rnd() < 0.02 ? 1 : 0], i * 2);
+    const c = rnd();
+    tint.set((c < 0.05 ? pink : c < 0.13 ? warm : white).toArray(), i * 3);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   g.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
   g.setAttribute("aMag", new THREE.BufferAttribute(mag, 1));
   g.setAttribute("aTw", new THREE.BufferAttribute(tw, 4));
+  g.setAttribute("aFlags", new THREE.BufferAttribute(flags, 2));
+  g.setAttribute("aTint", new THREE.BufferAttribute(tint, 3));
   return g;
 }
 
@@ -144,7 +218,7 @@ export function Stars({ low }: { low: boolean }) {
       new THREE.ShaderMaterial({
         vertexShader: vertex,
         fragmentShader: fragment,
-        uniforms: { uTime: { value: 0 }, uSlow: { value: 1 }, uShift: { value: new THREE.Vector2() }, uDpr: { value: 1 } },
+        uniforms: { uTime: { value: 0 }, uShift: { value: new THREE.Vector2() }, uDpr: { value: 1 } },
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
@@ -153,14 +227,71 @@ export function Stars({ low }: { low: boolean }) {
   );
   useEffect(() => () => geo.dispose(), [geo]);
 
-  useFrame(({ clock, viewport }) => {
+  useFrame(({ viewport }, dt) => {
     const u = mat.uniforms;
-    u.uTime.value = clock.elapsedTime;
-    // Reduced motion (incl. Windows "Animation effects: Off"): slower, never frozen.
-    u.uSlow.value = journeyStore.get().reducedMotion ? 0.4 : 1;
+    u.uTime.value += dt * speed();
     u.uShift.value.set(journey.pointerX * -0.002, journey.pointerY * 0.0014 + journey.progress * 0.01);
     u.uDpr.value = viewport.dpr;
   });
 
   return <points geometry={geo} material={mat} frustumCulled={false} renderOrder={-10} />;
+}
+
+/** A rare, thin shooting star (every ~6–12 s), fast and subtle, behind the Earth and Moon. */
+export function ShootingStar() {
+  const mesh = useRef<THREE.Mesh>(null);
+  const mat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: { uA: { value: new THREE.Vector2() }, uB: { value: new THREE.Vector2() }, uFade: { value: 0 } },
+        vertexShader: /* glsl */ `
+          uniform vec2 uA; uniform vec2 uB; varying float vT;
+          void main() {
+            vT = position.x; // 0 tail → 1 head
+            vec2 dirv = normalize(uB - uA);
+            vec2 n = vec2(-dirv.y, dirv.x) * 0.0016 * vT;
+            gl_Position = vec4(mix(uA, uB, vT) + n * position.y, 0.9999, 1.0); // at the far plane: the Earth and Moon hide it
+          }`,
+        fragmentShader: /* glsl */ `
+          uniform float uFade; varying float vT;
+          void main() { gl_FragColor = vec4(vec3(1.0, 0.97, 0.92) * vT * vT * uFade, 1.0); }`,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [],
+  );
+  const geo = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array([0, -1, 0, 0, 1, 0, 1, -1, 0, 1, 1, 0]), 3));
+    g.setIndex([0, 2, 1, 1, 2, 3]);
+    return g;
+  }, []);
+  const st = useRef({ clock: 0, next: 4, t: -1, from: new THREE.Vector2(), step: new THREE.Vector2() });
+
+  useFrame((_, dt) => {
+    const m = mesh.current;
+    if (!m) return;
+    const s = st.current;
+    s.clock += dt * speed();
+    if (s.t < 0) {
+      m.visible = false;
+      if (s.clock < s.next) return;
+      s.t = 0;
+      s.from.set(Math.random() * 1.6 - 0.6, 0.45 + Math.random() * 0.45);
+      s.step.set(-(0.9 + Math.random() * 0.4), -(0.25 + Math.random() * 0.2));
+    }
+    s.t += (dt * speed()) / 0.55; // fast: ~0.55 s across
+    const head = Math.min(1, s.t);
+    mat.uniforms.uB.value.copy(s.from).addScaledVector(s.step, head);
+    mat.uniforms.uA.value.copy(s.from).addScaledVector(s.step, Math.max(0, head - 0.18));
+    mat.uniforms.uFade.value = Math.sin(head * Math.PI) * 0.7;
+    m.visible = true;
+    if (s.t >= 1) {
+      s.t = -1;
+      s.next = s.clock + 6 + Math.random() * 6;
+    }
+  });
+
+  return <mesh ref={mesh} geometry={geo} material={mat} frustumCulled={false} renderOrder={-9} />;
 }

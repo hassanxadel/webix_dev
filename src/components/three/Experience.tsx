@@ -4,7 +4,7 @@ import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei"
 import * as THREE from "three";
 import { WebixPass } from "./WebixPass";
 import { CameraRig } from "./CameraRig";
-import { StarMap, Stars } from "./Stars";
+import { ShootingStar, StarMap, Stars } from "./Stars";
 import { Earth, Hubble, Moon, SunDisc, SunGlare, SunLights } from "./Space";
 import { Effects } from "./Effects";
 import { journeyStore, useJourney } from "@/lib/journey";
@@ -82,6 +82,7 @@ export default function Experience() {
       <SunDisc ref={setSun} />
       <SunGlare />
       <Stars low={low} />
+      <ShootingStar />
       <Suspense fallback={null}>
         <StarMap low={low} />
         <Earth low={low} />

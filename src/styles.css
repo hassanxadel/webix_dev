@@ -278,3 +278,22 @@
 .work-info-in {
   animation: work-info-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+
+/* Hero headline: arrives once the scene is up (the page's single load moment); scroll fades it out. */
+.hero-headline {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition:
+    opacity 0.9s ease,
+    transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hero-headline[data-in="true"] {
+  opacity: 1;
+  transform: none;
+}
+.hero-orbit {
+  color: var(--color-sun, #ffda24);
+  text-shadow:
+    0 0 18px rgb(255 218 36 / 0.35),
+    0 0 2px rgb(255 218 36 / 0.3);
+}

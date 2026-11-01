@@ -1,6 +1,7 @@
 # Status
 
 ## Current state
+- Hero polish (2026-11-01): Earth backlit (night + city lights, thin crescent, thin rim), exposure 0.7, bloom threshold 0.88; fast twinkle + sparkles + shooting star; nebula/galaxies with faint pink and gold; Moon normal map + drift; Hubble PBR + path; card ~29% width; headline "We launch brands into orbit."
 - Hero rebuilt photoreal (2026-11-01): Earth limb at sunrise (NASA Blue/Black Marble, clouds, ocean specular, atmosphere), NASA Moon, Hubble glb, NASA Deep Star Map + 1500 twinkling stars, god rays/bloom/ACES/edge aberration. Moon terrain, Neptune, fog and dust removed.
 - Order: Hero → Work → About → Services → Process → Results → Contact. W top-left + Menu top-right on every section.
 - Train/station theme fully removed (world, plates, signs, line map, HUD, sound, JP labels, post-processing).
@@ -8,7 +9,7 @@
 - Archive branch `archive/synthwave-lens` holds the earlier synthwave/lens version.
 
 ## Next up
-- User reviews the Earth hero (desktop, phone, Animation effects on/off). One headless screenshot was compared to the reference before the last lighting fixes; those fixes are not visually re-checked.
+- User reviews the polished hero (desktop, phone, Animation effects on/off). None of the polish pass has been visually checked (code only, by request).
 - User reviews the hero in the browser; then push.
 - ThreeUI Work showcase: **blocked** — the bundle lacks `src/shaders/landing-pages/pageTypography.ts` and `pageRecipes.ts` (imported by both components; not public; ThreeUI MCP needs login). Needs the user to supply them (e.g. `docs/vendor/threeui/`). Downloaded bundle hashes: LandingPages.tsx, LandingPageFrame.tsx, threeui.css match; the served HTML (55 KB, media on Supabase) differs from the listed 3.5 MB embedded-media file.
 
@@ -22,6 +23,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-01 · hero · polish: dark Earth, fast twinkle, nebula + pink/gold, Moon/Hubble motion, smaller card, headline · (this commit)
 - 2026-11-01 · hero · photoreal Earth limb + Moon + Hubble + NASA star map, twinkle layer, god rays; card float ±0.06/5 s · (this commit)
 - 2026-10-31 · hero · realistic moon/planet/stars, twinkle fix (reduced motion no longer freezes it), W/Menu/wordmark/hint moved · (this commit)
 - 2026-10-31 · all · space redesign: sky + stars + clay objects, Menu/W/wordmark hero, glass panels, train theme removed · (this commit)
