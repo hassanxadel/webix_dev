@@ -32,8 +32,9 @@ export function Effects({ sun, lite }: { sun: THREE.Mesh | null; lite: boolean }
   return (
     <EffectComposer multisampling={lite ? 0 : 4}>
       <primitive object={guard} />
-      {!lite && sun ? <GodRays sun={sun} samples={60} density={0.96} decay={0.93} weight={0.3} exposure={0.38} clampMax={1} kernelSize={KernelSize.SMALL} blur /> : <></>}
-      <Bloom mipmapBlur={!lite} luminanceThreshold={0.88} luminanceSmoothing={0.12} intensity={lite ? 0.4 : 0.6} radius={0.7} />
+      {/* Short, faint rays: they fan out over the Earth, so anything stronger reads as a white haze. */}
+      {!lite && sun ? <GodRays sun={sun} samples={60} density={0.96} decay={0.9} weight={0.16} exposure={0.3} clampMax={1} kernelSize={KernelSize.SMALL} blur /> : <></>}
+      <Bloom mipmapBlur={!lite} luminanceThreshold={0.9} luminanceSmoothing={0.1} intensity={lite ? 0.4 : 0.6} radius={0.7} />
       {!lite ? <primitive object={aberration} /> : <></>}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <Vignette offset={0.3} darkness={0.65} />

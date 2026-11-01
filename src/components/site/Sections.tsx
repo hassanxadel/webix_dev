@@ -56,6 +56,15 @@ function Label({ id }: { id: SectionId }) {
 
 /* ───────── Hero: the headline (top centre) over the card; W, Menu, wordmark and hint live in Menu.tsx ───────── */
 
+/** A word lettered like the Webix logo (`.logo-type` in styles.css); `ix` gives it the logo's yellow "ix" colours. */
+function LogoWord({ w, ix }: { w: string; ix?: boolean }) {
+  return (
+    <span className={ix ? "logo-type logo-type-ix" : "logo-type"} data-text={w}>
+      {w}
+    </span>
+  );
+}
+
 function Hero() {
   const ready = useJourney((s) => s.sceneReady);
   const [shown, setShown] = useState(false);
@@ -84,13 +93,17 @@ function Hero() {
 
   return (
     <section id="hero" aria-labelledby="hero-title" className="relative" style={{ height: heightOf("hero") }}>
-      {/* Below the W and the Menu at every width (they end at ~60 px / ~76 px). */}
-      <div ref={fade} className="pointer-events-none fixed inset-x-0 top-[84px] z-30 px-5 sm:top-[92px] sm:px-8">
-        <div className="hero-headline mx-auto max-w-4xl text-center" data-in={shown}>
-          <h1 id="hero-title" className="font-heading text-[clamp(2.5rem,5.2vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.02em] text-paper [text-wrap:balance]">
-            We launch brands into <span className="hero-orbit">orbit.</span>
+      {/* ~16% from the top: clearly below the W and the Menu at every width (they end at ~60 px / ~76 px). */}
+      <div ref={fade} className="pointer-events-none fixed inset-x-0 top-[clamp(92px,16vh,180px)] z-30 px-5 sm:px-8">
+        <div className="hero-headline mx-auto max-w-5xl text-center" data-in={shown}>
+          <h1 id="hero-title" className="hero-title">
+            <LogoWord w="we" />{" "}
+            <LogoWord w="launch" />{" "}
+            <LogoWord w="brands" />{" "}
+            <LogoWord w="into" />{" "}
+            <LogoWord w="orbit." ix />
           </h1>
-          <p className="mt-3 text-sm text-paper/60 sm:text-base">Websites, stores and 3D experiences by Webix.</p>
+          <p className="mt-4 text-sm text-paper/65 sm:mt-5 sm:text-base">Websites, stores and 3D experiences by Webix.</p>
         </div>
       </div>
     </section>
