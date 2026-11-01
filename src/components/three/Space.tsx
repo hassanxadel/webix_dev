@@ -1,335 +1,300 @@
-import { useEffect, useMemo, useRef } from "react";
-import { useFrame, useLoader } from "@react-three/fiber";
+import { forwardRef, useEffect, useMemo, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { journeyStore } from "@/lib/journey";
+import { useProgressiveTexture } from "./textures";
 
-/** Low, grazing sun from the right / back (world position of the light; it points at SUN_TARGET). */
-export const SUN_POS = new THREE.Vector3(70, 10, -110);
-export const SUN_TARGET = new THREE.Vector3(0, -3, -30);
-const SUN_DIR = SUN_POS.clone().sub(SUN_TARGET).normalize();
-/** Sky colour at the horizon; the fog uses it too, so the terrain fades into the sky. */
-export const HORIZON = "#122042";
-const GROUND_Y = -3;
+const deg = THREE.MathUtils.degToRad;
 
-/* ───────── noise (value noise + fBm), used once at build time ───────── */
+/** World direction for an azimuth (− left, + right) and elevation (degrees); the camera looks down −z. */
+const dir = (az: number, el: number) => new THREE.Vector3(Math.sin(deg(az)) * Math.cos(deg(el)), Math.sin(deg(el)), -Math.cos(deg(az)) * Math.cos(deg(el)));
 
-function hash(x: number, y: number) {
-  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
-  return s - Math.floor(s);
-}
-function noise(x: number, y: number) {
-  const xi = Math.floor(x), yi = Math.floor(y);
-  const xf = x - xi, yf = y - yi;
-  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
-  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-}
-function fbm(x: number, y: number, oct = 5) {
-  let f = 0, amp = 0.5, fr = 1;
-  for (let i = 0; i < oct; i++) {
-    f += amp * noise(x * fr, y * fr);
-    fr *= 2.03;
-    amp *= 0.5;
-  }
-  return f;
-}
+/** Camera framing: looking 3° up, so the Earth's limb fills the lower ~35–40% of the frame. */
+export const BASE_PITCH = deg(3);
+/** Earth: radius 100, centre below-left, so its limb runs from mid-left down to the lower right, under the card. */
+const EARTH_R = 100;
+const EARTH_POS = dir(-22, -64).multiplyScalar(116);
+/** The sun is rising just behind the limb near the left edge. */
+const GLARE_POS = dir(-30, -4.2).multiplyScalar(400);
+/** Sunlight on the Earth comes from that sunrise: a day crescent along the left limb, night (city lights) toward us. */
+const EARTH_SUN = GLARE_POS.clone().sub(EARTH_POS).normalize();
+/**
+ * The same sun as a key light for the near objects (Moon, Hubble, card):
+ * from the left, slightly toward the viewer, so their faces catch it.
+ */
+export const SUN_DIR = new THREE.Vector3(-0.9, 0.2, 0.4).normalize();
 
-/* ───────── sky ───────── */
+/* ───────── Earth ───────── */
+
+const earthVertex = /* glsl */ `
+  varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+  void main() {
+    vUv = uv;
+    vN = normalize(mat3(modelMatrix) * normal);
+    vec4 w = modelMatrix * vec4(position, 1.0);
+    vW = w.xyz;
+    gl_Position = projectionMatrix * viewMatrix * w;
+  }`;
 
 /**
- * Dark blue sky dome (never black): #0A1430 overhead to #122042 at the
- * horizon, a faint atmospheric glow band just above it, and a very faint
- * blue-magenta nebula high in one corner.
+ * NASA Blue Marble (day) / Black Marble (night) Earth: the sun direction
+ * blends day into night across a soft terminator, cities glow warm on the
+ * night side, oceans catch a specular highlight, and a blue scattering haze
+ * thickens toward the limb, brightest on the sunrise side. Very slow spin;
+ * a separate cloud shell turns a little faster and dims at night.
  */
-export function SkyDome() {
-  const mat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: {
-          uTop: { value: new THREE.Color("#0a1430") },
-          uHorizon: { value: new THREE.Color(HORIZON) },
-          uBand: { value: new THREE.Color("#2b3f7a") },
-          uNebula: { value: new THREE.Color("#5a3d9a") },
-        },
-        vertexShader: /* glsl */ `
-          varying vec3 vDir;
-          void main() {
-            vDir = normalize(position);
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }`,
-        fragmentShader: /* glsl */ `
-          uniform vec3 uTop, uHorizon, uBand, uNebula; varying vec3 vDir;
-          void main() {
-            float y = vDir.y;
-            vec3 c = mix(uHorizon, uTop, smoothstep(0.0, 0.55, y));
-            c += uBand * exp(-abs(y - 0.015) * 38.0) * 0.45;
-            float neb = smoothstep(0.55, 0.0, distance(vDir, normalize(vec3(-0.55, 0.62, -0.55))));
-            c += uNebula * neb * neb * 0.07;
-            gl_FragColor = vec4(c, 1.0);
-            #include <colorspace_fragment>
-          }`,
-        side: THREE.BackSide,
-        depthWrite: false,
-        fog: false,
-      }),
-    [],
-  );
-  return (
-    <mesh material={mat} renderOrder={-20} frustumCulled={false}>
-      <sphereGeometry args={[480, 48, 24]} />
-    </mesh>
-  );
-}
+export function Earth({ low }: { low: boolean }) {
+  const day = useProgressiveTexture("/space/earth-day-2k.webp", low ? null : "/space/earth-day-4k.webp");
+  const night = useProgressiveTexture("/space/earth-night-2k.webp", low ? null : "/space/earth-night-4k.webp");
+  const clouds = useProgressiveTexture("/space/earth-clouds-2k.webp", low ? null : "/space/earth-clouds-4k.webp", "data");
+  const spec = useProgressiveTexture("/space/earth-spec-2k.webp", null, "data");
+  const spin = useRef<THREE.Group>(null);
+  const cloudSpin = useRef<THREE.Mesh>(null);
 
-/* ───────── lunar surface ───────── */
-
-/** Tileable fine-detail normal map for the regolith, painted once on a canvas. */
-function regolithNormalMap(size = 256) {
-  const h = (x: number, y: number) => fbm((x / size) * 16, (y / size) * 16, 4) + noise(x * 0.9, y * 0.9) * 0.12;
-  const c = document.createElement("canvas");
-  c.width = c.height = size;
-  const g = c.getContext("2d")!;
-  const img = g.createImageData(size, size);
-  for (let y = 0; y < size; y++)
-    for (let x = 0; x < size; x++) {
-      const dx = (h(x + 1, y) - h(x - 1, y)) * 6;
-      const dy = (h(x, y + 1) - h(x, y - 1)) * 6;
-      const n = new THREE.Vector3(-dx, -dy, 1).normalize();
-      const i = (y * size + x) * 4;
-      img.data.set([(n.x * 0.5 + 0.5) * 255, (n.y * 0.5 + 0.5) * 255, (n.z * 0.5 + 0.5) * 255, 255], i);
-    }
-  g.putImageData(img, 0, 0);
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(40, 40);
-  return t;
-}
-
-/**
- * 200×200 moon surface: fBm hills and soft craters (bowl + raised rim),
- * displaced once at build time so shadows and normals come for free. Grey
- * regolith (#5E636D–#8A8F99), rough, not shiny; the grazing sun throws long
- * shadows across it and the exponential fog fades it into the horizon.
- */
-export function Terrain({ low }: { low: boolean }) {
-  const geo = useMemo(() => {
-    const seg = low ? 140 : 256;
-    const g = new THREE.PlaneGeometry(200, 200, seg, seg);
-    g.rotateX(-Math.PI / 2);
-    g.translate(0, 0, -90);
-    let seed = 42;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-    const craters = Array.from({ length: 18 }, () => ({ x: (rnd() - 0.5) * 120, z: -8 - rnd() * 150, r: 2.5 + rnd() * rnd() * 14, d: 0.4 + rnd() * 0.5 }));
-    const pos = g.attributes.position as THREE.BufferAttribute;
-    const col = new Float32Array(pos.count * 3);
-    const dark = new THREE.Color("#5e636d"), light = new THREE.Color("#8a8f99"), tmp = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), z = pos.getZ(i);
-      // Calm right under the card, rolling further out.
-      const reach = THREE.MathUtils.smoothstep(Math.hypot(x, z + 6), 4, 30);
-      let y = (fbm(x * 0.025, z * 0.025) - 0.5) * 5 * (0.35 + 0.65 * reach) + (fbm(x * 0.12, z * 0.12, 3) - 0.5) * 0.6;
-      for (const c of craters) {
-        const d = Math.hypot(x - c.x, z - c.z) / c.r;
-        if (d < 1) y -= c.r * 0.22 * c.d * (1 - d * d);
-        y += c.r * 0.07 * c.d * Math.exp(-((d - 1) * (d - 1)) / 0.06);
-      }
-      pos.setY(i, GROUND_Y + y);
-      tmp.copy(dark).lerp(light, THREE.MathUtils.clamp(fbm(x * 0.06 + 9, z * 0.06, 3) * 1.3 - 0.15, 0, 1));
-      col.set([tmp.r, tmp.g, tmp.b], i * 3);
-    }
-    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    g.computeVertexNormals();
-    return g;
-  }, [low]);
-
-  const mat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        vertexColors: true,
-        roughness: 0.95,
-        metalness: 0,
-        normalMap: regolithNormalMap(),
-        normalScale: new THREE.Vector2(0.7, 0.7),
-        // The city HDRI is there for the card; keep it off the moon.
-        envMapIntensity: 0.08,
-      }),
-    [],
-  );
-  useEffect(() => () => mat.normalMap?.dispose(), [mat]);
-
-  return <mesh geometry={geo} material={mat} receiveShadow castShadow />;
-}
-
-/** Warm grazing sun (casts the long crater shadows) and a cool blue fill from the left. Both also light the card. */
-export function SunLights({ low }: { low: boolean }) {
-  const sun = useRef<THREE.DirectionalLight>(null);
-  useEffect(() => {
-    const l = sun.current;
-    if (!l) return;
-    l.target.position.copy(SUN_TARGET);
-    l.target.updateMatrixWorld();
-    const cam = l.shadow.camera;
-    cam.left = -45;
-    cam.right = 45;
-    cam.top = 45;
-    cam.bottom = -45;
-    cam.near = 1;
-    cam.far = 260;
-    cam.updateProjectionMatrix();
-  }, []);
-  return (
-    <>
-      <directionalLight
-        ref={sun}
-        position={SUN_POS}
-        color="#ffe6c4"
-        intensity={2.6}
-        castShadow
-        shadow-mapSize={[low ? 1024 : 2048, low ? 1024 : 2048]}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.06}
-        shadow-radius={4}
-      />
-      <directionalLight position={[-40, 14, 22]} color="#7f9cff" intensity={0.45} />
-    </>
-  );
-}
-
-/* ───────── planet on the horizon ───────── */
-
-/**
- * Neptune (Solar System Scope, CC BY 4.0), tinted toward brand blue, lit
- * from the sun direction with a clear day/night terminator, behind a thin
- * Fresnel atmosphere (blue core, faint pink edge). Very slow rotation.
- */
-export function Planet({ low }: { low: boolean }) {
-  const map = useLoader(THREE.TextureLoader, low ? "/space/neptune-1k.webp" : "/space/neptune-2k.webp");
-  map.colorSpace = THREE.SRGBColorSpace;
-  const body = useRef<THREE.Mesh>(null);
   const mats = useMemo(() => {
-    const sun = { value: SUN_DIR };
+    const sun = { value: EARTH_SUN };
+    const glare = { value: EARTH_SUN };
+    const centre = { value: EARTH_POS };
     return {
       surface: new THREE.ShaderMaterial({
-        uniforms: { uMap: { value: map }, uSun: sun, uTint: { value: new THREE.Color("#7f9cff") }, uHaze: { value: new THREE.Color(HORIZON) } },
-        vertexShader: /* glsl */ `
-          varying vec2 vUv; varying vec3 vN; varying float vY;
-          void main() {
-            vUv = uv; vN = normalize(mat3(modelMatrix) * normal);
-            vec4 w = modelMatrix * vec4(position, 1.0); vY = w.y;
-            gl_Position = projectionMatrix * viewMatrix * w;
-          }`,
+        uniforms: { uDay: { value: null }, uNight: { value: null }, uSpec: { value: null }, uSun: sun, uAtmo: { value: new THREE.Color("#3f7dff") } },
+        vertexShader: earthVertex,
         fragmentShader: /* glsl */ `
-          uniform sampler2D uMap; uniform vec3 uSun, uTint, uHaze; varying vec2 vUv; varying vec3 vN; varying float vY;
+          uniform sampler2D uDay, uNight, uSpec; uniform vec3 uSun, uAtmo;
+          varying vec2 vUv; varying vec3 vN; varying vec3 vW;
           void main() {
-            vec3 tex = texture2D(uMap, vUv).rgb * mix(vec3(1.0), uTint, 0.35);
-            float l = dot(normalize(vN), uSun);
-            float day = smoothstep(-0.08, 0.35, l);
-            vec3 c = tex * (0.015 + 1.15 * day);
-            // Low on the horizon the planet sits in the moon's haze.
-            c = mix(c, uHaze, smoothstep(30.0, -20.0, vY) * 0.55);
+            vec3 N = normalize(vN);
+            vec3 V = normalize(cameraPosition - vW);
+            float l = dot(N, uSun);
+            float dayMix = smoothstep(-0.16, 0.22, l);
+            vec3 day = texture2D(uDay, vUv).rgb;
+            vec3 lit = day * (0.02 + 1.05 * max(l, 0.0));
+            vec3 nightTex = texture2D(uNight, vUv).rgb;
+            float city = smoothstep(0.16, 0.7, dot(nightTex, vec3(0.299, 0.587, 0.114)));
+            vec3 lights = vec3(1.0, 0.74, 0.4) * city * 2.4 * (1.0 - dayMix);
+            vec3 H = normalize(uSun + V);
+            float spec = pow(max(dot(N, H), 0.0), 80.0) * texture2D(uSpec, vUv).r * smoothstep(0.0, 0.35, l) * 1.8;
+            float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+            vec3 c = mix(day * 0.012, lit, dayMix) + lights + vec3(1.0, 0.95, 0.86) * spec;
+            c += uAtmo * fres * (0.1 + 1.1 * smoothstep(-0.25, 0.45, l));
             gl_FragColor = vec4(c, 1.0);
             #include <colorspace_fragment>
           }`,
-        fog: false,
       }),
-      atmosphere: new THREE.ShaderMaterial({
-        uniforms: { uSun: sun, uCore: { value: new THREE.Color("#5f86ff") }, uEdge: { value: new THREE.Color("#ff007f") } },
-        vertexShader: /* glsl */ `
-          varying vec3 vN; varying vec3 vV;
-          void main() {
-            vec4 w = modelMatrix * vec4(position, 1.0);
-            vN = normalize(mat3(modelMatrix) * normal); vV = normalize(cameraPosition - w.xyz);
-            gl_Position = projectionMatrix * viewMatrix * w;
-          }`,
+      clouds: new THREE.ShaderMaterial({
+        uniforms: { uClouds: { value: null }, uSun: sun },
+        vertexShader: earthVertex,
         fragmentShader: /* glsl */ `
-          uniform vec3 uSun, uCore, uEdge; varying vec3 vN; varying vec3 vV;
+          uniform sampler2D uClouds; uniform vec3 uSun; varying vec2 vUv; varying vec3 vN;
           void main() {
-            float f = 1.0 - max(dot(normalize(vN), vV), 0.0);
-            float rim = pow(f, 3.0);
-            float lit = 0.15 + 0.85 * smoothstep(-0.35, 0.45, dot(normalize(vN), uSun));
-            vec3 c = mix(uCore, uEdge, smoothstep(0.75, 1.0, f) * 0.35) * rim * lit * 1.4;
-            gl_FragColor = vec4(c, 1.0);
+            float l = dot(normalize(vN), uSun);
+            float a = texture2D(uClouds, vUv).r * mix(0.12, 0.9, smoothstep(-0.2, 0.25, l));
+            gl_FragColor = vec4(vec3(0.02 + 0.95 * max(l, 0.0)), a);
             #include <colorspace_fragment>
           }`,
         transparent: true,
         depthWrite: false,
+      }),
+      // Scattering shell: glows just outside the limb, fades outward; strongest toward the sunrise.
+      atmosphere: new THREE.ShaderMaterial({
+        uniforms: { uSun: sun, uGlare: glare, uCentre: centre, uDeep: { value: new THREE.Color("#2f6bff") }, uBright: { value: new THREE.Color("#d6e8ff") } },
+        vertexShader: /* glsl */ `
+          varying vec3 vNv; varying vec3 vW;
+          void main() {
+            vNv = normalize(normalMatrix * normal);
+            vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
+            gl_Position = projectionMatrix * viewMatrix * w;
+          }`,
+        fragmentShader: /* glsl */ `
+          uniform vec3 uSun, uGlare, uCentre, uDeep, uBright; varying vec3 vNv; varying vec3 vW;
+          void main() {
+            vec3 n = normalize(vW - uCentre);
+            float edge = smoothstep(0.0, -0.19, vNv.z);            // 1 at the limb → 0 at the shell's edge
+            float lit = 0.25 + 0.75 * smoothstep(-0.4, 0.5, dot(n, uSun));
+            float sunrise = pow(max(dot(n, uGlare), 0.0), 24.0);
+            vec3 c = mix(uDeep, uBright, pow(edge, 6.0)) * pow(edge, 2.2) * lit * 1.6 + uBright * sunrise * pow(edge, 3.0) * 3.0;
+            gl_FragColor = vec4(c, 1.0);
+            #include <colorspace_fragment>
+          }`,
+        side: THREE.BackSide,
+        transparent: true,
+        depthWrite: false,
         blending: THREE.AdditiveBlending,
-        fog: false,
       }),
     };
-  }, [map]);
+  }, []);
+
+  useEffect(() => {
+    mats.surface.uniforms.uDay.value = day;
+    mats.surface.uniforms.uNight.value = night;
+    mats.surface.uniforms.uSpec.value = spec;
+    mats.clouds.uniforms.uClouds.value = clouds;
+  }, [day, night, spec, clouds, mats]);
 
   useFrame((_, dt) => {
-    if (body.current && !journeyStore.get().reducedMotion) body.current.rotation.y += (dt * Math.PI * 2) / 900;
+    if (journeyStore.get().reducedMotion) return;
+    if (spin.current) spin.current.rotation.y += (dt * Math.PI * 2) / 3600;
+    if (cloudSpin.current) cloudSpin.current.rotation.y += (dt * Math.PI * 2) / 2400;
   });
 
+  const segs = low ? 128 : 256;
   return (
-    <group position={[-150, -24, -330]} rotation={[0.12, 0, 0.18]}>
-      <mesh ref={body} material={mats.surface}>
-        <sphereGeometry args={[70, 96, 64]} />
-      </mesh>
-      <mesh material={mats.atmosphere} scale={1.045}>
-        <sphereGeometry args={[70, 96, 64]} />
+    <group position={EARTH_POS}>
+      {/* Tilted so the Gulf of Mexico (lat 25°, lon −90°) faces the camera, like the reference. */}
+      <group rotation={[deg(-65), 0, 0]}>
+        <group ref={spin}>
+          <mesh material={mats.surface}>
+            <sphereGeometry args={[EARTH_R, segs, segs / 2]} />
+          </mesh>
+          <mesh ref={cloudSpin} material={mats.clouds} scale={1.006}>
+            <sphereGeometry args={[EARTH_R, segs, segs / 2]} />
+          </mesh>
+        </group>
+      </group>
+      <mesh material={mats.atmosphere} scale={1.018}>
+        <sphereGeometry args={[EARTH_R, segs, segs / 2]} />
       </mesh>
     </group>
   );
 }
 
-/* ───────── floating dust ───────── */
+/* ───────── screen anchoring (relative to the base framing, so parallax still shows) ───────── */
 
-/** ~150 soft motes near the camera, drifting slowly; the nearest are large and out of focus (bokeh). */
-export function Dust({ low }: { low: boolean }) {
-  const count = low ? 70 : 150;
-  const geo = useMemo(() => {
-    let seed = 7;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-    const p = new Float32Array(count * 3);
-    const s = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      p.set([(rnd() - 0.5) * 12, (rnd() - 0.5) * 5, -1 - rnd() * 13], i * 3);
-      s[i] = rnd();
+function useAnchor(nx: number, ny: number, d: number) {
+  const { camera, size } = useThree();
+  const out = useRef(new THREE.Vector3());
+  return () => {
+    const halfH = Math.tan(deg((camera as THREE.PerspectiveCamera).fov / 2));
+    const halfW = halfH * (size.width / size.height);
+    // Direction in the base camera frame, then pitched up by BASE_PITCH.
+    return out.current.set(nx * halfW, ny * halfH, -1).normalize().applyAxisAngle(new THREE.Vector3(1, 0, 0), BASE_PITCH).multiplyScalar(d);
+  };
+}
+
+/* ───────── Moon ───────── */
+
+/** NASA SVS CGI Moon Kit (LRO colour + elevation as bump), right side, lit by the shared sun. */
+export function Moon({ low }: { low: boolean }) {
+  const map = useProgressiveTexture("/space/moon-2k.webp", null);
+  const bump = useProgressiveTexture("/space/moon-bump-1k.webp", null, "data");
+  const mesh = useRef<THREE.Mesh>(null);
+  const place = useAnchor(low ? 0.55 : 0.72, low ? 0.42 : -0.12, 60);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, bumpScale: 2.2, envMapIntensity: 0 }), []);
+  useEffect(() => {
+    mat.map = map;
+    mat.bumpMap = bump;
+    mat.needsUpdate = true;
+  }, [map, bump, mat]);
+  useFrame((_, dt) => {
+    const m = mesh.current;
+    if (!m) return;
+    m.position.copy(place());
+    if (!journeyStore.get().reducedMotion) m.rotation.y += (dt * Math.PI * 2) / 1200;
+  });
+  return (
+    <mesh ref={mesh} material={mat} rotation={[0.1, 2.4, 0]}>
+      <sphereGeometry args={[low ? 4.5 : 6.8, 96, 64]} />
+    </mesh>
+  );
+}
+
+/* ───────── Hubble ───────── */
+
+/** NASA 3D Resources Hubble (public domain), small and distant, drifting and turning very slowly. */
+export function Hubble() {
+  const { scene } = useGLTF("/space/hubble.glb", false);
+  const group = useRef<THREE.Group>(null);
+  const place = useAnchor(-0.52, 0.6, 34);
+  const model = useMemo(() => {
+    const m = scene.clone(true);
+    const box = new THREE.Box3().setFromObject(m);
+    const s = 2.6 / Math.max(...box.getSize(new THREE.Vector3()).toArray());
+    m.position.copy(box.getCenter(new THREE.Vector3()).multiplyScalar(-s));
+    m.scale.setScalar(s);
+    m.traverse((o) => {
+      const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+      if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.5;
+    });
+    return m;
+  }, [scene]);
+  useFrame(({ clock }, dt) => {
+    const g = group.current;
+    if (!g) return;
+    const reduced = journeyStore.get().reducedMotion;
+    const t = reduced ? 0 : clock.elapsedTime;
+    g.position.copy(place()).add(new THREE.Vector3(Math.sin(t * 0.02) * 1.2, Math.sin(t * 0.015) * 0.5, 0));
+    if (!reduced) {
+      g.rotation.y += (dt * Math.PI * 2) / 160;
+      g.rotation.z = Math.sin(t * 0.05) * 0.15;
     }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(p, 3));
-    g.setAttribute("aSeed", new THREE.BufferAttribute(s, 1));
-    return g;
-  }, [count]);
+  });
+  return (
+    <group ref={group} rotation={[0.3, 0.8, 0.2]}>
+      <primitive object={model} />
+    </group>
+  );
+}
+
+/* ───────── Sun ───────── */
+
+/** Warm-white sun key (same direction as every shader) and blue Earth-shine from below. */
+export function SunLights() {
+  return (
+    <>
+      <directionalLight position={SUN_DIR.clone().multiplyScalar(50)} color="#fff3e2" intensity={2.6} />
+      <directionalLight position={[0, -10, 2]} color="#3f7dff" intensity={0.9} />
+      <hemisphereLight args={["#1b2a52", "#0a1430", 0.25]} />
+    </>
+  );
+}
+
+/** The sun's disc at the sunrise point: the god-rays source (half hidden by the Earth's limb). */
+export const SunDisc = forwardRef<THREE.Mesh>(function SunDisc(_, ref) {
+  return (
+    <mesh ref={ref} position={GLARE_POS}>
+      <sphereGeometry args={[7, 32, 16]} />
+      <meshBasicMaterial color={new THREE.Color("#fff8ee").multiplyScalar(4)} toneMapped={false} />
+    </mesh>
+  );
+});
+
+/** Sunrise burst: a soft white-blue glow and a thin flare along the limb, always facing the camera. */
+export function SunGlare() {
+  const mesh = useRef<THREE.Mesh>(null);
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        uniforms: { uTime: { value: 0 }, uDpr: { value: 1 } },
-        vertexShader: /* glsl */ `
-          attribute float aSeed; uniform float uTime; uniform float uDpr; varying float vNear; varying float vSeed;
-          void main() {
-            vec3 p = position;
-            p.x = mod(p.x + uTime * (0.04 + aSeed * 0.05) + 6.0, 12.0) - 6.0;
-            p.y = mod(p.y + uTime * (0.015 + aSeed * 0.02) + 2.5, 5.0) - 2.5;
-            vec4 mv = viewMatrix * vec4(p, 1.0);
-            vNear = smoothstep(-3.5, -1.0, mv.z); vSeed = aSeed;
-            gl_Position = projectionMatrix * mv;
-            gl_PointSize = (2.0 + aSeed * 3.0 + vNear * 40.0) * uDpr * (4.0 / max(1.0, -mv.z));
-          }`,
+        uniforms: { uCore: { value: new THREE.Color("#ffffff") }, uHalo: { value: new THREE.Color("#7fb4ff") } },
+        vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: /* glsl */ `
-          varying float vNear; varying float vSeed;
+          uniform vec3 uCore, uHalo; varying vec2 vUv;
           void main() {
-            float r = length(gl_PointCoord - 0.5) * 2.0;
-            float sharp = exp(-r * r * 6.0);
-            float bokeh = smoothstep(1.0, 0.8, r) * (0.55 + 0.45 * smoothstep(0.4, 0.95, r));
-            float a = mix(sharp, bokeh * 0.22, vNear) * (0.35 + 0.4 * vSeed);
-            if (a < 0.003) discard;
-            gl_FragColor = vec4(vec3(0.8, 0.86, 1.0) * a, 1.0);
+            vec2 p = (vUv - 0.5) * 2.0;
+            float r = length(p);
+            float core = exp(-r * r * 900.0) * 9.0 + exp(-r * r * 90.0) * 1.2;
+            float halo = exp(-r * 9.0) * 0.55;
+            // Flare along the limb (tilted with it) and a fainter cross streak.
+            vec2 q = mat2(0.985, 0.17, -0.17, 0.985) * p;
+            float streak = exp(-abs(q.y) * 220.0) * exp(-abs(q.x) * 2.6) * 2.2;
+            float cross = exp(-abs(q.x) * 160.0) * exp(-abs(q.y) * 7.0) * 0.35;
+            vec3 c = uCore * (core + streak) + uHalo * (halo + cross);
+            gl_FragColor = vec4(c, 1.0);
+            #include <colorspace_fragment>
           }`,
         transparent: true,
+        depthTest: false,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
-        fog: false,
       }),
     [],
   );
-  useFrame(({ clock, viewport }) => {
-    // Reduced motion: the motes hold still.
-    if (!journeyStore.get().reducedMotion) mat.uniforms.uTime.value = clock.elapsedTime;
-    mat.uniforms.uDpr.value = viewport.dpr;
-  });
-  return <points geometry={geo} material={mat} frustumCulled={false} />;
+  useFrame(({ camera }) => mesh.current?.quaternion.copy(camera.quaternion));
+  return (
+    <mesh ref={mesh} position={GLARE_POS} material={mat} renderOrder={15}>
+      <planeGeometry args={[260, 260]} />
+    </mesh>
+  );
 }
+
+useGLTF.preload("/space/hubble.glb", false);

@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { easing } from "maath";
 import * as THREE from "three";
 import { CARD_LAYER, cardState } from "./WebixPass";
+import { BASE_PITCH } from "./Space";
 import { HERO_GLIDE, SECTIONS, sectionIndex } from "@/config/sections";
 import { journey, journeyStore } from "@/lib/journey";
 
@@ -14,21 +15,21 @@ type Pose = { nx: number; ny: number; d: number; scale: number; rx: number; ry: 
 const P = (nx: number, ny: number, d: number, scale: number, rx = 0, ry = 0, rz = 0, tilt = 1, idle = 1): Pose => ({ nx, ny, d, scale, rx, ry, rz, tilt, idle });
 
 const POSES = {
-  // Hero: centre, above the moon. Work: small in the top-right corner, out of the showcase's way.
+  // Hero: centre, floating above the Earth's limb. Work: small in the top-right corner, out of the showcase's way.
   // After Work: left third on desktop (angled toward the panels), top on phones.
-  wide: { hero: P(0, 0.02, 2.6, 1.12), work: P(0.8, 0.7, 2.6, 0.4, 0.05, -0.35, 0, 0.5, 0.6), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8) },
-  tall: { hero: P(0, 0.02, 2.6, 0.8), work: P(0.62, 0.8, 2.6, 0.3, 0.05, -0.3, 0, 0.5, 0.6), side: P(0, 0.7, 2.4, 0.42, 0.04, 0.3, 0, 0.55, 0.8) },
+  wide: { hero: P(0, 0.08, 2.6, 1.12), work: P(0.8, 0.7, 2.6, 0.4, 0.05, -0.35, 0, 0.5, 0.6), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8) },
+  tall: { hero: P(0, 0.1, 2.6, 0.8), work: P(0.62, 0.8, 2.6, 0.3, 0.05, -0.3, 0, 0.5, 0.6), side: P(0, 0.7, 2.4, 0.42, 0.04, 0.3, 0, 0.55, 0.8) },
 };
 
-/** Camera framing: near-level, slightly above the surface so the moon fills the lower third. */
-const BASE = { pos: new THREE.Vector3(0, 0, 0), pitch: THREE.MathUtils.degToRad(4.5) };
+/** Camera framing: looking slightly up, so the Earth's limb fills the lower ~35–40% of the frame. */
+const BASE = { pos: new THREE.Vector3(0, 0, 0), pitch: BASE_PITCH };
 
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const span = (p: number, a: number, b: number) => ease(Math.min(1, Math.max(0, (p - a) / (b - a))));
 
 /**
  * Camera idle drift + mouse parallax (±1.5° rotation, a little translation so
- * the near terrain, card, horizon planet and stars move at different rates),
+ * the Earth, Moon, Hubble, card and stars move at different rates),
  * and the card's single writer: its target pose is a pure function of scroll
  * progress (fully reversible), damped so it can never jump.
  */

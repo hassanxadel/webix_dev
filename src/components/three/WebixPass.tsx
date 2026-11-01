@@ -175,12 +175,13 @@ export function WebixPass() {
     const px = deviceTilt.active ? deviceTilt.y : touchSway ? Math.sin(t * 0.35) * 0.55 : journey.pointerX;
     const py = deviceTilt.active ? deviceTilt.x : touchSway ? Math.sin(t * 0.27) * 0.3 : journey.pointerY;
     const k = 1 - Math.exp(-dt * 5);
-    const idle = reducedMotion ? 0 : cardState.idle;
+    // Reduced motion keeps a smaller, calmer float rather than none (the card must read as floating).
+    const idle = cardState.idle * (reducedMotion ? 0.4 : 1);
     const tg = tiltGroup.current;
     tg.rotation.x += (py * MAX_TILT * cardState.tilt + Math.sin(t * 0.5) * 0.025 * idle - tg.rotation.x) * k;
     tg.rotation.y += (px * MAX_TILT * cardState.tilt + Math.sin(t * 0.18) * 0.1 * idle - tg.rotation.y) * k;
-    // Slow float: ±0.03 over ~4 s.
-    tg.position.y = Math.sin((t * Math.PI * 2) / 4) * 0.03 * idle;
+    // Floating: a slow bob, ±0.06 over ~5 s.
+    tg.position.y = Math.sin((t * Math.PI * 2) / 5) * 0.06 * idle;
 
     flipGroup.current.rotation.y += (cardState.flip * Math.PI - flipGroup.current.rotation.y) * (reducedMotion ? 1 : 1 - Math.exp(-dt * 4));
     const showingBack = Math.cos(flipGroup.current.rotation.y) < 0;

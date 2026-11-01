@@ -232,8 +232,8 @@
 /* The sky, painted in CSS too: shown before WebGL loads and when it is unavailable. */
 .space-sky {
   background:
-    linear-gradient(0deg, transparent 34%, rgb(43 63 122 / 0.35) 36%, transparent 40%),
-    linear-gradient(0deg, #5e636d 0%, #3a4152 30%, #122042 36%, #0a1430 100%);
+    radial-gradient(140% 60% at 30% 118%, rgb(63 125 255 / 0.45), transparent 60%),
+    linear-gradient(180deg, #0a1430 0%, #050b1e 70%, #0b1a3f 100%);
 }
 
 

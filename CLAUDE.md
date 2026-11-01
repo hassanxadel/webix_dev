@@ -1,8 +1,8 @@
 # Webix — minimal space site
 
 Agency site for Webix Software Solutions (websites, Shopify e-commerce, 3D/interactive web, branding; Egyptian market).
-Concept (Igloo-style, in space): the "Webix Pass" metal card (Webix W enamel inlay) floats above a realistic moon
-surface that fades into haze, a planet rising on the horizon, a deep dark-blue twinkling starfield behind. Calm, photographic.
+Concept: photoreal space. The "Webix Pass" metal card (Webix W enamel inlay) floats above the Earth's limb at sunrise,
+the Moon to the right, Hubble drifting far above, NASA's real star sky behind with a twinkling star layer. Calm, cinematic.
 
 ## Stack + commands
 - TanStack Start (React 19, SSR via Nitro), Vite 8, file routing (`src/routes/`, single page `/`). Tailwind v4, shadcn/ui.
@@ -21,16 +21,20 @@ surface that fades into haze, a planet rising on the horizon, a deep dark-blue t
 - `src/components/site/` — HTML layer: `Sections.tsx` (all sections; glass panels), `Menu.tsx` (W top-left, Menu button + overlay
   top-right, hero "Scroll down to discover" bottom-left + wordmark bottom-right), `SceneLayer.tsx` (CSS sky + lazy canvas), `Loader`, `ContactForm`, `CaseStudyDialog`.
 - `src/components/three/` — WebGL (lazy chunk):
-  - `Experience.tsx` — the one Canvas: fog, sun/fill, SkyDome, Stars, Terrain, Dust, Planet, HDRI env (card reflections only), CardLights, card, Effects.
-  - `Stars.tsx` — one `THREE.Points` star field on 3 far shells: Gaussian points, magnitude spread, sin+detuned-sin twinkle, scintillation.
-  - `Space.tsx` — SkyDome, Terrain (CPU-displaced fBm + craters, procedural normal map, shadows), SunLights, Planet (texture + terminator +
-    Fresnel atmosphere), Dust (bokeh motes). `Effects.tsx` — NaN guard, DoF on the card, bloom, ACES, vignette, grain.
+  - `Experience.tsx` — the one Canvas: SunLights, SunDisc (god-rays source), SunGlare, Stars, StarMap, Earth, Moon, Hubble, HDRI env
+    (card reflections only), card, CameraRig, Effects.
+  - `Stars.tsx` — `StarMap` (NASA Deep Star Map on an inverted sphere, lifted onto navy) + `Stars` (one Points layer: core + halo,
+    spikes on the brightest 3%, 0.05→1 twinkle, scintillation, 3 parallax shells).
+  - `Space.tsx` — Earth (day/night/city lights/ocean specular shader, cloud shell, scattering atmosphere shell), Moon, Hubble (glb),
+    SunLights, SunDisc, SunGlare, screen anchoring. `textures.ts` — `useProgressiveTexture` (2K first, 4K swapped in later).
+  - `Effects.tsx` — NaN guard, god rays, bloom, edge-only chromatic aberration, ACES, vignette, grain (`lite` drops rays/aberration).
   - `WebixPass.tsx` — the card (+ `WInlay` from SVG) and `cardState`. `cardArt.ts` — card dims and printed front/back textures.
   - `CameraRig.tsx` — camera framing + idle drift + mouse parallax; the card's single writer (screen-anchored poses, maath damping).
 - `src/styles.css` — tokens + component classes (`.btn-primary`, `.btn-secondary`, `.glass` panel, `.hud`, `.field`, `.space-sky`).
 - Assets: `public/brand/webix-w.svg` (traced W, top-right), `public/brand/webix-wordmark-trim.webp` (hero wordmark, cropped from
   `webix-wordmark.webp`), `public/hdri/shanghai_bund_1k.hdr` (CC0, card reflections), `public/work/*.jpg` (project screenshots),
-  `public/space/neptune-{2k,1k}.webp` (Solar System Scope, **CC BY 4.0 — credit required**, see README).
+  `public/space/` (NASA, public domain: earth-day/night/clouds 4K+2K, earth-spec, moon + bump, stars 4K+2K, hubble.glb; credits in README).
+  Source pipeline: NASA originals → PIL / Blender CLI (`blender -b -P`, EXR tone-mapping, glb re-export with WebP textures) → WebP.
   Source: `src/assets/logo-w.png`; `scripts/trace-w.py` re-traces the W.
 
 ## Design tokens (see `src/styles.css` `:root` / `@theme`)
@@ -39,13 +43,13 @@ surface that fades into haze, a planet rising on the horizon, a deep dark-blue t
 - Tailwind names: `night indigo sun(yellow) neon(pink) signal(red) paper(text) dim`.
 - Fonts: Poppins 600/700 headings · Inter body · JetBrains Mono small labels (`.hud`). No retro/script fonts.
 - Buttons: primary = solid yellow, navy text, uppercase, tracked, arrow; secondary = 1px warm-white outline.
-- Sky: `#0A1430` overhead → `#122042` at the horizon (fog uses `#122042`); dark blue, never black. Regolith `#5E636D`–`#8A8F99`.
+- Sky: deep navy `#050B1E`–`#0A1430` under the NASA star map; never pure black. Atmosphere blue `#2F6BFF`–`#D6E8FF`, city lights warm amber.
 - Rules: yellow = interaction; pink = small accents; lots of empty space; nothing decorative that isn't needed.
 
 ## Sections (progress 0→1 of page scroll; details in `src/config/sections.ts`)
 | id | Content | Layout |
 |----|---------|--------|
-| hero | nothing but chrome | Card centre above the moon · W top-left · Menu top-right · scroll hint bottom-left · wordmark bottom-right |
+| hero | nothing but chrome | Card centre above the Earth limb · W top-left · Menu top-right · scroll hint bottom-left · wordmark bottom-right |
 | work | 6 projects (image, n/6, type, line, tags, View project → case study, live link) | Panels slide in/out per project, snap; reduced motion = vertical list |
 | about | "Your ideas. Our playground." (h1) + "We build digital journeys." + vision copy + Get Started / Explore our work | Glass panel |
 | services | 4 services | Glass panel |
@@ -55,12 +59,13 @@ surface that fades into haze, a planet rising on the horizon, a deep dark-blue t
 During Work the card shrinks into the top-right corner (~35%); from About on it sits in the left third (desktop) / top (phones), panels opposite.
 
 ## Decisions already made (do not revisit)
-- Theme: realistic space, Igloo-style (card above a moon surface, horizon planet, haze). Nothing cartoonish: no clay planets, rockets or sparkle sprites. The train theme is gone; don't bring back stations, signage, HUD or Japanese labels.
-- Reduced motion (incl. Windows "Animation effects: Off", which the owner's PC has) keeps a slow, gentle twinkle; never fully static.
+- Theme: photoreal space from real imagery (NASA Blue/Black Marble, CGI Moon Kit, Deep Star Maps, 3D Resources). No procedural stand-ins, clay objects or cartoon sprites. The train theme is gone; don't bring back stations, signage, HUD or Japanese labels.
+- Lighting: the Earth is lit from the sunrise point behind its left limb (day crescent + night side with city lights); the near objects (Moon, Hubble, card) share a key from the left (`SUN_DIR`) plus blue Earth-shine from below.
+- Reduced motion (incl. Windows "Animation effects: Off", which the owner's PC has) keeps a slower twinkle and a smaller card float; never fully static.
 - One fixed canvas for the whole site; the card never unmounts. The sky is drawn in the canvas (opaque) with a CSS copy underneath as the instant / no-WebGL fallback.
-- The card's look is final: geometry, materials, traced-W enamel inlay, pink edge, idle float, cursor tilt. It keeps the HDRI env map + CardLights for reflections (env never shown as background) and is also lit by the sun and the blue fill.
+- The card's look is final: geometry, materials, traced-W enamel inlay, pink edge, cursor tilt. Float: ±0.06 over ~5 s. It keeps the HDRI env map (plus a blue Lightformer below for the Earth-glow reflection; env never shown as background) and the scene's sun key + Earth-shine. The old pink/yellow CardLights are gone.
 - One card, one writer: CameraRig computes the target pose as a pure function of progress and damps `cardState.position/quaternion/scale` with maath. Tilt is a separate offset (18° hero, ~10° elsewhere via `cardState.tilt`).
-- Terrain keeps envMapIntensity ~0.08 so the city HDRI (there for the card) never tints the moon.
+- The Moon uses envMapIntensity 0 and Hubble 0.5, so the city HDRI (there for the card) doesn't tint them.
 - One scroll system: Lenis on gsap.ticker; per-frame DOM writes via gsap.ticker, no layout reads, no React state per frame.
 - The W is the **traced logo SVG** `public/brand/webix-w.svg`. Never redraw it. The wordmark is the logo image, never set in a font.
 - Hero has no copy: card, W, wordmark, Menu, scroll hint only.

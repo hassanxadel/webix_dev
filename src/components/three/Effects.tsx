@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { Bloom, DepthOfField, EffectComposer, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
-import { BlendFunction, Effect, ToneMappingMode } from "postprocessing";
-import { cardState } from "./WebixPass";
+import { Bloom, EffectComposer, GodRays, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { BlendFunction, ChromaticAberrationEffect, Effect, KernelSize, ToneMappingMode } from "postprocessing";
+import * as THREE from "three";
 
 /** Zeroes any NaN / infinite pixel before bloom, so one bad physical-shader value can't bloom into a black hole. */
 class NaNGuardEffect extends Effect {
@@ -19,21 +19,25 @@ class NaNGuardEffect extends Effect {
 }
 
 /**
- * Cinematic finish: low, selective bloom (card edge, bright stars, planet rim),
- * a subtle depth of field focused on the card, ACES tone mapping, vignette and
- * light grain. Weak GPUs (tier "low") render without it.
+ * Cinematic finish: god rays from the sunrise (the sun disc half hidden by
+ * the limb), bloom on what is truly bright (sun, atmosphere rim, city lights,
+ * bright stars, card edge), ACES, vignette, light grain and a touch of
+ * chromatic aberration at the frame edges only. `lite` (weak GPU / phones)
+ * drops god rays and aberration and uses a cheaper bloom.
  */
-export function Effects() {
+export function Effects({ sun, lite }: { sun: THREE.Mesh | null; lite: boolean }) {
   const guard = useMemo(() => new NaNGuardEffect(), []);
+  // Built by hand: in React 19 `ref` is a prop and the wrapper would try to serialise a live effect.
+  const aberration = useMemo(() => new ChromaticAberrationEffect({ offset: new THREE.Vector2(0.0011, 0.0011), radialModulation: true, modulationOffset: 0.55 }), []);
   return (
-    <EffectComposer multisampling={4}>
+    <EffectComposer multisampling={lite ? 0 : 4}>
       <primitive object={guard} />
-      {/* `target` is the card's live position, so focus follows it everywhere. */}
-      <DepthOfField target={cardState.position} worldFocusRange={2.5} bokehScale={1.4} />
-      <Bloom mipmapBlur luminanceThreshold={0.85} luminanceSmoothing={0.2} intensity={0.45} radius={0.65} />
+      {!lite && sun ? <GodRays sun={sun} samples={60} density={0.96} decay={0.93} weight={0.35} exposure={0.45} clampMax={1} kernelSize={KernelSize.SMALL} blur /> : <></>}
+      <Bloom mipmapBlur={!lite} luminanceThreshold={0.78} luminanceSmoothing={0.2} intensity={lite ? 0.45 : 0.7} radius={0.7} />
+      {!lite ? <primitive object={aberration} /> : <></>}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-      <Vignette offset={0.3} darkness={0.6} />
-      <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.08} />
+      <Vignette offset={0.3} darkness={0.65} />
+      <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.06} />
     </EffectComposer>
   );
 }

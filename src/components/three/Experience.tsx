@@ -1,11 +1,11 @@
-import { Suspense, useEffect, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useState } from "react";
+import { Canvas } from "@react-three/fiber";
 import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
 import * as THREE from "three";
-import { WebixPass, cardState } from "./WebixPass";
+import { WebixPass } from "./WebixPass";
 import { CameraRig } from "./CameraRig";
-import { Stars } from "./Stars";
-import { Dust, HORIZON, Planet, SkyDome, SunLights, Terrain } from "./Space";
+import { StarMap, Stars } from "./Stars";
+import { Earth, Hubble, Moon, SunDisc, SunGlare, SunLights } from "./Space";
 import { Effects } from "./Effects";
 import { journeyStore, useJourney } from "@/lib/journey";
 
@@ -22,9 +22,9 @@ async function loadFonts() {
 THREE.DefaultLoadingManager.onProgress = (_url, loaded, total) => journeyStore.set({ loadProgress: total ? loaded / total : 1 });
 
 /**
- * Image-based lighting for the card only (never shown as a background): the
- * CC0 night-city HDRI for believable reflections, plus pink and yellow strips
- * so neon highlights slide across the metal.
+ * Image-based lighting for the card's brushed metal (never shown as a
+ * background): the CC0 night-city HDRI, the brand pink / yellow strips, and a
+ * broad blue strip below so the metal carries a reflection of the Earth glow.
  */
 function SceneEnvironment() {
   return (
@@ -32,31 +32,8 @@ function SceneEnvironment() {
       <Lightformer form="rect" color="#ff007f" intensity={2.2} position={[-3, 2.5, 3]} scale={[1.2, 5, 1]} target={[0, 0, 0]} />
       <Lightformer form="rect" color="#ffda24" intensity={3} position={[3.2, 0.5, 2.5]} scale={[1, 4, 1]} target={[0, 0, 0]} />
       <Lightformer form="rect" color="#f4f1ea" intensity={1.4} position={[0, 4, 1]} scale={[6, 0.4, 1]} target={[0, 0, 0]} />
+      <Lightformer form="rect" color="#3f7dff" intensity={2.6} position={[0, -3.5, 1.5]} scale={[9, 1.4, 1]} target={[0, 0, 0]} />
     </Environment>
-  );
-}
-
-/** Pink and yellow key lights that stay with the card. */
-function CardLights() {
-  const pink = useRef<THREE.PointLight>(null);
-  const yellow = useRef<THREE.PointLight>(null);
-  const { camera } = useThree();
-  const right = new THREE.Vector3();
-  const up = new THREE.Vector3();
-  useFrame(() => {
-    camera.matrixWorld.extractBasis(right, up, new THREE.Vector3());
-    const s = cardState.scale;
-    pink.current?.position.copy(cardState.position).addScaledVector(right, 1.5 * s).addScaledVector(up, 0.35 * s).add(camera.position.clone().sub(cardState.position).setLength(0.5 * s));
-    yellow.current?.position.copy(cardState.position).addScaledVector(right, -1.3 * s).addScaledVector(up, -0.9 * s).add(camera.position.clone().sub(cardState.position).setLength(1.0 * s));
-    if (pink.current) pink.current.intensity = 2.4 * s;
-    if (yellow.current) yellow.current.intensity = 2 * s;
-  });
-  // Short reach: these light the card only.
-  return (
-    <>
-      <pointLight ref={pink} color="#ff007f" distance={2.2} decay={2} />
-      <pointLight ref={yellow} color="#ffda24" distance={2} decay={2} />
-    </>
   );
 }
 
@@ -74,9 +51,10 @@ function Ready() {
   return null;
 }
 
-/** One fixed canvas for the whole site: sky, stars, moon surface, horizon planet, dust, and the card in front. */
+/** One fixed canvas for the whole site: NASA star sky, twinkling stars, the Earth's limb at sunrise, the Moon, Hubble, and the card. */
 export default function Experience() {
   const [fonts, setFonts] = useState(false);
+  const [sun, setSun] = useState<THREE.Mesh | null>(null);
   const low = useJourney((s) => s.tier) === "low";
 
   useEffect(() => {
@@ -92,34 +70,35 @@ export default function Experience() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      shadows="soft"
       camera={{ fov: 45, near: 0.05, far: 1000, position: [0, 0, 0] }}
-      // ACES: applied by the renderer on the low tier, by the ToneMapping effect when post-processing runs.
+      // ACES + sRGB: the ToneMapping effect applies ACES when post-processing runs; the renderer setting covers the rest.
       gl={{ antialias: !low, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1 }}
       onCreated={(state) => {
         if (import.meta.env.DEV) (window as unknown as { __webix: unknown }).__webix = state;
       }}
     >
       <PerformanceMonitor onDecline={() => journeyStore.set({ tier: "low" })} />
-      <fogExp2 attach="fog" args={[HORIZON, 0.014]} />
-      <hemisphereLight args={["#27314d", "#0a0a10", 0.35]} />
-      <SunLights low={low} />
-      <SkyDome />
+      <SunLights />
+      <SunDisc ref={setSun} />
+      <SunGlare />
       <Stars low={low} />
-      <Terrain low={low} />
-      <Dust low={low} />
       <Suspense fallback={null}>
-        <Planet low={low} />
+        <StarMap low={low} />
+        <Earth low={low} />
+        <Moon low={low} />
       </Suspense>
+      {!low && (
+        <Suspense fallback={null}>
+          <Hubble />
+        </Suspense>
+      )}
       <Suspense fallback={null}>
         <SceneEnvironment />
         <WebixPass />
-        <CardLights />
         <CameraRig />
         <Ready />
       </Suspense>
-      {/* Weak GPUs (PerformanceMonitor → tier "low") drop bloom and depth of field. */}
-      {!low && <Effects />}
+      <Effects sun={sun} lite={low} />
     </Canvas>
   );
 }

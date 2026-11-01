@@ -1,5 +1,8 @@
 # webix_dev
+
 ## Credits
 
-- Planet texture: [Solar System Scope](https://www.solarsystemscope.com/textures/) (`2k_neptune.jpg`), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Converted to WebP in `public/space/`.
+- Imagery: NASA. Earth: Blue Marble Next Generation and Black Marble 2016 (NASA Earth Observatory), clouds (NASA Visible Earth).
+  Moon: CGI Moon Kit (NASA's Scientific Visualization Studio, LRO data). Sky: Deep Star Maps 2020 (NASA SVS).
+  Satellite: Hubble Space Telescope model (NASA 3D Resources). Public domain; resized and converted to WebP in `public/space/`.
 - Card reflections: "Shanghai Bund" HDRI by Poly Haven, CC0.
