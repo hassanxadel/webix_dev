@@ -1,6 +1,10 @@
 # Status
 
 ## Current state
+- Hero round 3 (2026-11-01): headline font self-hosted (Lilita One) at clamp(48px, 7vw, 112px) ~15% from the top, −5°, bevel;
+  subline in the same lettering. Earth: Egypt/Nile/Mediterranean at load, day left / twilight / night right, 8K KTX2 (desktop) /
+  4K KTX2 (touch), GEBCO relief, cloud shadows, more city lights, 5-min spin; green airglow removed, orange rim + sky glow.
+  Card job: services deck (4 passes) on hover/tap, real button + links, click → fly + scroll to Services.
 - Hero fixes (2026-11-01): Moon orbits the camera (was screen-pinned with a ~25 px drift, ×0.3 under reduced motion → looked static); Earth rebuilt as a night side (moonlit terrain, GEBCO relief, land mask, warm city lights, thin crescent, thin blue rim + green airglow, gold only near the sun; exposure 0.6, bloom 0.9, faint god rays); headline lowered to ~16% and lettered like the logo (Lilita One, `.logo-type`).
 - Hero polish (2026-11-01): Earth backlit (night + city lights, thin crescent, thin rim), exposure 0.7, bloom threshold 0.88; fast twinkle + sparkles + shooting star; nebula/galaxies with faint pink and gold; Moon normal map + drift; Hubble PBR + path; card ~29% width; headline "We launch brands into orbit."
 - Hero rebuilt photoreal (2026-11-01): Earth limb at sunrise (NASA Blue/Black Marble, clouds, ocean specular, atmosphere), NASA Moon, Hubble glb, NASA Deep Star Map + 1500 twinkling stars, god rays/bloom/ACES/edge aberration. Moon terrain, Neptune, fog and dust removed.
@@ -10,7 +14,10 @@
 - Archive branch `archive/synthwave-lens` holds the earlier synthwave/lens version.
 
 ## Next up
-- User reviews the hero (desktop, phone, Animation effects on/off). Nothing since the photoreal pass has been visually checked (code only, by request). Check especially: night-side brightness (`NIGHT_TINT`), the headline's extrusion/edge rendering in Chrome, Firefox and Safari, and the Moon crossing behind the card.
+- User reviews the hero (desktop, phone, Animation effects on/off). Checked text-only in headless Chrome (CDP): no console
+  errors; 8K KTX2 load (sRGB/linear, mips, aniso 16); deck opens/folds, fan on screen and clear of the headline and Menu at
+  942×504, 1262×624, 1422×804, 1902×984 and 390×844 (touch, 2×2 grid); a pass click scrolls to Services. Not checked: how
+  anything looks (no screenshots), the animation feel on a real GPU.
 - User reviews the hero in the browser; then push.
 - ThreeUI Work showcase: **blocked** — the bundle lacks `src/shaders/landing-pages/pageTypography.ts` and `pageRecipes.ts` (imported by both components; not public; ThreeUI MCP needs login). Needs the user to supply them (e.g. `docs/vendor/threeui/`). Downloaded bundle hashes: LandingPages.tsx, LandingPageFrame.tsx, threeui.css match; the served HTML (55 KB, media on Supabase) differs from the listed 3.5 MB embedded-media file.
 
@@ -20,10 +27,13 @@
 - Contact copy still says "Your stop." / "…make a train station feel real…" — kept as content; replace if the user wants new lines.
 - Card back print (never shown now) still exists in `cardArt.ts`.
 - "Imagery: NASA" credit is in the README; add it to the site footer when one exists.
-- The Earth is lit from the sunrise (behind the limb) while near objects use a left key light: a deliberate cinematic cheat so the card and Moon read.
+- Headline: the earlier "default font, small, at the top" report could not be reproduced (computed styles were correct on a
+  fresh server); the font is now self-hosted so it can't fall back. If it ever looks plain again: hard reload first.
+- Shader compiler warnings (D3D X4122/X4008) appear in the console on Windows; pre-existing, not errors.
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-01 · hero · round 3: self-hosted logo headline, Egypt day/night Earth (8K KTX2, spin), orange sky, services deck · (this commit)
 - 2026-11-01 · hero · Moon orbit around the camera, night Earth (GEBCO relief, city lights, thin rim + airglow), logo-style headline · (this commit)
 - 2026-11-01 · hero · polish: dark Earth, fast twinkle, nebula + pink/gold, Moon/Hubble motion, smaller card, headline · (this commit)
 - 2026-11-01 · hero · photoreal Earth limb + Moon + Hubble + NASA star map, twinkle layer, god rays; card float ±0.06/5 s · (this commit)
@@ -33,5 +43,3 @@
 - 2026-10-26 · repo · CLAUDE.md, STATUS.md, read-deny rules, screenshot tooling removed · (this commit)
 - 2026-10-25 · 01 hero · photo plate + card-only WebGL, traced W enamel inlay, minimal copy, reader-tap scroll-out · 221f1b6
 - 2026-10-25 · 03–07 · world, train, tunnels, billboards, split-flap, terminal; camera path; tiers · 4dcdc83
-- 2026-10-25 · card · Webix Pass card (materials, edge, stamps, tilt) · 83abd25
-- 2026-10-25 · UI · tokens, fonts, stations config, navbar, line map, signs, HUD, loader, sections · b4f271d

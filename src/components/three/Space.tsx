@@ -18,20 +18,47 @@ const EARTH_POS = dir(-22, -64).multiplyScalar(116);
 /** The sun is rising just behind the limb near the left edge. */
 const GLARE_POS = dir(-30, -4.2).multiplyScalar(400);
 /**
- * Light on the Earth, as angles from the point under the camera toward the
- * sunrise. Sun: 115°, from behind, so the visible cap is night with only a thin
- * day crescent at the limb on the sunrise side. Moonlight: 55° the other way,
- * a cool grazing light from the right that shows the relief.
+ * Sun on the Earth: from the left, so the terminator crosses the visible Earth
+ * ~35–40% from the left (solved for this framing): sunlit day on the left,
+ * a golden twilight band, night with city lights on the right. Close to
+ * SUN_DIR, so the Earth and the near objects share one sun.
  */
-const [EARTH_SUN, EARTH_MOONLIGHT] = (() => {
+const EARTH_SUN = new THREE.Vector3(-0.896, 0.003, 0.444).normalize();
+/** Moonlight on the night side: cool, grazing, from the right (55° from the point under the camera), so relief reads. */
+const EARTH_MOONLIGHT = (() => {
   const c = EARTH_POS.clone().negate().normalize();
   const g = GLARE_POS.clone().sub(EARTH_POS).normalize();
   const u = g.sub(c.clone().multiplyScalar(g.dot(c))).normalize();
-  const at = (a: number) => c.clone().multiplyScalar(Math.cos(deg(a))).addScaledVector(u, Math.sin(deg(a))).normalize();
-  return [at(115), at(-55)];
+  return c.multiplyScalar(Math.cos(deg(55))).addScaledVector(u, -Math.sin(deg(55))).normalize();
 })();
+/**
+ * The globe's orientation at load: 10°N 28°E sits under the camera, so Egypt
+ * (the Nile from Aswan to the delta), the Mediterranean and Greece fill the
+ * view, with north heading up-screen. Seen from here the spin axis leans ~23°
+ * off vertical, like the real axial tilt.
+ */
+const EARTH_NADIR = { lat: 10, lon: 28 };
+const EARTH_TILT = (() => {
+  // Unit vector / local north for a latitude-longitude in SphereGeometry's uv layout.
+  const geo = (lat: number, lon: number) => new THREE.Vector3(Math.cos(deg(lat)) * Math.cos(deg(lon)), Math.sin(deg(lat)), -Math.cos(deg(lat)) * Math.sin(deg(lon)));
+  const north = (lat: number, lon: number) => new THREE.Vector3(-Math.sin(deg(lat)) * Math.cos(deg(lon)), Math.cos(deg(lat)), Math.sin(deg(lat)) * Math.sin(deg(lon)));
+  const c = EARTH_POS.clone().negate().normalize();
+  // "Up-screen" on the surface: toward the point seen at the bottom-centre of the frame.
+  const rd = dir(0, -11);
+  const oc = EARTH_POS.clone().negate();
+  const b = oc.dot(rd);
+  const hit = rd.multiplyScalar(-b - Math.sqrt(b * b - oc.lengthSq() + EARTH_R * EARTH_R)).sub(EARTH_POS).normalize();
+  const ahead = hit.sub(c.clone().multiplyScalar(hit.dot(c))).normalize();
+  const frame = (n: THREE.Vector3, up: THREE.Vector3) => new THREE.Matrix4().makeBasis(up.clone().cross(n), up, n);
+  const { lat, lon } = EARTH_NADIR;
+  return new THREE.Quaternion().setFromRotationMatrix(frame(c, ahead).multiply(frame(geo(lat, lon), north(lat, lon)).invert()));
+})();
+/** One turn of the globe (s); clouds turn 1.2× faster. */
+const EARTH_DAY = 300;
 /** Exposure for the Earth's surface only (city lights and the rim are added after it, so they still bloom). */
 const EARTH_EXPOSURE = 0.6;
+/** Sunlight on the day side, before exposure: vivid blue oceans and green/brown land, white clouds below bloom. */
+const SUN_GAIN = 2;
 /** Moonlit night side, as a fraction of daylight per channel: cool blue, dim, continents still readable. */
 const NIGHT_TINT = new THREE.Color().setRGB(0.22, 0.34, 0.62);
 /** Where the sunrise is, seen from the camera (sky tint). */
@@ -57,19 +84,22 @@ const earthVertex = /* glsl */ `
   }`;
 
 /**
- * Earth at night, like the ISS photographs. NASA Blue Marble terrain lit only
- * by a dim cool moonlight (oceans darker and faintly glossy, land matte, relief
- * from a NASA GEBCO normal map), Black Marble city lights as warm emissive
- * (dense clusters glow wider), and a thin sunlit crescent at the limb near the
- * sunrise. Outside it a thin crisp blue rim with a faint green airglow band
- * above, gold only near the sun. Very slow spin; a faint grey-blue cloud shell
- * turns a little faster and partly veils the lights.
+ * The Earth over Egypt at sunrise. Left: NASA Blue Marble in daylight (blue
+ * oceans with a sun glint, land matte, relief from a GEBCO normal map that
+ * casts mountain shadows near the terminator, soft cloud shadows). A golden
+ * twilight band. Right: night, terrain in dim cool moonlight and Black Marble
+ * 2016 city lights as warm emissive (dense clusters glow wider). A thin blue
+ * rim, orange-gold toward the sun. Turns once every EARTH_DAY seconds; the
+ * cloud shell turns 1.2× faster, white by day, faint grey-blue at night.
  */
 export function Earth({ low }: { low: boolean }) {
-  const day = useProgressiveTexture("/space/earth-day-2k.webp", low ? null : "/space/earth-day-4k.webp");
-  const night = useProgressiveTexture("/space/earth-night-2k.webp", low ? null : "/space/earth-night-4k.webp");
-  const clouds = useProgressiveTexture("/space/earth-clouds-2k.webp", low ? null : "/space/earth-clouds-4k.webp", "data");
-  const normal = useProgressiveTexture("/space/earth-normal-2k.webp", low ? null : "/space/earth-normal-4k.webp", "data");
+  // 2K WebP paints first; then 8K KTX2 on desktop, 4K KTX2 on touch devices (none on the low tier).
+  const size = matchMedia("(hover: hover) and (pointer: fine)").matches ? "8k" : "4k";
+  const hi = (name: string) => (low ? null : `/space/earth-${name}-${size}.ktx2`);
+  const day = useProgressiveTexture("/space/earth-day-2k.webp", hi("day"));
+  const night = useProgressiveTexture("/space/earth-night-2k.webp", hi("night"));
+  const clouds = useProgressiveTexture("/space/earth-clouds-2k.webp", hi("clouds"), "data");
+  const normal = useProgressiveTexture("/space/earth-normal-2k.webp", hi("normal"), "data");
   const land = useProgressiveTexture("/space/earth-land-2k.webp", null, "data");
   const spin = useRef<THREE.Group>(null);
   const cloudSpin = useRef<THREE.Mesh>(null);
@@ -86,19 +116,22 @@ export function Earth({ low }: { low: boolean }) {
           uNight: { value: null },
           uNormal: { value: null },
           uLand: { value: null },
+          uClouds: { value: null },
+          uCloudShift: { value: 0 },
           uSun: sun,
           uMoon: moon,
           uTint: tint,
           uExposure: exposure,
+          uSunGain: { value: SUN_GAIN },
+          uTwilight: { value: new THREE.Color("#ff9a3c") },
           uCityLo: { value: new THREE.Color("#ffb547") },
-          uCityHi: { value: new THREE.Color("#ffd27a") },
+          uCityHi: { value: new THREE.Color("#ffe2a0") },
           uAtmo: { value: new THREE.Color("#3f7dff") },
-          uGold: { value: new THREE.Color("#ffd27a") },
         },
         vertexShader: earthVertex,
         fragmentShader: /* glsl */ `
-          uniform sampler2D uDay, uNight, uNormal, uLand;
-          uniform vec3 uSun, uMoon, uTint, uCityLo, uCityHi, uAtmo, uGold; uniform float uExposure;
+          uniform sampler2D uDay, uNight, uNormal, uLand, uClouds;
+          uniform vec3 uSun, uMoon, uTint, uTwilight, uCityLo, uCityHi, uAtmo; uniform float uExposure, uSunGain, uCloudShift;
           varying vec2 vUv; varying vec3 vN; varying vec3 vT; varying vec3 vW;
           float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
           void main() {
@@ -110,52 +143,58 @@ export function Earth({ low }: { low: boolean }) {
             float land = texture2D(uLand, vUv).r;
             vec3 day = texture2D(uDay, vUv).rgb;
 
-            // Both lights graze the visible cap, so relief is shading relative to the smooth sphere.
             float l = dot(N0, uSun);
-            float dayMix = smoothstep(-0.03, 0.1, l);
-            float sunRelief = clamp(1.0 + (dot(N, uSun) - l) * 5.0, 0.4, 1.6);
+            float dayMix = smoothstep(-0.06, 0.1, l);
+            // Day: Lambert on the relief normal, so mountains cast shade where the sun is low (near the
+            // terminator); low sun is golden-orange. The cloud shell (turning uCloudShift ahead) shades softly.
+            float shade = texture2D(uClouds, vec2(vUv.x - uCloudShift, vUv.y), 2.0).r;
+            vec3 sunCol = mix(uTwilight, vec3(1.0), smoothstep(0.0, 0.3, l));
+            vec3 sunlit = day * sunCol * (max(dot(N, uSun), 0.0) * uSunGain + 0.02) * (1.0 - 0.45 * shade);
+            // Night: dim cool moonlight, grazing from the right; oceans darker.
             float m = dot(N0, uMoon);
             float moonRelief = clamp(1.0 + (dot(N, uMoon) - m) * 4.0, 0.5, 1.6);
-
             vec3 moonlit = mix(vec3(lum(day)), day, 0.35) * uTint * (0.3 + 0.7 * max(m, 0.0)) * moonRelief * mix(0.45, 1.0, land);
-            vec3 sunlit = day * sunRelief * 1.15;
-            // Oceans only: a sun glint near the sunrise limb, a faint cool moon sheen.
-            float glint = pow(max(dot(N0, normalize(uSun + V)), 0.0), 120.0) * dayMix * 1.5;
+            // Oceans only: the sun's glint by day, a faint cool moon sheen by night.
+            float glint = pow(max(dot(N0, normalize(uSun + V)), 0.0), 90.0) * dayMix * (1.0 - shade) * 2.0;
             float sheen = pow(max(dot(N0, normalize(uMoon + V)), 0.0), 30.0) * 0.06;
-            vec3 spec = (1.0 - land) * (vec3(1.0, 0.9, 0.75) * glint + uTint * sheen);
+            vec3 spec = (1.0 - land) * (vec3(1.0, 0.92, 0.8) * glint + uTint * sheen);
 
             vec3 c = mix(moonlit, sunlit, dayMix) + spec;
-            // Only a thin blue edge at the very limb (no haze over the surface), warm on the sunlit crescent.
+            // The twilight band straddling the terminator, and only a thin blue edge at the very limb (no haze).
+            c += uTwilight * exp(-pow(l / 0.07, 2.0)) * 0.05;
             float fres = pow(1.0 - max(dot(N0, V), 0.0), 10.0);
-            c += uAtmo * fres * mix(0.12, 0.5, smoothstep(-0.3, 0.1, l)) + uGold * fres * dayMix * 0.3;
+            c += uAtmo * fres * mix(0.12, 0.5, smoothstep(-0.3, 0.1, l));
 
-            // City lights (Black Marble), added after exposure so the cores bloom; a blurred mip widens dense clusters.
-            float city = smoothstep(0.03, 0.6, lum(texture2D(uNight, vUv).rgb));
-            float spread = smoothstep(0.02, 0.3, lum(texture2D(uNight, vUv, 3.0).rgb));
-            vec3 lights = (mix(uCityLo, uCityHi, city * city) * pow(city, 1.3) * 3.0 + uCityLo * spread * 0.25) * (1.0 - dayMix);
+            // City lights (Black Marble 2016), added after exposure so the cores bloom: small towns as faint
+            // specks, dense clusters (coasts, river valleys, megacities) bright, widened by a blurred mip.
+            float city = smoothstep(0.012, 0.5, lum(texture2D(uNight, vUv).rgb));
+            float spread = smoothstep(0.015, 0.25, lum(texture2D(uNight, vUv, 3.0).rgb));
+            vec3 lights = (mix(uCityLo, uCityHi, city * city) * pow(city, 1.15) * 4.0 + uCityLo * spread * 0.4) * (1.0 - dayMix);
 
             gl_FragColor = vec4(c * uExposure + lights, 1.0);
             #include <colorspace_fragment>
           }`,
       }),
       clouds: new THREE.ShaderMaterial({
-        uniforms: { uClouds: { value: null }, uSun: sun, uMoon: moon, uTint: tint, uExposure: exposure },
+        uniforms: { uClouds: { value: null }, uSun: sun, uMoon: moon, uTint: tint, uExposure: exposure, uSunGain: { value: SUN_GAIN } },
         vertexShader: earthVertex,
         fragmentShader: /* glsl */ `
-          uniform sampler2D uClouds; uniform vec3 uSun, uMoon, uTint; uniform float uExposure; varying vec2 vUv; varying vec3 vN;
+          uniform sampler2D uClouds; uniform vec3 uSun, uMoon, uTint; uniform float uExposure, uSunGain; varying vec2 vUv; varying vec3 vN;
           void main() {
             vec3 n = normalize(vN);
-            float dayMix = smoothstep(-0.03, 0.1, dot(n, uSun));
-            vec3 night = uTint * 0.55 * (0.35 + 0.65 * max(dot(n, uMoon), 0.0)); // grey-blue, moonlit
-            float a = texture2D(uClouds, vUv).r * mix(0.38, 0.85, dayMix);
-            gl_FragColor = vec4(mix(night, vec3(1.1), dayMix) * uExposure, a);
+            float l = dot(n, uSun);
+            float dayMix = smoothstep(-0.06, 0.1, l);
+            vec3 night = uTint * 0.55 * (0.35 + 0.65 * max(dot(n, uMoon), 0.0)); // faint grey-blue, moonlit
+            vec3 day = mix(vec3(1.0, 0.62, 0.35), vec3(1.0), smoothstep(0.0, 0.3, l)) * (max(l, 0.0) * uSunGain * 0.75 + 0.05);
+            float a = texture2D(uClouds, vUv).r * mix(0.38, 0.9, dayMix);
+            gl_FragColor = vec4(mix(night, day, dayMix) * uExposure, a);
             #include <colorspace_fragment>
           }`,
         transparent: true,
         depthWrite: false,
       }),
       // Limb, from each view ray's tangent altitude above the surface: a thin crisp blue line (bright on the
-      // sunrise side, dim on the night side), a faint green airglow band ~100 km up, gold only toward the sun.
+      // day side, dim on the night side), turning orange-gold toward the sunrise.
       atmosphere: new THREE.ShaderMaterial({
         uniforms: {
           uSun: sun,
@@ -163,8 +202,8 @@ export function Earth({ low }: { low: boolean }) {
           uR: { value: EARTH_R },
           uGlareDir: { value: GLARE_DIR },
           uBlue: { value: new THREE.Color("#5b9bff") },
-          uGreen: { value: new THREE.Color("#6dff9e") },
-          uGold: { value: new THREE.Color("#ffd27a") },
+          uOrange: { value: new THREE.Color("#ff8a1f") },
+          uGold: { value: new THREE.Color("#ffb547") },
         },
         vertexShader: /* glsl */ `
           varying vec3 vW;
@@ -173,7 +212,7 @@ export function Earth({ low }: { low: boolean }) {
             gl_Position = projectionMatrix * viewMatrix * w;
           }`,
         fragmentShader: /* glsl */ `
-          uniform vec3 uSun, uCentre, uGlareDir, uBlue, uGreen, uGold; uniform float uR; varying vec3 vW;
+          uniform vec3 uSun, uCentre, uGlareDir, uBlue, uOrange, uGold; uniform float uR; varying vec3 vW;
           void main() {
             vec3 rd = normalize(vW - cameraPosition);
             vec3 p = cameraPosition + rd * dot(uCentre - cameraPosition, rd); // closest approach to the centre
@@ -182,10 +221,10 @@ export function Earth({ low }: { low: boolean }) {
             float sunSide = smoothstep(-0.35, 0.15, dot(normalize(p - uCentre), uSun));
             float line = exp(-h / 0.0022);
             float soft = exp(-h / 0.008) * 0.18;
-            vec3 blue = uBlue * (line + soft) * mix(0.22, 1.4, sunSide);
-            float air = exp(-pow((h - 0.016) / 0.0022, 2.0)) * 0.1 * (1.0 - 0.7 * sunSide);
-            float toSun = pow(max(dot(rd, uGlareDir), 0.0), 60.0);
-            gl_FragColor = vec4(blue + uGreen * air + uGold * (line + soft * 2.0) * toSun * 2.2, 1.0);
+            float toSun = pow(max(dot(rd, uGlareDir), 0.0), 16.0);
+            vec3 warm = mix(uOrange, uGold, line);
+            vec3 c = mix(uBlue * mix(0.22, 1.4, sunSide), warm * 1.8, toSun) * (line + soft);
+            gl_FragColor = vec4(c, 1.0);
             #include <colorspace_fragment>
           }`,
         side: THREE.BackSide,
@@ -197,24 +236,30 @@ export function Earth({ low }: { low: boolean }) {
   }, []);
 
   useEffect(() => {
+    clouds.wrapS = THREE.RepeatWrapping; // the cloud-shadow lookup is offset in longitude
+    clouds.needsUpdate = true;
     mats.surface.uniforms.uDay.value = day;
     mats.surface.uniforms.uNight.value = night;
     mats.surface.uniforms.uNormal.value = normal;
     mats.surface.uniforms.uLand.value = land;
+    mats.surface.uniforms.uClouds.value = clouds;
     mats.clouds.uniforms.uClouds.value = clouds;
   }, [day, night, normal, land, clouds, mats]);
 
   useFrame((_, dt) => {
-    const s = motionStep(dt);
-    if (spin.current) spin.current.rotation.y += (s * Math.PI * 2) / 3600;
-    if (cloudSpin.current) cloudSpin.current.rotation.y += (s * Math.PI * 2) / 2400;
+    const s = (motionStep(dt) * Math.PI * 2) / EARTH_DAY;
+    if (spin.current) spin.current.rotation.y += s;
+    if (cloudSpin.current) {
+      // The clouds' own extra turn (+20%), which the surface also needs for their shadows.
+      cloudSpin.current.rotation.y = (cloudSpin.current.rotation.y + s * 0.2) % (Math.PI * 2);
+      mats.surface.uniforms.uCloudShift.value = cloudSpin.current.rotation.y / (Math.PI * 2);
+    }
   });
 
   const segs = low ? 128 : 256;
   return (
     <group position={EARTH_POS}>
-      {/* Tilted so the Gulf of Mexico (lat 25°, lon −90°) faces the camera, like the reference. */}
-      <group rotation={[deg(-65), 0, 0]}>
+      <group quaternion={EARTH_TILT}>
         <group ref={spin}>
           <mesh material={mats.surface}>
             <sphereGeometry args={[EARTH_R, segs, segs / 2]} />
@@ -224,8 +269,7 @@ export function Earth({ low }: { low: boolean }) {
           </mesh>
         </group>
       </group>
-      {/* Tall enough for the airglow band (h ≈ 0.016 R). */}
-      <mesh material={mats.atmosphere} scale={1.026}>
+      <mesh material={mats.atmosphere} scale={1.02}>
         <sphereGeometry args={[EARTH_R, segs, segs / 2]} />
       </mesh>
     </group>
@@ -433,7 +477,7 @@ export function SunGlare() {
   useFrame(({ camera }) => mesh.current?.quaternion.copy(camera.quaternion));
   return (
     <mesh ref={mesh} position={GLARE_POS} material={mat} renderOrder={15}>
-      <planeGeometry args={[180, 180]} />
+      <planeGeometry args={[140, 140]} />
     </mesh>
   );
 }

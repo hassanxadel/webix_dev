@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
 import { ArrowRight, ArrowUpRight, Instagram, Mail, MessageCircle } from "lucide-react";
 import { HERO_GLIDE, PAGE_VH, SECTIONS, WORK_WINDOW, sectionIndex, type SectionId } from "@/config/sections";
@@ -7,6 +7,7 @@ import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/lib/journey";
 import { ContactForm } from "./ContactForm";
+import { ServiceDeck } from "./ServiceDeck";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const heightOf = (id: SectionId) => {
@@ -56,14 +57,15 @@ function Label({ id }: { id: SectionId }) {
 
 /* ───────── Hero: the headline (top centre) over the card; W, Menu, wordmark and hint live in Menu.tsx ───────── */
 
-/** A word lettered like the Webix logo (`.logo-type` in styles.css); `ix` gives it the logo's yellow "ix" colours. */
-function LogoWord({ w, ix }: { w: string; ix?: boolean }) {
+/** A word lettered like the Webix logo (`.logo-type` in styles.css); `ix` = the logo's yellow "ix" colours, `sub` = the small subline style. */
+function LogoWord({ w, variant }: { w: string; variant?: "ix" | "sub" }) {
   return (
-    <span className={ix ? "logo-type logo-type-ix" : "logo-type"} data-text={w}>
+    <span className={variant ? `logo-type logo-type-${variant}` : "logo-type"} data-text={w}>
       {w}
     </span>
   );
 }
+const HERO_SUB = "websites, stores and 3D experiences by webix.";
 
 function Hero() {
   const ready = useJourney((s) => s.sceneReady);
@@ -93,19 +95,27 @@ function Hero() {
 
   return (
     <section id="hero" aria-labelledby="hero-title" className="relative" style={{ height: heightOf("hero") }}>
-      {/* ~16% from the top: clearly below the W and the Menu at every width (they end at ~60 px / ~76 px). */}
-      <div ref={fade} className="pointer-events-none fixed inset-x-0 top-[clamp(92px,16vh,180px)] z-30 px-5 sm:px-8">
-        <div className="hero-headline mx-auto max-w-5xl text-center" data-in={shown}>
+      {/* ~15% from the top: clearly below the W and the Menu at every width (they end at ~60 px / ~76 px), even with the tilt. */}
+      <div ref={fade} className="pointer-events-none fixed inset-x-0 top-[max(100px,15vh)] z-30 px-3 sm:px-8 [@media(max-height:620px)]:top-[90px]">
+        <div className="hero-headline text-center" data-in={shown}>
           <h1 id="hero-title" className="hero-title">
             <LogoWord w="we" />{" "}
             <LogoWord w="launch" />{" "}
             <LogoWord w="brands" />{" "}
             <LogoWord w="into" />{" "}
-            <LogoWord w="orbit." ix />
+            <LogoWord w="orbit." variant="ix" />
           </h1>
-          <p className="mt-4 text-sm text-paper/65 sm:mt-5 sm:text-base">Websites, stores and 3D experiences by Webix.</p>
+          <p className="hero-sub mt-3 sm:mt-4">
+            {HERO_SUB.split(" ").map((w, i) => (
+              <Fragment key={i}>
+                {i > 0 && " "}
+                <LogoWord w={w} variant="sub" />
+              </Fragment>
+            ))}
+          </p>
         </div>
       </div>
+      <ServiceDeck />
     </section>
   );
 }

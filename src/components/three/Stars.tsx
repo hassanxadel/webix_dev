@@ -24,8 +24,9 @@ const GALAXIES = [
  * NASA SVS Deep Star Maps 2020 (public domain) on a huge inverted sphere:
  * the real Milky Way and thousands of real faint stars, darkened onto deep
  * navy (#050B1E–#0A1430), never pure black. Over it, at very low opacity:
- * noise-shaped nebula wisps (a faint pink one high on the right), a warm
- * golden glow around the sunrise, and three small distant galaxies.
+ * noise-shaped nebula wisps (a faint pink one high on the right), an orange
+ * glow rising from the horizon around the sunrise with a faint orange haze
+ * over the lower-left sky, and three small distant galaxies.
  */
 export function StarMap({ low }: { low: boolean }) {
   const map = useProgressiveTexture("/space/stars-2k.webp", low ? null : "/space/stars-4k.webp");
@@ -39,7 +40,8 @@ export function StarMap({ low }: { low: boolean }) {
           uNavyTop: { value: new THREE.Color("#0a1430") },
           uNavyLow: { value: new THREE.Color("#050b1e") },
           uPink: { value: new THREE.Color("#ff007f") },
-          uGold: { value: new THREE.Color("#ffda24") },
+          uOrange: { value: new THREE.Color("#ff8a1f") },
+          uAmber: { value: new THREE.Color("#ffb547") },
           uBlue: { value: new THREE.Color("#4a6cff") },
           uPinkDir: { value: dir(34, 30) },
           uSunDir: { value: GLARE_DIR },
@@ -57,7 +59,7 @@ export function StarMap({ low }: { low: boolean }) {
           }`,
         fragmentShader: /* glsl */ `
           uniform sampler2D uMap;
-          uniform vec3 uNavyTop, uNavyLow, uPink, uGold, uBlue, uPinkDir, uSunDir;
+          uniform vec3 uNavyTop, uNavyLow, uPink, uOrange, uAmber, uBlue, uPinkDir, uSunDir;
           uniform vec3 uGalC[3]; uniform vec3 uGalT1[3]; uniform vec3 uGalT2[3]; uniform vec2 uGalAB[3];
           varying vec2 vUv; varying vec3 vDir;
           float hash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
@@ -76,8 +78,12 @@ export function StarMap({ low }: { low: boolean }) {
             float wisp = smoothstep(0.42, 0.85, fbm(d * 3.2 + vec3(4.0, 1.0, 7.0)));
             float pinkZone = smoothstep(0.75, 0.15, distance(d, uPinkDir));
             c += uPink * wisp * pinkZone * 0.09 + uBlue * wisp * (1.0 - pinkZone) * smoothstep(0.0, 0.4, d.y) * 0.03;
-            // The sun reads slightly golden: a warm glow around the sunrise (5–8%).
-            c += uGold * pow(max(dot(d, uSunDir), 0.0), 14.0) * 0.07;
+            // Sunrise warmth: an orange glow rising from the horizon around the sun and fading upward,
+            // amber close to the sun; plus a faint orange haze over the lower-left sky.
+            float toSun = max(dot(d, uSunDir), 0.0);
+            float nearHorizon = exp(-max(d.y + 0.06, 0.0) * 7.0);
+            c += mix(uOrange, uAmber, toSun * toSun) * (pow(toSun, 6.0) * nearHorizon * 0.1 + pow(toSun, 40.0) * 0.06);
+            c += uOrange * smoothstep(0.2, -0.8, d.x) * exp(-max(d.y + 0.1, 0.0) * 5.0) * 0.035;
             // Distant galaxies: soft elliptical smudges with a brighter core.
             for (int i = 0; i < 3; i++) {
               vec3 q = d - uGalC[i];
