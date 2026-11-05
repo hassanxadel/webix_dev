@@ -29,9 +29,9 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 - `src/components/three/` — WebGL (lazy chunk):
   - `Experience.tsx` — the one Canvas: SunLights, Stars (+ big-star layer), StarMap, Earth, Moon, Hubble, HDRI env, LoupeView (magnifier pass),
     (card reflections only), card, CameraRig, Effects.
-  - `Stars.tsx` — `StarMap` (NASA Deep Star Map on navy + noise nebula wisps, faint pink nebula top-right, golden glow at the sunrise,
-    3 small galaxies) + `Stars` (one Points layer: 0.4–0.9 s twinkle per star, halo grows with brightness, 2% sparkles, spikes on the
-    brightest 3%, 5% pink / 8% warm tints) + `ShootingStar` (every 6–12 s).
+  - `Stars.tsx` — `StarMap` (NASA Deep Star Map on navy, its stars desaturated to white, + noise nebula wisps, faint pink nebula top-right,
+    golden glow at the sunrise, 3 small galaxies) + `Stars` (white only #FFFFFF→#EEF3FF: 1500 points (600 on phones), 2–5 s twinkle per
+    star, halo grows with brightness, 2% slow sparkles, spikes on the brightest 3%; + 34 big stars (14 on phones), 4–7 s) + `ShootingStar`.
   - `Space.tsx` — Earth (`EARTH_NADIR` 10°N 28°E under the camera → Egypt/Nile/Mediterranean in view, `EARTH_TILT`; `EARTH_SUN` from
     the left, terminator ~35–40% across, golden twilight band; day = Blue Marble × `SUN_GAIN` with GEBCO relief, ocean glint, cloud
     shadows; night = moonlit `NIGHT_TINT` + Black Marble city lights `#FFB547`→`#FFE2A0`; spins every `EARTH_DAY` s, clouds 1.2×;
@@ -63,6 +63,7 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
   (closest free match to the logo's lettering; self-hosted `public/fonts/lilita-one-latin.woff2`, OFL, preloaded), drawn by `.logo-type` (indigo face, yellow outline, red extruded side, dark edge;
   `.logo-type-ix` = the logo's yellow/pink "ix"). No retro/script fonts.
 - Buttons: primary = solid yellow, navy text, uppercase, tracked, arrow; secondary = 1px warm-white outline.
+- Stars: white only (no yellow / pink / orange / blue tints, anywhere), calm twinkle (2–5 s; big 4–7 s), never in sync.
 - Sky: deep navy `#050B1E`–`#0A1430` under the NASA star map; never pure black. Rim blue `#5B9BFF` turning orange-gold `#FF8A1F`→`#FFB547` at the sunrise; orange horizon glow + faint lower-left haze;
   city lights `#FFB547`→`#FFE2A0`. No green.
 - Rules: yellow = interaction; pink = small accents; lots of empty space; nothing decorative that isn't needed.
@@ -70,7 +71,7 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 ## Sections (progress 0→1 of page scroll; details in `src/config/sections.ts`)
 | id | Content | Layout |
 |----|---------|--------|
-| hero | h1 "we launch brands into orbit." + subline (logo lettering, −5°) · services deck on the card · Get started pill · magnifier | Headline centred ~15% from the top · Moon orbits behind · hovering/tapping the card deals 4 brand service cards (4 across; 2+2 beside the card if narrower; 2×2 grid below on phones) · clicking one opens `#service-<slug>` · "Get started" pill under the card · magnifier lens (toggle next to the scroll hint) · card slightly below centre (~29% width desktop, ~60% phone) · W top-left · Menu top-right · scroll hint bottom-left · wordmark bottom-right |
+| hero | h1 "we launch brands into orbit." (logo lettering, −5°; no subline) · services deck on the card · Get started pill · magnifier (desktop only) | Headline centred ~15% from the top · Moon orbits behind · hovering/tapping the card deals 4 brand service cards (4 across; 2+2 beside the card if narrower; 2×2 grid below on phones) · clicking one opens `#service-<slug>` · "Get started" pill under the card · magnifier lens (toggle next to the scroll hint; not on phones / touch) · card slightly below centre (~29% width desktop, ~74vw phone, FOV 68° portrait) · W top-left · Menu top-right · WhatsApp + toggle + scroll hint bottom-left · wordmark bottom-right (11.5vw / 32vw) · touch: ✕ on the card folds the deck · safe-area insets (`.safe-edges`) |
 | work | 6 projects in the ThreeUI filmstrip (screenshot, nn, name, type; select the front card → case study) | Logo-lettered heading top-left · filmstrip 26vh→97vh · card tiny in the top-right corner · sr-only project list |
 | about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work + email / WhatsApp · 3D ID badge on a lanyard | Badge left third (desktop) / top centre (phones), glass panel opposite; card stays in the top-right corner |
 | services | 4 services | Glass panel |
@@ -92,8 +93,12 @@ During Work and About the card is tiny in the top-right corner; from Services on
 - The Moon uses envMapIntensity 0 and Hubble 0.5, so the city HDRI (there for the card) doesn't tint them.
 - One scroll system: Lenis on gsap.ticker; per-frame DOM writes via gsap.ticker, no layout reads, no React state per frame.
 - The W is the **traced logo SVG** `public/brand/webix-w.svg`. Never redraw it. The wordmark is the logo image, never set in a font.
-- Hero copy is only the headline + one subline (it is the page h1). Nothing else: card (+ its services deck), W, wordmark, Menu,
-  scroll hint, the "hover the pass" hint.
+- Hero copy is only the headline (it is the page h1; the subline was removed 2026-11-05). Nothing else: card (+ its services deck), W,
+  wordmark, Menu, WhatsApp, magnifier toggle, scroll hint, the "hover the pass" hint.
+- Phones / touch (`journeyStore.mobile` = `(max-width: 768px), (pointer: coarse)`): no magnifier (lens, toggle and render pass not
+  mounted), DPR ≤ 1.5, ~40% of the stars, 2K Earth / star textures. Headline clamp(32px, 9vw, 48px) under the W / Menu row.
+- WhatsApp (`Menu.tsx`): the official icon `public/brand/whatsapp.webp` (from `src/assets/WhatsApp_icon.png`), 46 px, bottom-left on every
+  section; in the hero it sits 12 px above the magnifier toggle / scroll hint row.
 - The card's job: hovering it (tap on touch, Enter/Space) deals out one pass per service from `SERVICES` (4; never invent more).
   The HTML layer owns intent and a11y (real button with aria-expanded, real links, Esc, 400 ms fold); the card animates and
   reports screen boxes through `deck`. Closed: brand slabs stacked behind the card (only coloured slivers peek; no text). Dealt: an HTML
@@ -102,8 +107,10 @@ During Work and About the card is tiny in the top-right corner; from Services on
   `#service-<slug>`, FLIP from the card; Back / Esc / browser Back fold it to the card; Get started presets the contact form via
   `servicePreset` / `?service=<slug>`). Not a route: a route would unmount the one canvas. Reduced motion: fade in place.
 - Magnifier (`site/Loupe.tsx` + `three/LoupeView.tsx`): gold→yellow bezel + handle, drag with easing (none under reduced motion), arrow
-  keys; on by default for fine pointers, off on touch (toggle shows it fixed). Built from the written spec: the Sketchbook source was not supplied.
-- Big stars: ~34 extra points in clear sky (`buildBig` in `Stars.tsx`, rejection-sampled away from headline/card/corners/Earth), 0.4–1.2 s twinkle to ~off.
+  keys; on by default on desktop; not on phones / touch. Built from the written spec: the Sketchbook source was not supplied.
+- Big stars: ~34 extra points in clear sky (`buildBig` in `Stars.tsx`, rejection-sampled away from headline/card/corners/Earth), 4–7 s twinkle to ~off.
+- Deck layouts (`dealLayout`): passes as large as fit — fan 0.45–0.55 of the card, split ≤ 0.75, grid ≤ 0.62 scaled to the width and the
+  height left under the card (84 px kept free at the bottom); a pass below 120 px wide moves on to the next layout.
 - Zero budget: free/OSS libraries, Google Fonts, CC0 assets only. No invented testimonials or stats.
 - Card draws over everything via a depth-clear mesh (renderOrder 19); card on layer 1.
 - No `anisotropy` on card materials (NaN artefacts).

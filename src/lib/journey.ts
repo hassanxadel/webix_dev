@@ -28,6 +28,8 @@ type JourneyState = {
   servicePreset: string | null;
   /** Hero magnifier toggle. */
   loupe: boolean;
+  /** Phones / touch (`(max-width: 768px), (pointer: coarse)`): no magnifier, DPR ≤ 1.5, fewer stars, 2K textures. */
+  mobile: boolean;
   reducedMotion: boolean;
   tier: Tier;
   sceneReady: boolean;
@@ -42,6 +44,7 @@ let state: JourneyState = {
   openService: null,
   servicePreset: null,
   loupe: false,
+  mobile: false,
   reducedMotion: false,
   tier: "high",
   sceneReady: false,
@@ -89,8 +92,9 @@ let lenis: Lenis | null = null;
 export function useJourneyTracker() {
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const phone = window.matchMedia("(max-width: 768px), (pointer: coarse)");
     const reduced = motion.matches;
-    journeyStore.set({ reducedMotion: reduced, tier: window.matchMedia("(max-width: 767px)").matches ? "low" : "high" });
+    journeyStore.set({ reducedMotion: reduced, mobile: phone.matches, tier: window.matchMedia("(max-width: 767px)").matches ? "low" : "high" });
 
     // Lenis eases wheel input into the long, cinematic scroll; reduced motion keeps native scrolling.
     if (!reduced) lenis = new Lenis({ lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9 });
@@ -110,14 +114,17 @@ export function useJourneyTracker() {
       journey.pointerY = (e.clientY / window.innerHeight) * 2 - 1;
     };
     const onMotion = () => journeyStore.set({ reducedMotion: motion.matches });
+    const onPhone = () => journeyStore.set({ mobile: phone.matches });
     window.addEventListener("pointermove", onPointer, { passive: true });
     motion.addEventListener("change", onMotion);
+    phone.addEventListener("change", onPhone);
     return () => {
       gsap.ticker.remove(tick);
       lenis?.destroy();
       lenis = null;
       window.removeEventListener("pointermove", onPointer);
       motion.removeEventListener("change", onMotion);
+      phone.removeEventListener("change", onPhone);
     };
   }, []);
 }

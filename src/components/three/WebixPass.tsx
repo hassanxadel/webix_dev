@@ -39,7 +39,7 @@ const deviceTilt = { x: 0, y: 0, active: false };
 /* ───────── Services deck (state in lib/deck.ts) ───────── */
 
 const deg = THREE.MathUtils.degToRad;
-/** Dealt passes are this fraction of the card (wide screens), bigger in the phone grid so the text fits. */
+/** Dealt passes: at least this fraction of the card on wide screens; at most PASS_GRID in the phone grid. */
 const PASS = 0.45;
 const PASS_GRID = 0.62;
 /** Hovering the card: it tilts back this much and scales to 0.95. */
@@ -49,25 +49,38 @@ const PASS_FACES = { yellow: ["#ffda24", "#e81a2e"], pink: ["#ff007f", "#a8004f"
 const PASS_DEPTH = 0.06;
 type Slot = { x: number; y: number; rz: number };
 
+/** Smallest pass that still reads well (CSS px wide); below it the deck moves to the next layout. */
+const MIN_PASS_PX = 120;
+/** Kept free at the bottom of the screen in the grid layout (WhatsApp button, wordmark), CSS px. */
+const BOTTOM_RESERVE = 84;
+
 /**
  * Where the passes land (card-local units), chosen so no pass overlaps another
- * or the card: four across like a hand of cards if the window is wide enough,
- * else two stacked on each side of the card, else (phones) a 2x2 grid below.
- * `ppu` = screen px per card unit (from the card's measured box).
+ * or the card, each as large as the window allows: four across like a hand of
+ * cards (0.45–0.55 of the card), else two stacked on each side (≤ 0.75), else
+ * (phones) a 2×2 grid below the card, scaled to the width and to the height
+ * left under the card. `ppu` = screen px per card unit; `belowPx` = where the
+ * card's bottom edge is on screen.
  * shortcut: four slots for the four services; add slots if SERVICES grows.
  */
-function dealLayout(vw: number, vh: number, ppu: number): { kind: typeof deck.layout; scale: number; slots: Slot[] } {
-  const g = 0.07 * W, pw = PASS * W, ph = PASS * H, fits = (half: number) => half * 2 * ppu <= vw * 0.96;
+function dealLayout(vw: number, vh: number, ppu: number, belowPx: number): { kind: typeof deck.layout; scale: number; slots: Slot[] } {
+  const g = 0.07 * W, half = (vw * 0.48) / ppu;
+  const readable = (k: number) => k * W * ppu >= MIN_PASS_PX;
   if (vw > vh) {
-    const inner = W / 2 + g + pw / 2, outer = inner + pw + g;
-    if (fits(outer + pw / 2 + 0.03))
-      return { kind: "fan", scale: PASS, slots: [{ x: -outer, y: -0.12, rz: deg(9) }, { x: -inner, y: -0.03, rz: deg(4) }, { x: inner, y: -0.03, rz: deg(-4) }, { x: outer, y: -0.12, rz: deg(-9) }] };
-    const cx = W / 2 + g + pw / 2, dy = ph / 2 + g / 2;
-    if (fits(cx + pw / 2 + 0.03))
-      return { kind: "split", scale: PASS, slots: [{ x: -cx, y: dy, rz: deg(3) }, { x: -cx, y: -dy, rz: deg(-2) }, { x: cx, y: dy, rz: deg(-3) }, { x: cx, y: -dy, rz: deg(2) }] };
+    const sf = Math.min(0.55, (half - W / 2 - 2 * g - 0.03) / (2 * W));
+    if (sf >= PASS && readable(sf)) {
+      const pw = sf * W, inner = W / 2 + g + pw / 2, outer = inner + pw + g;
+      return { kind: "fan", scale: sf, slots: [{ x: -outer, y: -0.12, rz: deg(9) }, { x: -inner, y: -0.03, rz: deg(4) }, { x: inner, y: -0.03, rz: deg(-4) }, { x: outer, y: -0.12, rz: deg(-9) }] };
+    }
+    const ss = Math.min(0.75, (half - W / 2 - g - 0.03) / W, ((vh * 0.9) / ppu - g) / (2 * H));
+    if (ss >= 0.4 && readable(ss)) {
+      const pw = ss * W, ph = ss * H, cx = W / 2 + g + pw / 2, dy = ph / 2 + g / 2;
+      return { kind: "split", scale: ss, slots: [{ x: -cx, y: dy, rz: deg(3) }, { x: -cx, y: -dy, rz: deg(-2) }, { x: cx, y: dy, rz: deg(-3) }, { x: cx, y: -dy, rz: deg(2) }] };
+    }
   }
-  const gw = PASS_GRID * W, gh = PASS_GRID * H, cx = gw / 2 + g / 2, y1 = -(H / 2 + g + gh / 2), y2 = y1 - gh - g;
-  return { kind: "grid", scale: PASS_GRID, slots: [{ x: -cx, y: y1, rz: 0 }, { x: cx, y: y1, rz: 0 }, { x: -cx, y: y2, rz: 0 }, { x: cx, y: y2, rz: 0 }] };
+  const sg = Math.max(0.3, Math.min(PASS_GRID, (half * 2 - g) / (2 * W), ((vh - belowPx - BOTTOM_RESERVE) / ppu - 2 * g) / (2 * H)));
+  const gw = sg * W, gh = sg * H, cx = gw / 2 + g / 2, y1 = -(H / 2 + g + gh / 2), y2 = y1 - gh - g;
+  return { kind: "grid", scale: sg, slots: [{ x: -cx, y: y1, rz: 0 }, { x: cx, y: y1, rz: 0 }, { x: -cx, y: y2, rz: 0 }, { x: cx, y: y2, rz: 0 }] };
 }
 
 /* ───────── The W: a metal enamel inlay built from the traced logo ───────── */
@@ -251,7 +264,7 @@ export function WebixPass() {
     // The layout is picked while the deck is closed (and frozen while open, so it never jumps mid-hover).
     if (!deck.open || !deal.layout) {
       const ppu = deck.card.w > 0 ? deck.card.w / (W * (1 - 0.05 * deal.press)) : size.height * 0.4;
-      deal.layout = dealLayout(size.width, size.height, ppu);
+      deal.layout = dealLayout(size.width, size.height, ppu, deck.card.w > 0 ? deck.card.y + deck.card.h : size.height * 0.55);
       deck.layout = deal.layout.kind;
     }
     const { slots, scale: dealt } = deal.layout;

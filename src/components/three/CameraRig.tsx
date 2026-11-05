@@ -18,8 +18,14 @@ const POSES = {
   // Hero: centre, floating above the Earth's limb. Work: small, tucked in the top-right corner above the filmstrip (which starts at 26vh).
   // After Work: left third on desktop (angled toward the panels), top on phones.
   wide: { hero: P(0, -0.1, 2.6, 0.82), work: P(0.86, 0.76, 2.6, 0.26, 0.05, -0.35, 0, 0.4, 0.5), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8) },
-  tall: { hero: P(0, -0.04, 2.6, 0.69), work: P(0.72, 0.86, 2.6, 0.2, 0.05, -0.3, 0, 0.4, 0.5), side: P(0, 0.7, 2.4, 0.42, 0.04, 0.3, 0, 0.55, 0.8) },
+  // Short windows (phones in landscape): the card a little higher, under a one-line headline, with room for Get started below.
+  short: { hero: P(0, 0.08, 2.6, 0.82), work: P(0.86, 0.76, 2.6, 0.26, 0.05, -0.3, 0, 0.4, 0.5), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8) },
+  // Phones (portrait, FOV 68°): the card ~74vw wide, centred above the middle so the service grid fits below it.
+  tall: { hero: P(0, 0.16, 2.6, 1.0), work: P(0.72, 0.86, 2.6, 0.23, 0.05, -0.3, 0, 0.4, 0.5), side: P(0, 0.7, 2.4, 0.49, 0.04, 0.3, 0, 0.55, 0.8) },
 };
+
+/** Vertical FOV per window shape: 45° wide; 68° portrait (wider than 60° so more of the Moon's loop crosses the narrow frame; the limb stays in the bottom ~37%). */
+export const fovFor = (w: number, h: number) => (w > h ? 45 : 68);
 
 /** Camera framing: looking slightly up, so the Earth's limb fills the lower ~35–40% of the frame. */
 const BASE = { pos: new THREE.Vector3(0, 0, 0), pitch: BASE_PITCH };
@@ -55,7 +61,7 @@ export function CameraRig() {
   useFrame(({ clock }, dt) => {
     const cam = camera as THREE.PerspectiveCamera;
     const wide = size.width / size.height > 1;
-    const fov = wide ? 45 : 60;
+    const fov = fovFor(size.width, size.height);
     if (cam.fov !== fov) {
       cam.fov = fov;
       cam.updateProjectionMatrix();
@@ -74,7 +80,7 @@ export function CameraRig() {
     cam.updateMatrixWorld();
 
     // ── Card: screen-anchored target pose ──
-    const S = wide ? POSES.wide : POSES.tall;
+    const S = !wide ? POSES.tall : size.height <= 520 ? POSES.short : POSES.wide;
     const halfH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
     cam.matrixWorld.extractBasis(t.right, t.up, t.fwd);
     t.fwd.negate();

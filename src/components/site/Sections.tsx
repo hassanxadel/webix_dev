@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
 import { ArrowRight, Mail, MessageCircle } from "lucide-react";
 import { HERO_GLIDE, PAGE_VH, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
@@ -40,7 +40,7 @@ function Section({ id, children }: { id: SectionId; children: ReactNode }) {
         if (journeyStore.get().showing !== index) travelTo(s.anchor);
       }}
     >
-      <div className="sticky top-0 h-screen overflow-hidden">
+      <div className="sticky top-0 h-svh overflow-hidden">
         <div
           className="section-copy mx-auto flex h-full max-w-[1440px] items-start px-5 pb-6 pt-[34vh] sm:px-8 md:items-center md:py-24 md:pl-[38%] lg:pr-16"
           data-on={showing === index}
@@ -59,15 +59,14 @@ function Label({ id }: { id: SectionId }) {
 
 /* ───────── Hero: the headline (top centre) over the card; W, Menu, wordmark and hint live in Menu.tsx ───────── */
 
-/** A word lettered like the Webix logo (`.logo-type` in styles.css); `ix` = the logo's yellow "ix" colours, `sub` = the small subline style. */
-function LogoWord({ w, variant }: { w: string; variant?: "ix" | "sub" }) {
+/** A word lettered like the Webix logo (`.logo-type` in styles.css); `ix` = the logo's yellow "ix" colours. */
+function LogoWord({ w, variant }: { w: string; variant?: "ix" }) {
   return (
     <span className={variant ? `logo-type logo-type-${variant}` : "logo-type"} data-text={w}>
       {w}
     </span>
   );
 }
-const HERO_SUB = "websites, stores and 3D experiences by webix.";
 
 function Hero() {
   const ready = useJourney((s) => s.sceneReady);
@@ -97,8 +96,8 @@ function Hero() {
 
   return (
     <section id="hero" aria-labelledby="hero-title" className="relative" style={{ height: heightOf("hero") }}>
-      {/* ~15% from the top: clearly below the W and the Menu at every width (they end at ~60 px / ~76 px), even with the tilt. */}
-      <div ref={fade} className="pointer-events-none fixed inset-x-0 top-[max(100px,15vh)] z-30 px-3 sm:px-8 [@media(max-height:620px)]:top-[90px]">
+      {/* Below the W / Menu row (safe-area aware): ~16% from the top on desktop, under the row on phones (.hero-head). */}
+      <div ref={fade} className="hero-head pointer-events-none fixed inset-x-0 z-30 px-3 sm:px-8">
         <div className="hero-headline text-center" data-in={shown}>
           <h1 id="hero-title" className="hero-title">
             <LogoWord w="we" />{" "}
@@ -107,14 +106,6 @@ function Hero() {
             <LogoWord w="into" />{" "}
             <LogoWord w="orbit." variant="ix" />
           </h1>
-          <p className="hero-sub mt-3 sm:mt-4">
-            {HERO_SUB.split(" ").map((w, i) => (
-              <Fragment key={i}>
-                {i > 0 && " "}
-                <LogoWord w={w} variant="sub" />
-              </Fragment>
-            ))}
-          </p>
         </div>
       </div>
       <ServiceDeck />
@@ -129,7 +120,7 @@ function Work() {
   const showing = useJourney((st) => st.showing);
   return (
     <section id="work" tabIndex={-1} aria-labelledby="work-title" className="relative outline-none" style={{ height: heightOf("work") }}>
-      <div className="sticky top-0 h-screen overflow-hidden">
+      <div className="sticky top-0 h-svh overflow-hidden">
         <div className="section-copy relative h-full" data-on={showing === index}>
           <div className="mx-auto max-w-[1440px] px-5 pt-[13vh] sm:px-8">
             <Label id="work" />

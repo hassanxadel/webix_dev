@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { ArrowRight, Box, Globe, Palette, ShoppingBag, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowRight, Box, Globe, Palette, ShoppingBag, Sparkles, X, type LucideIcon } from "lucide-react";
 import { HERO_GLIDE } from "@/config/sections";
 import { SERVICES } from "@/lib/webix-data";
 import { deck } from "@/lib/deck";
@@ -28,6 +28,7 @@ export function ServiceDeck() {
   const button = useRef<HTMLButtonElement>(null);
   const hint = useRef<HTMLParagraphElement>(null);
   const cta = useRef<HTMLAnchorElement>(null);
+  const shut = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const links = useRef<(HTMLAnchorElement | null)[]>([]);
   const closeTimer = useRef(0);
@@ -112,6 +113,11 @@ export function ServiceDeck() {
         c.style.opacity = ctaOn ? "1" : "0";
         c.style.visibility = ctaOn ? "visible" : "hidden";
       }
+      // Touch: a ✕ on the card's top-right corner folds the deck (also: tap outside).
+      if (shut.current) {
+        shut.current.style.transform = `translate3d(${deck.card.x + deck.card.w - 52}px, ${deck.card.y + 8}px, 0)`;
+        shut.current.style.visibility = inHero && deck.open ? "visible" : "hidden";
+      }
       if (h) {
         h.style.transform = `translate3d(${deck.card.x + deck.card.w / 2}px, ${below + (c?.offsetHeight ?? 44) + 12}px, 0) translateX(-50%)`;
         h.style.opacity = inHero && !deck.open ? "1" : "0";
@@ -165,6 +171,11 @@ export function ServiceDeck() {
       >
         Get started <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
       </a>
+      {touch && (
+        <button ref={shut} type="button" aria-label="Fold the services" className="deck-close pointer-events-auto fixed left-0 top-0 z-[32]" onClick={() => setOpen(false)}>
+          <X size={18} strokeWidth={2.6} aria-hidden />
+        </button>
+      )}
       <p ref={hint} aria-hidden className="hud deck-hint pointer-events-none fixed left-0 top-0 z-30">
         {touch ? "tap the pass" : "hover the pass"}
       </p>

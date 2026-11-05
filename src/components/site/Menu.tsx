@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import gsap from "gsap";
-import { MessageCircle, X } from "lucide-react";
+import { X } from "lucide-react";
 import { HERO_GLIDE, type SectionId } from "@/config/sections";
 import { journey, travelTo, travelToSection } from "@/lib/journey";
 import { LoupeToggle } from "./Loupe";
-import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
+import { whatsappLink } from "@/lib/site-config";
 
 const LINKS: { id: SectionId; label: string }[] = [
   { id: "hero", label: "Home" },
@@ -18,22 +18,24 @@ const LINKS: { id: SectionId; label: string }[] = [
 /**
  * Site chrome: the Webix W top-left (back to top) and a "Menu" button
  * top-right (full-screen overlay with the links), on every section. The hero
- * adds a "Scroll down to discover" hint bottom-left and the wordmark
- * bottom-right; both fade out as the card glides away.
+ * adds the magnifier toggle + "Scroll down to discover" hint bottom-left and
+ * the wordmark bottom-right; both fade out as the card glides away. The
+ * WhatsApp button sits bottom-left on every section: in the hero, directly
+ * above the toggle (12 px gap); it drops into the corner once the hint fades.
  */
 export function Menu() {
   const [open, setOpen] = useState(false);
   const heroOnly = useRef<HTMLDivElement>(null);
   const fab = useRef<HTMLAnchorElement>(null);
-  const mark = useRef<HTMLImageElement>(null);
-  const markH = useRef(0);
+  const row = useRef<HTMLSpanElement>(null);
+  const rowH = useRef(0);
 
-  // The wordmark's height, for lifting the WhatsApp button above it in the hero (measured on resize, not per frame).
+  // The toggle + hint row's height, for lifting the WhatsApp button above it in the hero (measured on resize, not per frame).
   useEffect(() => {
-    const img = mark.current;
-    if (!img) return;
-    const ro = new ResizeObserver(() => (markH.current = img.offsetHeight));
-    ro.observe(img);
+    const el = row.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => (rowH.current = el.offsetHeight));
+    ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
@@ -44,7 +46,7 @@ export function Menu() {
       const k = Math.min(1, Math.max(0, (journey.progress - HERO_GLIDE[0] * 0.6) / (HERO_GLIDE[0] * 0.8)));
       el.style.opacity = String(1 - k);
       el.style.visibility = k >= 1 ? "hidden" : "visible";
-      if (fab.current) fab.current.style.transform = `translate3d(0, ${-(1 - k) * (markH.current + 14)}px, 0)`;
+      if (fab.current) fab.current.style.transform = `translate3d(0, ${-(1 - k) * (rowH.current + 12)}px, 0)`;
     };
     gsap.ticker.add(tick);
     return () => gsap.ticker.remove(tick);
@@ -57,7 +59,7 @@ export function Menu() {
 
   return (
     <>
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-40 flex items-start justify-between p-5 sm:p-8">
+      <header className="safe-edges pointer-events-none fixed inset-x-0 top-0 z-40 flex items-start justify-between">
         <a
           href="#hero"
           aria-label="Webix — back to top"
@@ -109,8 +111,8 @@ export function Menu() {
         </Dialog.Root>
       </header>
 
-      <div ref={heroOnly} className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end justify-between p-5 sm:p-8">
-        <span className="flex items-center gap-4">
+      <div ref={heroOnly} className="safe-edges pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end justify-between">
+        <span ref={row} className="flex items-center gap-4">
         <LoupeToggle />
         <span aria-hidden className="hud mb-1 flex items-center gap-3 text-[0.62rem] text-paper/60">
           <span className="relative h-px w-10 overflow-hidden bg-paper/20">
@@ -119,19 +121,12 @@ export function Menu() {
           Scroll down to discover
         </span>
         </span>
-        <img ref={mark} aria-hidden src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[40vw] select-none md:w-[18vw]" />
+        <img aria-hidden src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[32vw] select-none md:w-[11.5vw]" />
       </div>
 
-      {/* Floating WhatsApp: bottom-right, lifted above the wordmark while it shows. */}
-      <a
-        ref={fab}
-        href={whatsappLink()}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Chat with Webix on WhatsApp, ${SITE_CONFIG.handle} (opens in a new tab)`}
-        className="wa-fab fixed bottom-5 right-5 z-30 sm:bottom-8 sm:right-8"
-      >
-        <MessageCircle size={22} strokeWidth={2.4} aria-hidden />
+      {/* WhatsApp: bottom-left, same left edge as the toggle; lifted above it while the hero row shows. */}
+      <a ref={fab} href={whatsappLink()} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" className="wa-fab safe-corner fixed bottom-0 left-0 z-30">
+        <img src="/brand/whatsapp.webp" alt="" width={46} height={46} draggable={false} />
       </a>
     </>
   );

@@ -93,9 +93,10 @@ const earthVertex = /* glsl */ `
  * cloud shell turns 1.2× faster, white by day, faint grey-blue at night.
  */
 export function Earth({ low }: { low: boolean }) {
-  // 2K WebP paints first; then 8K KTX2 on desktop, 4K KTX2 on touch devices (none on the low tier).
+  // 2K WebP paints first; then 8K KTX2 on desktop, 2K only on phones / touch and the low tier.
   const size = matchMedia("(hover: hover) and (pointer: fine)").matches ? "8k" : "4k";
-  const hi = (name: string) => (low ? null : `/space/earth-${name}-${size}.ktx2`);
+  const phone = matchMedia("(max-width: 768px), (pointer: coarse)").matches;
+  const hi = (name: string) => (low || phone ? null : `/space/earth-${name}-${size}.ktx2`);
   const day = useProgressiveTexture("/space/earth-day-2k.webp", hi("day"));
   const night = useProgressiveTexture("/space/earth-night-2k.webp", hi("night"));
   const clouds = useProgressiveTexture("/space/earth-clouds-2k.webp", hi("clouds"), "data");

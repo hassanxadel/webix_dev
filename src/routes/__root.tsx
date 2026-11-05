@@ -72,7 +72,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#070b14" },
       { title: "Webix — Websites, E-commerce & Digital Experiences" },
       { name: "description", content: "Webix designs and builds modern websites, Shopify stores, UI/UX and brand identities for ambitious brands." },

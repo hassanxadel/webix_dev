@@ -73,6 +73,8 @@ export function StarMap({ low }: { low: boolean }) {
             vec3 d = normalize(vDir);
             vec3 navy = mix(uNavyLow, uNavyTop, smoothstep(-0.2, 0.6, d.y));
             vec3 sky = texture2D(uMap, vUv).rgb;
+            // White stars only: keep brightness, drop the texture's star colours (a faint cool white remains).
+            sky = vec3(dot(sky, vec3(0.2126, 0.7152, 0.0722))) * vec3(0.96, 0.975, 1.0);
             vec3 c = navy + max(sky - 0.012, 0.0) * 0.85;
             // Nebula wisps: a faint pink one high on the right (6–10%), cold blue ones elsewhere (~3%).
             float wisp = smoothstep(0.42, 0.85, fbm(d * 3.2 + vec3(4.0, 1.0, 7.0)));
@@ -115,13 +117,13 @@ export function StarMap({ low }: { low: boolean }) {
 }
 
 /**
- * Twinkling stars over the map: one THREE.Points, one draw call. Each star is
+ * Twinkling stars over the map: one THREE.Points, one draw call. All white
+ * (#FFFFFF → #EEF3FF, no visible colour). Each star is
  * a crisp core in a soft halo; the halo grows and shrinks with brightness.
- * Fast shimmer: every star has its own 0.4–0.9 s cycle and phase (never in
- * sync), swinging small and medium stars from 1.0 to ~0.05; bright stars
- * pulse slower. ~2% sparkle now and then (brighter, ×1.5 size); the brightest
- * ~3% carry faint diffraction spikes. Tints: ~5% pink, ~8% warm yellow, the
- * rest white with a slight white / pale blue / warm scintillation.
+ * Calm twinkle: every star has its own 2–5 s cycle and phase (never in
+ * sync; big stars 4–7 s), swinging from 1.0 to ~0.05. ~2% sparkle now and
+ * then (a slow 3 s swell in 9 s slots); the brightest ~3% carry faint
+ * diffraction spikes.
  */
 const vertex = /* glsl */ `
   attribute float aSize;
@@ -141,19 +143,17 @@ const vertex = /* glsl */ `
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     mv.xy += uShift * (0.3 + aTw.z) * -mv.z;
     gl_Position = projectionMatrix * mv;
-    float w = aTw.y * mix(1.0, 0.5, aMag * (1.0 - uBig));                    // bright stars pulse slower
+    float w = aTw.y;                    // bright stars pulse slower
     float s = 0.65 * sin(uTime * w + aTw.x) + 0.35 * sin(uTime * w * 2.37 + aTw.x * 3.1);
     float tw = clamp(0.5 + 0.5 * s, 0.0, 1.0);
     float b = mix(mix(mix(0.05, 0.45, aMag), 0.02, uBig), 1.0, tw * tw);
-    // Sparkle: in random 3 s slots, a chosen star flares for about a second.
-    float slot = floor(uTime / 3.0 + aTw.w * 7.0);
+    // Sparkle: in random 9 s slots, a chosen star swells for about 3 s.
+    float slot = floor(uTime / 9.0 + aTw.w * 7.0);
     float lucky = step(0.6, fract(sin(slot * 12.9898 + aTw.w * 78.233) * 43758.5453)) * aFlags.y;
-    float flare = lucky * sin(clamp(fract(uTime / 3.0 + aTw.w * 7.0) * 3.0, 0.0, 1.0) * 3.14159);
+    float flare = lucky * sin(clamp(fract(uTime / 9.0 + aTw.w * 7.0) * 3.0, 0.0, 1.0) * 3.14159);
     vBright = b * (0.35 + 0.65 * aMag) * 1.7 * (1.0 + 0.9 * flare);
     vScale = (0.55 + 0.45 * b) * (1.0 + 0.5 * flare);          // the halo breathes with brightness
-    float hue = sin(uTime * w * 0.6 + aTw.x * 2.0);
-    vec3 scint = hue > 0.0 ? vec3(0.75, 0.86, 1.0) : vec3(1.0, 0.9, 0.74);
-    vColor = mix(aTint, aTint * scint, abs(hue) * 0.45);
+    vColor = aTint;
     vSpikes = aFlags.x;
     gl_PointSize = aSize * vScale * uDpr;
   }
@@ -185,9 +185,8 @@ function build(count: number) {
   const tw = new Float32Array(count * 4);
   const flags = new Float32Array(count * 2);
   const tint = new Float32Array(count * 3);
-  const pink = new THREE.Color("#ffa3d1");
-  const warm = new THREE.Color("#ffe39a");
   const white = new THREE.Color("#ffffff");
+  const cool = new THREE.Color("#eef3ff");
   const mags = Array.from({ length: count }, () => Math.pow(rnd(), 5));
   const spikeCut = [...mags].sort((a, b) => b - a)[Math.floor(count * 0.03)];
   const radii = [300, 340, 380];
@@ -201,11 +200,10 @@ function build(count: number) {
     mag[i] = m;
     const spikes = m > spikeCut ? 1 : 0;
     size[i] = spikes ? 28 + m * 18 : 6 + m * 18;
-    const period = 0.4 + rnd() * 0.5; // 0.4–0.9 s, per star
+    const period = 2 + rnd() * 3; // 2–5 s, per star
     tw.set([rnd() * Math.PI * 2, (Math.PI * 2) / period, 1 - layer / 2, rnd()], i * 4);
     flags.set([spikes, rnd() < 0.02 ? 1 : 0], i * 2);
-    const c = rnd();
-    tint.set((c < 0.05 ? pink : c < 0.13 ? warm : white).toArray(), i * 3);
+    tint.set(white.clone().lerp(cool, rnd()).toArray(), i * 3);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
@@ -220,7 +218,7 @@ function build(count: number) {
 /**
  * ~32 big, bright stars in clear sky (rejection-sampled in screen space so none
  * land on the headline, the card, the W / Menu / wordmark corners or the Earth):
- * bright core, halo and 4-ray spikes, each with its own 0.4–1.2 s twinkle.
+ * bright core, halo and 4-ray spikes, each with its own 4–7 s twinkle; white only.
  */
 function buildBig(count: number) {
   let seed = 4421;
@@ -233,7 +231,7 @@ function buildBig(count: number) {
     (Math.abs(x) > 0.55 && y < -0.7) || // scroll hint, wordmark
     y < -0.25; // the Earth's limb
   const pos: number[] = [], size: number[] = [], mag: number[] = [], tw: number[] = [], flags: number[] = [], tint: number[] = [];
-  const warm = new THREE.Color("#ffe27a"), pink = new THREE.Color("#ff9fcf"), white = new THREE.Color("#ffffff");
+  const white = new THREE.Color("#ffffff"), cool = new THREE.Color("#eef3ff");
   while (size.length < count) {
     const x = rnd() * 2.6 - 1.3, y = rnd() * 1.3 - 0.25;
     if (blocked(x, y)) continue;
@@ -241,11 +239,10 @@ function buildBig(count: number) {
     pos.push(v.x, v.y, v.z);
     size.push(46 + rnd() * 30);
     mag.push(1);
-    const period = 0.4 + rnd() * 0.8; // 0.4–1.2 s, per star
+    const period = 4 + rnd() * 3; // 4–7 s, per star
     tw.push(rnd() * Math.PI * 2, (Math.PI * 2) / period, 1, rnd());
     flags.push(1, 0);
-    const c = rnd();
-    tint.push(...(c < 0.18 ? pink : c < 0.45 ? warm : white).toArray());
+    tint.push(...white.clone().lerp(cool, rnd()).toArray());
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
@@ -257,11 +254,12 @@ function buildBig(count: number) {
   return g;
 }
 
-export function Stars({ low }: { low: boolean }) {
+/** `few` (phones, weak GPUs): ~40% of the stars. */
+export function Stars({ few }: { few: boolean }) {
   return (
     <>
-      <StarLayer geo={useMemo(() => build(low ? 600 : 1500), [low])} big={0} />
-      <StarLayer geo={useMemo(() => buildBig(low ? 24 : 34), [low])} big={1} />
+      <StarLayer geo={useMemo(() => build(few ? 600 : 1500), [few])} big={0} />
+      <StarLayer geo={useMemo(() => buildBig(few ? 14 : 34), [few])} big={1} />
     </>
   );
 }
@@ -309,7 +307,7 @@ export function ShootingStar() {
           }`,
         fragmentShader: /* glsl */ `
           uniform float uFade; varying float vT;
-          void main() { gl_FragColor = vec4(vec3(1.0, 0.97, 0.92) * vT * vT * uFade, 1.0); }`,
+          void main() { gl_FragColor = vec4(vec3(0.97, 0.98, 1.0) * vT * vT * uFade, 1.0); }`,
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,

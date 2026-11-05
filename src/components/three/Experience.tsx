@@ -60,6 +60,7 @@ function Ready() {
 export default function Experience() {
   const [fonts, setFonts] = useState(false);
   const low = useJourney((s) => s.tier) === "low";
+  const mobile = useJourney((s) => s.mobile);
   const near = useJourney((s) => s.section >= sectionIndex("work"));
   const [badge, setBadge] = useState(false);
   useEffect(() => void (near && setBadge(true)), [near]);
@@ -76,7 +77,7 @@ export default function Experience() {
 
   return (
     <Canvas
-      dpr={[1, 1.75]}
+      dpr={mobile ? [1, 1.5] : [1, 1.75]}
       camera={{ fov: 45, near: 0.05, far: 1000, position: [0, 0, 0] }}
       // ACES + sRGB: the ToneMapping effect applies ACES when post-processing runs; the renderer setting covers the rest.
       gl={{ antialias: !low, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1 }}
@@ -86,10 +87,10 @@ export default function Experience() {
     >
       <PerformanceMonitor onDecline={() => journeyStore.set({ tier: "low" })} />
       <SunLights />
-      <Stars low={low} />
+      <Stars few={low || mobile} />
       <ShootingStar />
       <Suspense fallback={null}>
-        <StarMap low={low} />
+        <StarMap low={low || mobile} />
         <Earth low={low} />
         <Moon low={low} />
       </Suspense>
@@ -104,7 +105,8 @@ export default function Experience() {
         <CameraRig />
         <Ready />
       </Suspense>
-      <LoupeView />
+      {/* Phones: no magnifier at all, so no extra render pass. */}
+      {!mobile && <LoupeView />}
       {badge && (
         <Suspense fallback={null}>
           <Badge />

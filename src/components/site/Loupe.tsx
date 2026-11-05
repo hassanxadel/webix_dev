@@ -9,11 +9,12 @@ import { loupe } from "@/lib/loupe";
 const radius = () => Math.min(120, Math.max(64, Math.min(innerWidth, innerHeight) * 0.11));
 /** Rest position: up and right of the card, on the Moon's path. */
 const rest = () => ({ x: innerWidth * 0.74, y: innerHeight * 0.3 });
-const coarse = () => matchMedia("(pointer: coarse)").matches;
 
 /** The small round toggle next to the hero's scroll hint. */
 export function LoupeToggle() {
   const on = useJourney((s) => s.loupe);
+  // Phones / touch: no magnifier (and no toggle).
+  if (useJourney((s) => s.mobile)) return null;
   return (
     <button
       type="button"
@@ -32,16 +33,16 @@ export function LoupeToggle() {
  * glass that shows the scene ×2.3 (rendered in WebGL by three/LoupeView, not a
  * copy of the DOM). Pick it up and drag it; it stays where you put it, easing
  * behind the pointer (no easing with reduced motion). Arrow keys move it.
- * Coarse pointers: the toggle shows it fixed at its rest position.
+ * Not on phones / touch (no lens, no toggle, no render pass).
  */
 export function Loupe() {
-  const on = useJourney((s) => s.loupe);
+  const on = useJourney((s) => s.loupe && !s.mobile);
   const el = useRef<HTMLDivElement>(null);
   const s = useRef({ x: 0, y: 0, tx: 0, ty: 0, placed: false, grab: null as null | { dx: number; dy: number } }).current;
 
-  // On by default for mouse / pen; off on touch (tap the toggle).
+  // On by default for mouse / pen (phones and touch never get it).
   useEffect(() => {
-    if (!coarse()) journeyStore.set({ loupe: true });
+    if (!matchMedia("(max-width: 768px), (pointer: coarse)").matches) journeyStore.set({ loupe: true });
   }, []);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function Loupe() {
       loupe.visible = !!node && journeyStore.get().loupe && inHero;
       if (!node) return;
       const r = radius();
-      if (!s.placed || coarse()) {
+      if (!s.placed) {
         const p = rest();
         [s.tx, s.ty] = [p.x, p.y];
         if (!s.placed) [s.x, s.y, s.placed] = [p.x, p.y, true];
@@ -88,7 +89,6 @@ export function Loupe() {
       role="application"
       aria-label="Magnifier lens. Drag it, or move it with the arrow keys."
       className="loupe pointer-events-auto fixed left-0 top-0 z-[35]"
-      data-coarse={coarse() || undefined}
       onKeyDown={(e) => {
         const step = e.shiftKey ? 60 : 20;
         const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
@@ -97,7 +97,6 @@ export function Loupe() {
         move(d[0], d[1]);
       }}
       onPointerDown={(e) => {
-        if (coarse()) return;
         e.currentTarget.setPointerCapture(e.pointerId);
         s.grab = { dx: s.tx - e.clientX, dy: s.ty - e.clientY };
         e.currentTarget.dataset.held = "";

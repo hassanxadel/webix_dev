@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { normaliseUVs, roundedRect } from "./cardArt";
 import { BADGE, badgeBack, badgeFront, strap } from "./badgeArt";
 import { BASE_PITCH } from "./Space";
+import { fovFor } from "./CameraRig";
 import { badge } from "@/lib/badge";
 import { sectionIndex } from "@/config/sections";
 import { journeyStore, useJourney } from "@/lib/journey";
@@ -31,7 +32,7 @@ function useLayout() {
   const aspect = Math.round((size.width / size.height) * 20) / 20;
   return useMemo(() => {
     const d = 2.6;
-    const halfH = d * Math.tan(THREE.MathUtils.degToRad((wide ? 45 : 60) / 2));
+    const halfH = d * Math.tan(THREE.MathUtils.degToRad(fovFor(size.width, size.height) / 2));
     const halfW = halfH * aspect;
     const scale = wide ? 1 : 0.62;
     const at = (nx: number, ny: number) => new THREE.Vector3(nx * halfW, ny * halfH, -d).applyAxisAngle(X, BASE_PITCH);
