@@ -1,13 +1,14 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
-import { ArrowRight, ArrowUpRight, Instagram, Mail, MessageCircle } from "lucide-react";
-import { HERO_GLIDE, PAGE_VH, SECTIONS, WORK_WINDOW, sectionIndex, type SectionId } from "@/config/sections";
-import { WORK } from "@/config/projects";
+import { ArrowRight, Instagram, Mail, MessageCircle } from "lucide-react";
+import { HERO_GLIDE, PAGE_VH, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
 import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/lib/journey";
 import { ContactForm } from "./ContactForm";
 import { ServiceDeck } from "./ServiceDeck";
+import { CharacterCarousel } from "@/shaders/character-carousel/CharacterCarousel";
+import "@/shaders/threeui.css";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const heightOf = (id: SectionId) => {
@@ -120,110 +121,27 @@ function Hero() {
   );
 }
 
-/* ───────── Work: one floating panel per project, sliding in as the last slides out ───────── */
-
-function ProjectPanel({ i }: { i: number }) {
-  const w = WORK[i];
-  return (
-    <article className="glass w-full overflow-hidden">
-      <img src={w.image} alt={`Screenshot of the ${w.name} website`} width={1280} height={800} loading={i < 2 ? "eager" : "lazy"} decoding="async" className="aspect-[16/9] w-full object-cover object-top" />
-      <div className="p-5 sm:p-7">
-        <p className="hud flex flex-wrap items-center gap-x-3 gap-y-1 text-paper/55">
-          <span className="text-sun">
-            {pad2(i + 1)} / {pad2(WORK.length)}
-          </span>
-          <span>{w.type}</span>
-        </p>
-        <h3 className="mt-2 font-heading text-2xl font-bold text-paper sm:text-3xl">{w.name}</h3>
-        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-paper/65">{w.description}</p>
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          {w.tech.map((t) => (
-            <span key={t} className="hud rounded-full border border-paper/15 px-2.5 py-1 text-[0.6rem] text-paper/60">
-              {t}
-            </span>
-          ))}
-          <button type="button" className="btn-primary ml-auto !px-5 !py-2.5" onClick={() => journeyStore.set({ openProject: w.index })}>
-            View project <ArrowRight size={15} aria-hidden />
-          </button>
-          <a href={w.url} target="_blank" rel="noopener noreferrer" className="btn-secondary !px-3 !py-2.5" aria-label={`${w.name} live site (opens in a new tab)`}>
-            <ArrowUpRight size={15} aria-hidden />
-          </a>
-        </div>
-      </div>
-    </article>
-  );
-}
+/* ───────── Work: ThreeUI CharacterCarousel (filmstrip) ───────── */
 
 function Work() {
-  const reduced = useJourney((s) => s.reducedMotion);
-  const step = useJourney((s) => s.workStep);
-  const panels = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    if (reduced) return;
-    const [w0, w1] = WORK_WINDOW;
-    const n = WORK.length - 1;
-    const tick = () => {
-      const f = Math.max(-1, Math.min(n, ((journey.progress - w0) / (w1 - w0)) * n));
-      panels.current.forEach((el, i) => {
-        if (!el) return;
-        const d = i - f; // 0 = centred, +1 = waiting on the right, −1 = gone left
-        const o = Math.max(0, 1 - Math.abs(d) * 1.4);
-        el.style.transform = `translate3d(${d * 70}%, 0, 0) scale(${1 - Math.min(1, Math.abs(d)) * 0.06})`;
-        el.style.opacity = String(o);
-        el.style.visibility = o > 0.01 ? "visible" : "hidden";
-      });
-    };
-    gsap.ticker.add(tick);
-    return () => gsap.ticker.remove(tick);
-  }, [reduced]);
-
-  const head = (
-    <h2 id="work-title" className="mt-3 text-3xl text-paper sm:text-4xl">
-      Real brands. <span className="text-sun">Real work.</span>
-    </h2>
-  );
-
-  // Reduced motion: a plain vertical list.
-  if (reduced) {
-    return (
-      <section id="work" tabIndex={-1} aria-labelledby="work-title" className="relative outline-none" style={{ height: heightOf("work") }}>
-        <div className="mx-auto max-w-[1440px] px-5 pb-24 pt-[34vh] sm:px-8 md:pl-[38%] md:pt-28 lg:pr-16">
-          <Label id="work" />
-          {head}
-          <ol className="mt-10 space-y-10">
-            {WORK.map((w, i) => (
-              <li key={w.id}>
-                <ProjectPanel i={i} />
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-    );
-  }
-
+  const index = sectionIndex("work");
+  const showing = useJourney((st) => st.showing);
   return (
-    <Section id="work">
-      <div className="flex w-full max-w-2xl flex-col">
-        <Label id="work" />
-        <div className="hidden md:block">{head}</div>
-        <h2 className="sr-only md:hidden">Real brands. Real work.</h2>
-        <div className="relative mt-6 grid">
-          {WORK.map((w, i) => (
-            <div
-              key={w.id}
-              ref={(el) => void (panels.current[i] = el)}
-              className="col-start-1 row-start-1 will-change-transform"
-              aria-hidden={i !== step || undefined}
-              inert={i !== step || undefined}
-            >
-              <ProjectPanel i={i} />
-            </div>
-          ))}
+    <section id="work" tabIndex={-1} aria-labelledby="work-title" className="relative outline-none" style={{ height: heightOf("work") }}>
+      <div className="sticky top-0 h-screen overflow-hidden">
+        <div className="section-copy relative h-full" data-on={showing === index}>
+          <div className="mx-auto max-w-[1440px] px-5 pt-[13vh] sm:px-8">
+            <Label id="work" />
+            <h2 id="work-title" className="mt-3 text-3xl text-paper sm:text-4xl">
+              Real brands. <span className="text-sun">Real work.</span>
+            </h2>
+          </div>
+          <div className="shader-frame absolute inset-x-0 bottom-[3vh] top-[26vh]">
+            <CharacterCarousel variant="filmstrip" speed={1.0} scale={1.0} opacity={1.0} hue={0} saturation={1.0} brightness={1.0} />
+          </div>
         </div>
       </div>
-    </Section>
+    </section>
   );
 }
 

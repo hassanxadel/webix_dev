@@ -103,24 +103,11 @@ export function useJourneyTracker() {
 
     // One scroll system: Lenis, driven by GSAP's ticker (the same ticker every per-frame DOM writer uses).
     gsap.ticker.lagSmoothing(0);
-    let lastScroll = performance.now();
-    let snapping = false;
     const tick = (seconds: number) => {
       lenis?.raf(seconds * 1000);
       const p = Math.min(1, Math.max(0, window.scrollY / Math.max(1, journeyPx())));
-      if (p !== journey.progress) lastScroll = performance.now();
       journey.progress = p;
       journeyStore.set(derive(p));
-      // Work: once the visitor stops, settle on the nearest project.
-      const [w0, w1] = WORK_WINDOW;
-      if (lenis && !snapping && performance.now() - lastScroll > 140 && p > w0 - 0.004 && p < w1 + 0.004) {
-        const n = PROJECTS.length - 1;
-        const target = w0 + (Math.round(((p - w0) / (w1 - w0)) * n) / n) * (w1 - w0);
-        if (Math.abs(target - p) > 0.0004) {
-          snapping = true;
-          lenis.scrollTo(target * journeyPx(), { duration: 0.6, easing: (t) => 1 - Math.pow(1 - t, 3), onComplete: () => (snapping = false) });
-        }
-      }
     };
     gsap.ticker.add(tick);
 

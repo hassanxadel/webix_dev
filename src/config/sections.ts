@@ -17,10 +17,10 @@ export type Section = {
   anchor: number;
 };
 
-/** Section lengths in viewport heights (Work: one screen per project). */
+/** Section lengths in viewport heights. */
 const VH: [SectionId, string, number][] = [
   ["hero", "Home", 160],
-  ["work", "Work", 640],
+  ["work", "Work", 220],
   ["about", "About", 180],
   ["services", "Services", 180],
   ["process", "Process", 180],
