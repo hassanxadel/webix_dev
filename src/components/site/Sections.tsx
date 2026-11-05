@@ -21,10 +21,11 @@ const heightOf = (id: SectionId) => {
 
 /**
  * One section. Its height is its share of the scroll; the panel sits in a
- * sticky layer opposite the card (right on desktop, below it on phones) and
+ * sticky layer opposite the card (right on desktop — `copy="left"` when the
+ * card is on the right, as in About — below it on phones) and
  * fades in only during the section's content window.
  */
-function Section({ id, children }: { id: SectionId; children: ReactNode }) {
+function Section({ id, children, copy = "right" }: { id: SectionId; children: ReactNode; copy?: "left" | "right" }) {
   const index = sectionIndex(id);
   const s = SECTIONS[index];
   const showing = useJourney((st) => st.showing);
@@ -42,7 +43,7 @@ function Section({ id, children }: { id: SectionId; children: ReactNode }) {
     >
       <div className="sticky top-0 h-svh overflow-hidden">
         <div
-          className="section-copy mx-auto flex h-full max-w-[1440px] items-start px-5 pb-6 pt-[34vh] sm:px-8 md:items-center md:py-24 md:pl-[38%] lg:pr-16"
+          className={`section-copy mx-auto flex h-full max-w-[1440px] items-start px-5 pb-6 pt-[34vh] sm:px-8 md:items-center md:py-24 ${copy === "left" ? "md:pr-[40%] lg:pl-16" : "md:pl-[38%] lg:pr-16"}`}
           data-on={showing === index}
         >
           {/* Phones: the card sits above, so long panels scroll inside the space left below it. */}
@@ -192,7 +193,7 @@ function BadgeHit() {
 
 function About() {
   return (
-    <Section id="about">
+    <Section id="about" copy="left">
       <div className="glass w-full max-w-2xl p-6 sm:p-9">
         <Label id="about" />
         <h2 id="about-title" className="mt-4 text-[2.2rem] leading-[1.05] text-paper sm:text-5xl">

@@ -55,6 +55,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-05 · about · Webix Pass on the right, copy on the left · (this commit)
 - 2026-11-05 · work · 16:9 filmstrip cards, Webix Pass visible top-right · (this commit)
 - 2026-11-05 · hero · white slow stars, WhatsApp bottom-left, no subline, smaller wordmark, mobile hero · (this commit)
 - 2026-11-05 · contact · real email / WhatsApp, floating WhatsApp button · (this commit)
