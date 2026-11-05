@@ -4,7 +4,7 @@ import { SITE_CONFIG } from "@/lib/site-config";
 /**
  * Printed art for the About badge, as canvas textures (crisp at 2048 px):
  * the card face (W + wordmark from the logo files — never set in a font — pass
- * number, CREW PASS line, photo slot, FOUNDER tag, name, title, email, barcode,
+ * number, CREW PASS line, photo, FOUNDER tag, name, title, email, barcode,
  * ADMIT ONE, city), its back, and the lanyard's woven strap.
  */
 export const BADGE = { width: 0.5, height: 0.75 };
@@ -94,7 +94,7 @@ export function badgeFront() {
     x.font = '500 44px "JetBrains Mono", monospace';
     x.fillText("CREW PASS · MISSION 26", L, 460);
 
-    // Photo slot (or a placeholder silhouette).
+    // Photo slot: the cutout cover-fitted (bottom-aligned, so the head sits high), clipped to the slot's corners.
     const px = L, py = 520, pw = 560, ph = 680;
     x.save();
     rounded(x, px, py, pw, ph, 32);
@@ -103,15 +103,7 @@ export function badgeFront() {
     x.fillRect(px, py, pw, ph);
     if (photo) {
       const s = Math.max(pw / photo.width, ph / photo.height);
-      x.drawImage(photo, px + (pw - photo.width * s) / 2, py + (ph - photo.height * s) / 2, photo.width * s, photo.height * s);
-    } else {
-      x.fillStyle = "#24365a";
-      x.beginPath();
-      x.arc(px + pw / 2, py + 270, 120, 0, Math.PI * 2);
-      x.fill();
-      x.beginPath();
-      x.ellipse(px + pw / 2, py + ph + 40, 250, 290, 0, Math.PI, 0);
-      x.fill();
+      x.drawImage(photo, px + (pw - photo.width * s) / 2, py + ph - photo.height * s, photo.width * s, photo.height * s);
     }
     x.restore();
     x.strokeStyle = YELLOW;

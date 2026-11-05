@@ -1,6 +1,8 @@
 # Status
 
 ## Current state
+- About Me (2026-11-05, later): new last section (Menu: after Contact); the badge moved here from About, centred, two straps, photo,
+  opaque lit faces. Box check: badge centred at 31.3vw beside the copy (1920, 1280), 26vw / 69vw above it (1024, 390), photo loaded, no box in Contact / About.
 - Work (2026-11-05, later): filmstrip cards with a 16:9 media area (1280×720 WebP from the top of each site); the Webix Pass top-right,
   fully visible (24.6vw at 16:9, 27vw phones), clear of the Menu, title and the filmstrip's cards (text-only box check).
 - Hero polish (2026-11-05, later): white, slower stars; WhatsApp icon bottom-left above the magnifier toggle; subline removed;
@@ -39,7 +41,7 @@
 - User reviews the hero in the browser; then push.
 
 ## Known issues
-- Badge chunk ~2.3 MB (~860 KB gz; Rapier WASM inlined) — lazy, after Work. Photo: set `SITE_CONFIG.ownerPhoto` once `public/about/me.jpg` exists.
+- Badge chunk ~2.3 MB (~860 KB gz; Rapier WASM inlined) — lazy, once the visitor reaches Contact. About Me bio is a placeholder (TODO).
 - Work filmstrip: wheel over the iframe browses the carousel and does not scroll the page (move the pointer off it, or use keys).
 - Work tags/tech from the old panels are not shown in the filmstrip (name, number, type only).
 - Service timelines are TODO (`TIMELINE_TBD` in `webix-data.ts`); "who it's for" / intro copy written from the existing service text — confirm.
@@ -55,6 +57,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-05 · about me · new last section, two-strap badge, photo, visible lighting · (this commit)
 - 2026-11-05 · about · Webix Pass on the right, copy on the left · (this commit)
 - 2026-11-05 · work · 16:9 filmstrip cards, Webix Pass visible top-right · (this commit)
 - 2026-11-05 · hero · white slow stars, WhatsApp bottom-left, no subline, smaller wordmark, mobile hero · (this commit)

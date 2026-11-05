@@ -147,7 +147,7 @@ function Work() {
   );
 }
 
-/* ───────── About (includes the former hero lines) + the crew-pass badge (three/Badge) ───────── */
+/* ───────── About (includes the former hero lines) ───────── */
 
 /** Grab area over the 3D badge (the canvas takes no pointer events): placed every frame from `badge.box`. */
 function BadgeHit() {
@@ -228,19 +228,6 @@ function About() {
             Explore our work
           </a>
         </div>
-        <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          <li>
-            <a href={`mailto:${SITE_CONFIG.email}`} className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
-              <Mail size={16} className="text-sun" aria-hidden /> {SITE_CONFIG.email}
-            </a>
-          </li>
-          <li>
-            <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
-              <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="hud text-[0.65rem] text-paper/55">{SITE_CONFIG.handle}</span>{" "}
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
-          </li>
-        </ul>
       </div>
     </Section>
   );
@@ -321,6 +308,51 @@ function Results() {
   );
 }
 
+/* ───────── About Me: the founder's crew pass on its lanyard (three/Badge) ───────── */
+
+/**
+ * Last section. The badge hangs centred (3D, in the main canvas); the copy sits
+ * beside it on wide screens (≥ 1200 px, ≥ 3:2) and below it elsewhere.
+ */
+function AboutMe() {
+  const index = sectionIndex("me");
+  const showing = useJourney((st) => st.showing);
+  return (
+    <section id="me" tabIndex={-1} aria-labelledby="me-title" className="relative outline-none" style={{ height: heightOf("me") }}>
+      <div className="sticky top-0 h-svh overflow-hidden">
+        <div className="section-copy relative h-full" data-on={showing === index}>
+          <div className="me-copy">
+            <div className="glass p-6 sm:p-8">
+              <Label id="me" />
+              <h2 id="me-title" className="me-title mt-4">
+                <LogoWord w={SITE_CONFIG.owner.split(" ")[0]} /> <LogoWord w={SITE_CONFIG.owner.split(" ").slice(1).join(" ")} variant="ix" />
+              </h2>
+              <p className="mt-2 font-heading text-lg font-semibold text-sun">{SITE_CONFIG.ownerTitle}</p>
+              {/* TODO: a real bio from the owner; this restates only what the site already says. */}
+              <p className="mt-4 leading-relaxed text-paper/70">
+                I run Webix: we design and build websites, Shopify stores, real-time 3D for the web and brand identities, from {SITE_CONFIG.city}.
+              </p>
+              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                <li>
+                  <a href={`mailto:${SITE_CONFIG.email}`} className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
+                    <Mail size={16} className="text-sun" aria-hidden /> {SITE_CONFIG.email}
+                  </a>
+                </li>
+                <li>
+                  <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
+                    <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="hud text-[0.65rem] text-paper/55">{SITE_CONFIG.handle}</span>{" "}
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ───────── Contact ───────── */
 
 function Contact() {
@@ -361,11 +393,12 @@ export function Sections() {
       <Hero />
       <Work />
       <About />
-      <BadgeHit />
       <Services />
       <Process />
       <Results />
       <Contact />
+      <AboutMe />
+      <BadgeHit />
     </>
   );
 }

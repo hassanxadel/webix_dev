@@ -14,7 +14,7 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 
 ## File map
 - `src/routes/index.tsx` — page composition; `src/routes/__root.tsx` — head, fonts, meta.
-- `src/config/sections.ts` — **single source of truth**: 7 sections (range, content window, anchor), PAGE_VH, HERO_GLIDE.
+- `src/config/sections.ts` — **single source of truth**: 8 sections (range, content window, anchor), PAGE_VH, HERO_GLIDE.
 - `src/config/projects.ts` — Work panel data (derived from webix-data; tech tags = platform only, TODO real stacks).
 - `src/lib/journey.ts` — scroll progress store (`journey` mutable + `journeyStore`), Lenis on gsap.ticker, `lockScroll`, `travelTo*`.
 - `src/lib/webix-data.ts` — projects (6, real screenshots), services (4), process (4), RESULT_STATS (derived, no invented numbers).
@@ -43,9 +43,12 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
   - `LoupeView.tsx` — magnifier: same camera ×2.3 (`MAG`, `src/lib/loupe.ts`) into a square RT, drawn as a screen-space disc (fringe, rim darkening); only while visible, ~30 fps.
   - `WebixPass.tsx` — the card (+ `WInlay` from SVG), `cardState`, and the services deck's 3D half (press tilt; 4 brand-colour slabs
     stacked behind the card; `dealLayout` picks fan / split / grid so nothing overlaps; screen boxes + HTML-face alpha written to `deck`). `src/lib/deck.ts` — the deck's shared state (no three import). `cardArt.ts` — card dims and printed front/back textures.
-  - `Badge.tsx` + `badgeArt.ts` — About: the crew pass on a Rapier lanyard (fixed anchor + 3 rope links + spherical joint, MeshLine strap
-    along a Catmull-Rom; gravity −1.4 + drift force; drag via `src/lib/badge.ts` + the HTML `BadgeHit`; physics paused outside About;
-    reduced motion = still badge, hover tilt). Lazy chunk (Rapier WASM, ~860 KB gz), loaded once the visitor reaches Work.
+  - `Badge.tsx` + `badgeArt.ts` — About Me: the crew pass worn on a two-strap Rapier lanyard (two fixed anchors above the screen, 0.3 of
+    the badge apart; 3 rope links each, collision-filtered; both spherical-jointed to either side of the clip; MeshLine straps along
+    Catmull-Roms with a twist-width; gravity −1.4 + drift; drag via `src/lib/badge.ts` + the HTML `BadgeHit`). Centred; ~31vw beside the
+    copy on wide screens (≥ 1200 px, ≥ 3:2), else above it (≤ 52% of the height; 70vw phones). Opaque printed faces (2048 px print as
+    its own emissive + key + HDRI), clearcoat sleeve. Only in About Me (hidden + physics paused elsewhere); reduced motion = still badge,
+    hover tilt. Photo `public/about/me.webp` (from `src/assets/me.png`, cropped to the subject). Lazy chunk, loaded at Contact.
   - `CameraRig.tsx` — camera framing + idle drift + mouse parallax; the card's single writer (screen-anchored poses, maath damping).
 - `src/styles.css` — tokens + component classes (`.btn-primary`, `.btn-secondary`, `.glass` panel, `.hud`, `.field`, `.space-sky`).
 - Assets: `public/brand/webix-w.svg` (traced W, top-right), `public/brand/webix-wordmark-trim.webp` (hero wordmark, cropped from
@@ -78,6 +81,7 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 | process | Discover → Design → Build → Launch | Glass panel |
 | results | Derived stats; testimonials = dev-only placeholder | Glass panel |
 | contact | "Your stop. Let's build it." + links + form | Glass panels |
+| me | "About Me": name (logo lettering), title, short bio (TODO real bio), email / WhatsApp · the 3D crew-pass badge on a two-strap lanyard | Badge centred; copy beside it (right) on wide screens, below it elsewhere; card in the side pose (desktop) / out of frame (phones) |
 Card path: hero centre → Work top-right (~24vw) → About right side, centred (~31vw; phones: above the copy, ~50vw) → from Services on the left third (desktop) / top (phones), panels opposite.
 
 ## Decisions already made (do not revisit)
@@ -114,7 +118,7 @@ Card path: hero centre → Work top-right (~24vw) → About right side, centred 
 - Zero budget: free/OSS libraries, Google Fonts, CC0 assets only. No invented testimonials or stats.
 - Card draws over everything via a depth-clear mesh (renderOrder 19); card on layer 1.
 - No `anisotropy` on card materials (NaN artefacts).
-- Menu order: Home · Work · Services · About · Contact.
+- Menu order: Home · Work · Services · About · Contact · About Me. Page order: Hero → Work → About → Services → Process → Results → Contact → About Me (last).
 - Work is the ThreeUI CharacterCarousel **filmstrip** (2026-11-05), restyled only via an injected stylesheet + content transforms; its motion,
   rail and input are untouched. Work is 220 vh, no scroll snap. The iframe captures the wheel while the pointer is over it (inherent).
 

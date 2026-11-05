@@ -13,6 +13,7 @@ const LINKS: { id: SectionId; label: string }[] = [
   { id: "services", label: "Services" },
   { id: "about", label: "About" },
   { id: "contact", label: "Contact" },
+  { id: "me", label: "About Me" },
 ];
 
 /**

@@ -11,7 +11,7 @@ import { LoupeView } from "./LoupeView";
 import { journeyStore, useJourney } from "@/lib/journey";
 import { sectionIndex } from "@/config/sections";
 
-/** About's lanyard badge (Rapier + MeshLine): loaded only once the visitor reaches Work. */
+/** About Me's lanyard badge (Rapier + MeshLine): loaded only once the visitor reaches Contact. */
 const Badge = lazy(() => import("./Badge"));
 
 /** Canvas textures use these faces, so wait for them (briefly) before painting. */
@@ -61,7 +61,7 @@ export default function Experience() {
   const [fonts, setFonts] = useState(false);
   const low = useJourney((s) => s.tier) === "low";
   const mobile = useJourney((s) => s.mobile);
-  const near = useJourney((s) => s.section >= sectionIndex("work"));
+  const near = useJourney((s) => s.section >= sectionIndex("contact"));
   const [badge, setBadge] = useState(false);
   useEffect(() => void (near && setBadge(true)), [near]);
 

@@ -4,7 +4,7 @@
  * the menu and the card choreography all read from this file.
  */
 
-export type SectionId = "hero" | "work" | "about" | "services" | "process" | "results" | "contact";
+export type SectionId = "hero" | "work" | "about" | "services" | "process" | "results" | "contact" | "me";
 
 export type Section = {
   id: SectionId;
@@ -26,6 +26,7 @@ const VH: [SectionId, string, number][] = [
   ["process", "Process", 180],
   ["results", "Results", 160],
   ["contact", "Contact", 160],
+  ["me", "About Me", 160],
 ];
 
 /** Total scroll length of the page, in viewport heights. */
@@ -42,7 +43,7 @@ export const SECTIONS: Section[] = VH.map(([id, label, vh], i) => {
 
 const S = (id: SectionId) => SECTIONS.find((s) => s.id === id)!;
 S("hero").anchor = 0;
-S("contact").anchor = 1;
+S("me").anchor = 1;
 
 /** The card glides from the centre to its side over the second half of the hero. */
 export const HERO_GLIDE: [number, number] = [S("hero").range[1] * 0.35, S("hero").range[1]];
