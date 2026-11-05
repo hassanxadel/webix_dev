@@ -47,9 +47,7 @@ S("contact").anchor = 1;
 /** The card glides from the centre to its side over the second half of the hero. */
 export const HERO_GLIDE: [number, number] = [S("hero").range[1] * 0.35, S("hero").range[1]];
 
-/** Work: one snap point per project, from the first panel to the last. */
-export const WORK_WINDOW: [number, number] = [S("work").range[0] + at(40), S("work").range[1] - at(80)];
+/** Work: the filmstrip is on screen for almost the whole section. */
 S("work").content = [S("work").range[0] + at(10), S("work").range[1] - at(30)];
-S("work").anchor = WORK_WINDOW[0];
 
 export const sectionIndex = (id: SectionId) => SECTIONS.findIndex((s) => s.id === id);

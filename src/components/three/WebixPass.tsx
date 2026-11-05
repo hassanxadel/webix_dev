@@ -28,7 +28,6 @@ export const cardState = {
 
 const MAX_TILT = THREE.MathUtils.degToRad(18);
 const EDGE_PINK = new THREE.Color("#ff007f");
-const EDGE_YELLOW = new THREE.Color("#ffda24");
 
 export const CARD_LAYER = 1;
 const { width: W, height: H, thickness: T, radius: R } = CARD;
@@ -136,8 +135,6 @@ export function WebixPass() {
   const flipGroup = useRef<THREE.Group>(null);
   const frontSide = useRef<THREE.Group>(null);
   const backSide = useRef<THREE.Group>(null);
-  const lastWork = useRef(-1);
-  const pulse = useRef(0);
 
   const geo = useMemo(() => {
     const bevel = 0.0025;
@@ -214,7 +211,7 @@ export function WebixPass() {
   useFrame(({ clock, camera, size }, dt) => {
     const g = root.current;
     if (!g || !tiltGroup.current || !flipGroup.current || !pressGroup.current) return;
-    const { reducedMotion, workStep, section } = journeyStore.get();
+    const { reducedMotion, section } = journeyStore.get();
     const t = clock.elapsedTime;
 
     g.position.copy(cardState.position);
@@ -241,15 +238,10 @@ export function WebixPass() {
     if (frontSide.current) frontSide.current.visible = !showingBack;
     if (backSide.current) backSide.current.visible = showingBack;
 
-    // Each project change in Work: a yellow pulse along the edge.
-    const inWork = section === 1;
-    if (inWork && lastWork.current !== -1 && workStep !== lastWork.current && !reducedMotion) pulse.current = 1;
-    lastWork.current = inWork ? workStep : -1;
-    pulse.current = Math.max(0, pulse.current - dt * 1.8);
     // In the hero, a soft pink pulse every ~3 s hints that the card does something.
     const hint = section === 0 && !deck.open ? Math.pow(Math.max(Math.sin((t * Math.PI * 2) / 3), 0), 12) : 0;
-    mats.edge.emissive.copy(EDGE_PINK).lerp(EDGE_YELLOW, pulse.current);
-    mats.edge.emissiveIntensity = 0.4 + pulse.current * 2.4 + hint * 1.4;
+    mats.edge.emissive.copy(EDGE_PINK);
+    mats.edge.emissiveIntensity = 0.4 + hint * 1.4;
 
     // ── Services deck: the card tilts back on hover; the passes deal out of the stack behind it ──
     const kd = 1 - Math.exp(-dt * 10);

@@ -655,3 +655,13 @@
   outline: 2px solid #ffda24;
   outline-offset: 3px;
 }
+
+/* Work: the ThreeUI filmstrip over the scene (site/WorkFilmstrip.tsx); its frame paints #d8c9ad inline, so clear it. */
+.work-film .character-carousel,
+.work-film iframe {
+  background: transparent !important;
+}
+.work-title {
+  font-size: clamp(1.9rem, 4.2vw, 3.2rem);
+  line-height: 1.1;
+}

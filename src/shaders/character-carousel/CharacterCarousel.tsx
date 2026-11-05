@@ -15,6 +15,8 @@ export type CharacterCarouselProps = {
   brightness?: number;
   className?: string;
   style?: CSSProperties;
+  /** Webix host adaptation: a transformed copy of the variant's source document (content + theme). */
+  source?: string;
 };
 
 export const CHARACTER_CAROUSEL_DEFAULTS = {
@@ -36,7 +38,7 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function buildFocusedDocument(variant: CharacterCarouselVariant) {
+function buildFocusedDocument(variant: CharacterCarouselVariant, override?: string) {
   const focusStyles = `<style data-character-carousel-focus>
 :root { --character-carousel-scale: 1; }
 html, body, .stage { width: 100%; height: 100%; margin: 0; overflow: hidden; }
@@ -78,7 +80,7 @@ html, body, .stage { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 })();
 </script>`;
 
-  const focusedSource = SOURCE_BY_VARIANT[variant]
+  const focusedSource = (override ?? SOURCE_BY_VARIANT[variant])
     .replaceAll("performance.now()", "window.__CHARACTER_CAROUSEL_NOW()");
 
   return focusedSource
@@ -96,6 +98,7 @@ export function CharacterCarousel({
   brightness = CHARACTER_CAROUSEL_DEFAULTS.brightness,
   className = "",
   style,
+  source: sourceOverride,
 }: CharacterCarouselProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [hostVisible, setHostVisible] = useState(true);
@@ -103,7 +106,7 @@ export function CharacterCarousel({
   const safeSpeed = clamp(speed, 0, 2.5);
   const safeScale = clamp(scale, 0.7, 1.3);
   const paused = !hostVisible || !documentVisible || safeSpeed === 0;
-  const source = useMemo(() => buildFocusedDocument(variant), [variant]);
+  const source = useMemo(() => buildFocusedDocument(variant, sourceOverride), [variant, sourceOverride]);
 
   const postControls = useCallback(() => {
     iframeRef.current?.contentWindow?.postMessage({

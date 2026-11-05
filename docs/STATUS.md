@@ -1,6 +1,8 @@
 # Status
 
 ## Current state
+- Work (2026-11-05): ThreeUI CharacterCarousel filmstrip, vendored byte-exact (hashes verified), mapped to the 6 projects and restyled
+  to space (transparent, navy frames, yellow/pink, JetBrains Mono); front card → case study; card tucked in the corner.
 - Hero fixes (2026-11-05): sun disc / flare / god rays removed (orange rim + sky glow kept); ~34 big twinkling stars; service deck
   redesigned (brand cards stacked behind the card, fit-to-window layout fan/split/grid, hover forward + dim others), one sub-section
   per service (`#service-<slug>` overlay, FLIP from the card, Get started → contact preset); "Get started" logo pill under the card;
@@ -23,9 +25,10 @@
   942×504, 1262×624, 1422×804, 1902×984 and 390×844 (touch, 2×2 grid); a pass click scrolls to Services. Not checked: how
   anything looks (no screenshots), the animation feel on a real GPU.
 - User reviews the hero in the browser; then push.
-- ThreeUI Work showcase: **blocked** — the bundle lacks `src/shaders/landing-pages/pageTypography.ts` and `pageRecipes.ts` (imported by both components; not public; ThreeUI MCP needs login). Needs the user to supply them (e.g. `docs/vendor/threeui/`). Downloaded bundle hashes: LandingPages.tsx, LandingPageFrame.tsx, threeui.css match; the served HTML (55 KB, media on Supabase) differs from the listed 3.5 MB embedded-media file.
 
 ## Known issues
+- Work filmstrip: wheel over the iframe browses the carousel and does not scroll the page (move the pointer off it, or use keys).
+- Work tags/tech from the old panels are not shown in the filmstrip (name, number, type only).
 - Service timelines are TODO (`TIMELINE_TBD` in `webix-data.ts`); "who it's for" / intro copy written from the existing service text — confirm.
 - Magnifier built from the written spec; the Sketchbook loupe source block was empty in the request.
 - `src/lib/site-config.ts` contact details are placeholders.
@@ -39,6 +42,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-05 · work · ThreeUI filmstrip mapped to projects + space restyle · (this commit)
 - 2026-11-05 · hero · no sun flare, big stars, brand service cards + sub-sections, Get started pill, magnifier · (this commit)
 - 2026-11-01 · hero · round 3: self-hosted logo headline, Egypt day/night Earth (8K KTX2, spin), orange sky, services deck · (this commit)
 - 2026-11-01 · hero · Moon orbit around the camera, night Earth (GEBCO relief, city lights, thin rim + airglow), logo-style headline · (this commit)

@@ -14,12 +14,15 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 
 ## File map
 - `src/routes/index.tsx` — page composition; `src/routes/__root.tsx` — head, fonts, meta.
-- `src/config/sections.ts` — **single source of truth**: 7 sections (range, content window, anchor), PAGE_VH, HERO_GLIDE, WORK_WINDOW.
+- `src/config/sections.ts` — **single source of truth**: 7 sections (range, content window, anchor), PAGE_VH, HERO_GLIDE.
 - `src/config/projects.ts` — Work panel data (derived from webix-data; tech tags = platform only, TODO real stacks).
-- `src/lib/journey.ts` — scroll progress store (`journey` mutable + `journeyStore`), Lenis on gsap.ticker, Work snap per project, `travelTo*`.
+- `src/lib/journey.ts` — scroll progress store (`journey` mutable + `journeyStore`), Lenis on gsap.ticker, `lockScroll`, `travelTo*`.
 - `src/lib/webix-data.ts` — projects (6, real screenshots), services (4), process (4), RESULT_STATS (derived, no invented numbers).
 - `src/lib/site-config.ts` — contact details (**placeholders**: email / WhatsApp / Instagram). `src/lib/inquiry.ts` — form schema + message.
-- `src/components/site/` — HTML layer: `Sections.tsx` (all sections; glass panels), `ServiceDeck.tsx` (the card's services deck: button over
+- `src/shaders/` — **vendored ThreeUI, byte-exact** (SHA-256 checked; `.gitattributes` keeps LF): `character-carousel/CharacterCarousel.tsx`
+  (+ one host prop, `source`), `sources/character-filmstrip.html`, `character-wave.html`, `threeui.css`. Never edit the HTML sources.
+- `src/components/site/` — HTML layer: `WorkFilmstrip.tsx` (Work: string transforms on the filmstrip source — projects ×2 in, square
+  WebP portraits `public/work/film/`, theme CSS, a `webix-project` postMessage on selecting the front card → case study), `Sections.tsx` (all sections; glass panels), `ServiceDeck.tsx` (the card's services deck: button over
   the card, a real link over each pass, hint, Esc / tap-outside / 400 ms fold), `Menu.tsx` (W top-left, Menu button + overlay
   top-right, hero "Scroll down to discover" bottom-left + wordmark bottom-right), `SceneLayer.tsx` (CSS sky + lazy canvas), `Loader`, `ContactForm`, `CaseStudyDialog`.
 - `src/components/three/` — WebGL (lazy chunk):
@@ -64,7 +67,7 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 | id | Content | Layout |
 |----|---------|--------|
 | hero | h1 "we launch brands into orbit." + subline (logo lettering, −5°) · services deck on the card · Get started pill · magnifier | Headline centred ~15% from the top · Moon orbits behind · hovering/tapping the card deals 4 brand service cards (4 across; 2+2 beside the card if narrower; 2×2 grid below on phones) · clicking one opens `#service-<slug>` · "Get started" pill under the card · magnifier lens (toggle next to the scroll hint) · card slightly below centre (~29% width desktop, ~60% phone) · W top-left · Menu top-right · scroll hint bottom-left · wordmark bottom-right |
-| work | 6 projects (image, n/6, type, line, tags, View project → case study, live link) | Panels slide in/out per project, snap; reduced motion = vertical list |
+| work | 6 projects in the ThreeUI filmstrip (screenshot, nn, name, type; select the front card → case study) | Logo-lettered heading top-left · filmstrip 26vh→97vh · card tiny in the top-right corner · sr-only project list |
 | about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work | Glass panel |
 | services | 4 services | Glass panel |
 | process | Discover → Design → Build → Launch | Glass panel |
@@ -101,7 +104,8 @@ During Work the card shrinks into the top-right corner (~35%); from About on it 
 - Card draws over everything via a depth-clear mesh (renderOrder 19); card on layer 1.
 - No `anisotropy` on card materials (NaN artefacts).
 - Menu order: Home · Work · Services · About · Contact.
-- Work will be ThreeUI `BestsellersBookShowcase` (vendored, unmodified first, then restyled) — blocked on missing `pageTypography.ts` / `pageRecipes.ts`.
+- Work is the ThreeUI CharacterCarousel **filmstrip** (2026-11-05), restyled only via an injected stylesheet + content transforms; its motion,
+  rail and input are untouched. Work is 220 vh, no scroll snap. The iframe captures the wheel while the pointer is over it (inherent).
 
 ## Working rules
 1. No screenshots or browser captures. Don't open images unless the user attaches one and asks. The user checks visuals.

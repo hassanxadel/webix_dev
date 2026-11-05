@@ -7,8 +7,8 @@ import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/lib/journey";
 import { ContactForm } from "./ContactForm";
 import { ServiceDeck } from "./ServiceDeck";
-import { CharacterCarousel } from "@/shaders/character-carousel/CharacterCarousel";
-import "@/shaders/threeui.css";
+import { WorkFilmstrip } from "./WorkFilmstrip";
+import { WORK } from "@/config/projects";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const heightOf = (id: SectionId) => {
@@ -132,13 +132,22 @@ function Work() {
         <div className="section-copy relative h-full" data-on={showing === index}>
           <div className="mx-auto max-w-[1440px] px-5 pt-[13vh] sm:px-8">
             <Label id="work" />
-            <h2 id="work-title" className="mt-3 text-3xl text-paper sm:text-4xl">
-              Real brands. <span className="text-sun">Real work.</span>
+            <h2 id="work-title" className="work-title mt-3">
+              <LogoWord w="Real" /> <LogoWord w="brands." /> <LogoWord w="Real" /> <LogoWord w="work." variant="ix" />
             </h2>
+            <p className="hud mt-3 text-paper/55">Move, scroll or use the arrow keys · select the card in front to open it</p>
           </div>
-          <div className="shader-frame absolute inset-x-0 bottom-[3vh] top-[26vh]">
-            <CharacterCarousel variant="filmstrip" speed={1.0} scale={1.0} opacity={1.0} hue={0} saturation={1.0} brightness={1.0} />
-          </div>
+          <WorkFilmstrip />
+          {/* The same projects outside the frame, for assistive tech. */}
+          <ol className="sr-only">
+            {WORK.map((w) => (
+              <li key={w.id}>
+                <button type="button" onClick={() => journeyStore.set({ openProject: w.index })}>
+                  Open {w.name}, {w.type}
+                </button>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </section>

@@ -1,8 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import Lenis from "lenis";
 import gsap from "gsap";
-import { PAGE_VH, SECTIONS, WORK_WINDOW, type SectionId } from "@/config/sections";
-import { PROJECTS } from "./webix-data";
+import { PAGE_VH, SECTIONS, type SectionId } from "@/config/sections";
 
 /**
  * Journey state, in two layers:
@@ -22,7 +21,6 @@ type JourneyState = {
   section: number;
   /** Section whose panel is currently on screen, or −1 between sections. */
   showing: number;
-  workStep: number;
   openProject: number | null;
   /** Service sub-section on screen (index into SERVICES), or null. */
   openService: number | null;
@@ -40,7 +38,6 @@ type JourneyState = {
 let state: JourneyState = {
   section: 0,
   showing: 0,
-  workStep: 0,
   openProject: null,
   openService: null,
   servicePreset: null,
@@ -83,10 +80,7 @@ function derive(p: number): Partial<JourneyState> {
     if (p >= s.range[0]) section = i;
   });
   const showing = SECTIONS.findIndex((s) => p >= s.content[0] && p <= s.content[1]);
-  const [w0, w1] = WORK_WINDOW;
-  // Nearest project (matches the snap points).
-  const workStep = Math.min(PROJECTS.length - 1, Math.max(0, Math.round(((p - w0) / (w1 - w0)) * (PROJECTS.length - 1))));
-  return { section, showing, workStep };
+  return { section, showing };
 }
 
 let lenis: Lenis | null = null;
