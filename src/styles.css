@@ -675,3 +675,37 @@
 .badge-hit:active {
   cursor: grabbing;
 }
+
+/* Floating WhatsApp (Menu.tsx): a round logo-style button — yellow face, indigo icon, dark outline, red extruded edge. */
+.wa-fab {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 3px solid #0b0f1a;
+  border-radius: 50%;
+  background: #ffda24;
+  color: #1a253a;
+  box-shadow:
+    0 4px 0 0 #e81a2e,
+    0 4px 0 3px #0b0f1a;
+  transition:
+    translate 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.wa-fab:hover {
+  translate: 0 -3px;
+  box-shadow:
+    0 7px 0 0 #c4121f,
+    0 7px 0 3px #0b0f1a;
+}
+.wa-fab:active {
+  translate: 0 3px;
+  box-shadow:
+    0 1px 0 0 #c4121f,
+    0 1px 0 3px #0b0f1a;
+}
+.wa-fab:focus-visible {
+  outline: 2px solid #f4f1ea;
+  outline-offset: 5px;
+}

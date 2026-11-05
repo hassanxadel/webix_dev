@@ -18,7 +18,8 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 - `src/config/projects.ts` — Work panel data (derived from webix-data; tech tags = platform only, TODO real stacks).
 - `src/lib/journey.ts` — scroll progress store (`journey` mutable + `journeyStore`), Lenis on gsap.ticker, `lockScroll`, `travelTo*`.
 - `src/lib/webix-data.ts` — projects (6, real screenshots), services (4), process (4), RESULT_STATS (derived, no invented numbers).
-- `src/lib/site-config.ts` — contact details (**placeholders**: email / WhatsApp / Instagram). `src/lib/inquiry.ts` — form schema + message.
+- `src/lib/site-config.ts` — real contact details (single source): email hassanadelh@outlook.com, WhatsApp +966 59 797 6116
+  (`wa.me/966597976116`), handle @webix_dev, owner name/title (TODO confirm), badge photo, city. No Instagram (none given). `src/lib/inquiry.ts` — form schema + message.
 - `src/shaders/` — **vendored ThreeUI, byte-exact** (SHA-256 checked; `.gitattributes` keeps LF): `character-carousel/CharacterCarousel.tsx`
   (+ one host prop, `source`), `sources/character-filmstrip.html`, `character-wave.html`, `threeui.css`. Never edit the HTML sources.
 - `src/components/site/` — HTML layer: `WorkFilmstrip.tsx` (Work: string transforms on the filmstrip source — projects ×2 in, square

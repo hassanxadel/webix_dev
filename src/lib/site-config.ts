@@ -1,6 +1,6 @@
 /**
- * Contact details used by the inquiry form, footer and contact section.
- * Replace these placeholders with Webix's real details before launch.
+ * Webix's contact details: the inquiry form, Contact and About sections, the
+ * ID badge, the floating WhatsApp button and every Get started CTA read them here.
  */
 export const SITE_CONFIG = {
   brand: "Webix",
@@ -10,11 +10,12 @@ export const SITE_CONFIG = {
   /** Badge photo (About). null = placeholder silhouette; set to e.g. "/about/me.jpg" once the photo is in public/about/. */
   ownerPhoto: null as string | null,
   city: "Cairo, EG",
-  email: "hello@example.com",
+  email: "hassanadelh@outlook.com",
   /** International format, digits only (no +, spaces or leading zeros), e.g. "201001234567". */
-  whatsapp: "200000000000",
-  instagram: "https://www.instagram.com/",
-  instagramHandle: "@webix",
+  whatsapp: "966597976116",
+  /** Shown as written next to WhatsApp. */
+  whatsappDisplay: "+966 59 797 6116",
+  handle: "@webix_dev",
 } as const;
 
 export const whatsappLink = (text?: string) =>

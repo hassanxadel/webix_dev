@@ -1,6 +1,8 @@
 # Status
 
 ## Current state
+- Contact (2026-11-05): real email + WhatsApp (+ @webix_dev) everywhere via `SITE_CONFIG`; floating WhatsApp button bottom-right
+  (lifted above the wordmark in the hero); Instagram placeholder removed.
 - About (2026-11-05): founder's crew pass on a Rapier lanyard in the main canvas (one canvas rule kept), drag via an HTML hit area,
   physics paused off-screen, still badge under reduced motion. Name/title from `SITE_CONFIG.owner*` (TODO confirm); photo placeholder.
 - Headless CDP check (no screenshots, 2026-11-05): no console errors at 1920×1080 / 1024×768 / 390×844; deck = fan / split / grid,
@@ -37,7 +39,7 @@
 - Work tags/tech from the old panels are not shown in the filmstrip (name, number, type only).
 - Service timelines are TODO (`TIMELINE_TBD` in `webix-data.ts`); "who it's for" / intro copy written from the existing service text — confirm.
 - Magnifier built from the written spec; the Sketchbook loupe source block was empty in the request.
-- `src/lib/site-config.ts` contact details are placeholders.
+- Name / title on the badge are the brief's "[CONFIRM]" values; no Instagram account given (link removed); no footer yet.
 - Work tech tags show only the platform — TODO real stacks in `src/config/projects.ts`.
 - Contact copy still says "Your stop." / "…make a train station feel real…" — kept as content; replace if the user wants new lines.
 - Card back print (never shown now) still exists in `cardArt.ts`.
@@ -48,6 +50,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-05 · contact · real email / WhatsApp, floating WhatsApp button · (this commit)
 - 2026-11-05 · about · Rapier lanyard ID badge, About links · (this commit)
 - 2026-11-05 · work · ThreeUI filmstrip mapped to projects + space restyle · (this commit)
 - 2026-11-05 · hero · no sun flare, big stars, brand service cards + sub-sections, Get started pill, magnifier · (this commit)

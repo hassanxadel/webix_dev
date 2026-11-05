@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import gsap from "gsap";
-import { X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { HERO_GLIDE, type SectionId } from "@/config/sections";
 import { journey, travelTo, travelToSection } from "@/lib/journey";
 import { LoupeToggle } from "./Loupe";
+import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 
 const LINKS: { id: SectionId; label: string }[] = [
   { id: "hero", label: "Home" },
@@ -23,6 +24,18 @@ const LINKS: { id: SectionId; label: string }[] = [
 export function Menu() {
   const [open, setOpen] = useState(false);
   const heroOnly = useRef<HTMLDivElement>(null);
+  const fab = useRef<HTMLAnchorElement>(null);
+  const mark = useRef<HTMLImageElement>(null);
+  const markH = useRef(0);
+
+  // The wordmark's height, for lifting the WhatsApp button above it in the hero (measured on resize, not per frame).
+  useEffect(() => {
+    const img = mark.current;
+    if (!img) return;
+    const ro = new ResizeObserver(() => (markH.current = img.offsetHeight));
+    ro.observe(img);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const tick = () => {
@@ -31,6 +44,7 @@ export function Menu() {
       const k = Math.min(1, Math.max(0, (journey.progress - HERO_GLIDE[0] * 0.6) / (HERO_GLIDE[0] * 0.8)));
       el.style.opacity = String(1 - k);
       el.style.visibility = k >= 1 ? "hidden" : "visible";
+      if (fab.current) fab.current.style.transform = `translate3d(0, ${-(1 - k) * (markH.current + 14)}px, 0)`;
     };
     gsap.ticker.add(tick);
     return () => gsap.ticker.remove(tick);
@@ -105,8 +119,20 @@ export function Menu() {
           Scroll down to discover
         </span>
         </span>
-        <img aria-hidden src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[40vw] select-none md:w-[18vw]" />
+        <img ref={mark} aria-hidden src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[40vw] select-none md:w-[18vw]" />
       </div>
+
+      {/* Floating WhatsApp: bottom-right, lifted above the wordmark while it shows. */}
+      <a
+        ref={fab}
+        href={whatsappLink()}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Chat with Webix on WhatsApp, ${SITE_CONFIG.handle} (opens in a new tab)`}
+        className="wa-fab fixed bottom-5 right-5 z-30 sm:bottom-8 sm:right-8"
+      >
+        <MessageCircle size={22} strokeWidth={2.4} aria-hidden />
+      </a>
     </>
   );
 }

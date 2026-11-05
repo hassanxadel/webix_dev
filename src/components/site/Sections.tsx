@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
-import { ArrowRight, Instagram, Mail, MessageCircle } from "lucide-react";
+import { ArrowRight, Mail, MessageCircle } from "lucide-react";
 import { HERO_GLIDE, PAGE_VH, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
 import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
@@ -244,7 +244,8 @@ function About() {
           </li>
           <li>
             <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
-              <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="sr-only">(opens in a new tab)</span>
+              <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="hud text-[0.65rem] text-paper/55">{SITE_CONFIG.handle}</span>{" "}
+              <span className="sr-only">(opens in a new tab)</span>
             </a>
           </li>
         </ul>
@@ -343,17 +344,13 @@ function Contact() {
           <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <li>
               <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
-                <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="sr-only">(opens in a new tab)</span>
+                <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp {SITE_CONFIG.whatsappDisplay}{" "}
+                <span className="hud text-[0.65rem] text-paper/55">{SITE_CONFIG.handle}</span> <span className="sr-only">(opens in a new tab)</span>
               </a>
             </li>
             <li>
               <a href={`mailto:${SITE_CONFIG.email}`} className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
                 <Mail size={16} className="text-sun" aria-hidden /> {SITE_CONFIG.email}
-              </a>
-            </li>
-            <li>
-              <a href={SITE_CONFIG.instagram} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
-                <Instagram size={16} className="text-sun" aria-hidden /> {SITE_CONFIG.instagramHandle} <span className="sr-only">(opens in a new tab)</span>
               </a>
             </li>
           </ul>
