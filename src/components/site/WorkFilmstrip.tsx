@@ -9,7 +9,7 @@ import "@/shaders/threeui.css";
  * Work: the ThreeUI CharacterCarousel (filmstrip), mapped to Webix projects and
  * restyled to the space theme. The vendored source stays byte-exact; this file
  * applies checked string transforms at the host boundary: projects in place of
- * the profiles (portrait = project screenshot, square WebP; footer = number,
+ * the profiles (media = project screenshot, 16:9 WebP; footer = number,
  * name, type), the embedded JPEGs dropped, a theme stylesheet added (transparent
  * stage, navy frames, warm-white text, yellow / pink accents, JetBrains Mono,
  * faint grain), and one message out: clicking the card already in front asks the
@@ -45,6 +45,12 @@ html, body { background: transparent !important; }
   background: repeating-radial-gradient(circle at 12% 18%, rgba(244, 241, 234, 0.14) 0 0.5px, transparent 0.7px 4px);
 }
 .stage::after { background: none; }
+/* 16:9 media: a wider, landscape card (only its size changes; the rail, spacing and motion are the source's). */
+.card { width: clamp(190px, 19vw, 290px); aspect-ratio: 1.24; }
+.portrait { inset: 7px 7px auto 7px; aspect-ratio: 16 / 9; }
+/* Footer: the space under the media (card height − 3 gaps − (124% of the height − 14px) × 9/16). */
+.footer { top: calc(69.75% + 6.125px); height: auto; }
+@media (max-width: 650px) { .card { width: clamp(200px, 62vw, 260px); } }
 .card {
   border-color: rgba(255, 218, 36, 0.32);
   border-radius: 8px;
@@ -58,6 +64,7 @@ html, body { background: transparent !important; }
 .card:focus-visible { box-shadow: 0 26px 50px rgba(2, 5, 14, 0.6), 0 0 0 3px #ffda24; }
 .portrait { background: #0a1430; }
 .portrait img {
+  object-fit: cover;
   object-position: 50% 0;
   filter: saturate(calc(0.55 + var(--focus) * 0.45)) brightness(calc(0.7 + var(--focus) * 0.3)) contrast(1.04);
 }
@@ -77,7 +84,7 @@ function swap(html: string, from: string | RegExp, to: string) {
 let doc = filmstrip;
 doc = swap(doc, /\n      const portraits = \{[\s\S]*?\n      \};\n/, "\n");
 doc = swap(doc, /const profiles = \[[\s\S]*?\]\.map\(\(\[name, role, portrait\]\) => \(\{ name, role, portrait \}\)\);/, `const profiles = ${JSON.stringify(CARDS)};`);
-doc = swap(doc, '<img src="${portraits[profile.portrait]}" alt="Generated portrait of ${profile.name}">', '<img src="${profile.image}" alt="Screenshot of the ${profile.name} website" width="640" height="640" decoding="async">');
+doc = swap(doc, '<img src="${portraits[profile.portrait]}" alt="Generated portrait of ${profile.name}">', '<img src="${profile.image}" alt="Screenshot of the ${profile.name} website" width="1280" height="720" decoding="async">');
 doc = swap(doc, '<span class="index">${String(index + 1).padStart(2, "0")}</span>', '<span class="index">${profile.no}</span>');
 doc = swap(doc, 'card.setAttribute("aria-label", `Focus ${profile.name}, ${profile.role}`);', 'card.setAttribute("aria-label", `${profile.no} ${profile.name}, ${profile.role}. Select again to open the project.`);');
 doc = swap(

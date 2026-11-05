@@ -23,7 +23,7 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 - `src/shaders/` — **vendored ThreeUI, byte-exact** (SHA-256 checked; `.gitattributes` keeps LF): `character-carousel/CharacterCarousel.tsx`
   (+ one host prop, `source`), `sources/character-filmstrip.html`, `character-wave.html`, `threeui.css`. Never edit the HTML sources.
 - `src/components/site/` — HTML layer: `WorkFilmstrip.tsx` (Work: string transforms on the filmstrip source — projects ×2 in, square
-  WebP portraits `public/work/film/`, theme CSS, a `webix-project` postMessage on selecting the front card → case study), `Sections.tsx` (all sections; glass panels), `ServiceDeck.tsx` (the card's services deck: button over
+  WebP 16:9 screenshots `public/work/film/` (1280×720, top of the site), cards widened to clamp(190px,19vw,290px) with a 16:9 media area, theme CSS, a `webix-project` postMessage on selecting the front card → case study), `Sections.tsx` (all sections; glass panels), `ServiceDeck.tsx` (the card's services deck: button over
   the card, a real link over each pass, hint, Esc / tap-outside / 400 ms fold), `Menu.tsx` (W top-left, Menu button + overlay
   top-right, hero "Scroll down to discover" bottom-left + wordmark bottom-right), `SceneLayer.tsx` (CSS sky + lazy canvas), `Loader`, `ContactForm`, `CaseStudyDialog`.
 - `src/components/three/` — WebGL (lazy chunk):
@@ -72,13 +72,13 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 | id | Content | Layout |
 |----|---------|--------|
 | hero | h1 "we launch brands into orbit." (logo lettering, −5°; no subline) · services deck on the card · Get started pill · magnifier (desktop only) | Headline centred ~15% from the top · Moon orbits behind · hovering/tapping the card deals 4 brand service cards (4 across; 2+2 beside the card if narrower; 2×2 grid below on phones) · clicking one opens `#service-<slug>` · "Get started" pill under the card · magnifier lens (toggle next to the scroll hint; not on phones / touch) · card slightly below centre (~29% width desktop, ~74vw phone, FOV 68° portrait) · W top-left · Menu top-right · WhatsApp + toggle + scroll hint bottom-left · wordmark bottom-right (11.5vw / 32vw) · touch: ✕ on the card folds the deck · safe-area insets (`.safe-edges`) |
-| work | 6 projects in the ThreeUI filmstrip (screenshot, nn, name, type; select the front card → case study) | Logo-lettered heading top-left · filmstrip 26vh→97vh · card tiny in the top-right corner · sr-only project list |
+| work | 6 projects in the ThreeUI filmstrip (16:9 screenshot, nn, name, type; select the front card → case study) | Logo-lettered heading top-left · filmstrip 26vh→97vh · card top-right, fully visible (~24vw desktop, ~27vw phones), above the filmstrip's cards · sr-only project list |
 | about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work + email / WhatsApp · 3D ID badge on a lanyard | Badge left third (desktop) / top centre (phones), glass panel opposite; card stays in the top-right corner |
 | services | 4 services | Glass panel |
 | process | Discover → Design → Build → Launch | Glass panel |
 | results | Derived stats; testimonials = dev-only placeholder | Glass panel |
 | contact | "Your stop. Let's build it." + links + form | Glass panels |
-During Work and About the card is tiny in the top-right corner; from Services on it sits in the left third (desktop) / top (phones), panels opposite.
+Card path: hero centre → Work top-right (~24vw) → About right side, centred (~31vw; phones: above the copy, ~50vw) → from Services on the left third (desktop) / top (phones), panels opposite.
 
 ## Decisions already made (do not revisit)
 - Theme: photoreal space from real imagery (NASA Blue/Black Marble, CGI Moon Kit, Deep Star Maps, 3D Resources). No procedural stand-ins, clay objects or cartoon sprites. The train theme is gone; don't bring back stations, signage, HUD or Japanese labels.

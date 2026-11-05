@@ -1,6 +1,8 @@
 # Status
 
 ## Current state
+- Work (2026-11-05, later): filmstrip cards with a 16:9 media area (1280×720 WebP from the top of each site); the Webix Pass top-right,
+  fully visible (24.6vw at 16:9, 27vw phones), clear of the Menu, title and the filmstrip's cards (text-only box check).
 - Hero polish (2026-11-05, later): white, slower stars; WhatsApp icon bottom-left above the magnifier toggle; subline removed;
   wordmark −36%; phones: 74vw card, FOV 68°, grid deal + ✕, no magnifier, DPR ≤ 1.5, fewer stars, 2K textures; safe-area insets.
   Overlap check (text only): no overlaps at 360/390/430 portrait, 780/844/932 landscape, 1280/1440/1920 (W, Menu, headline, card, Get started, WhatsApp, toggle, hint, wordmark; dealt passes 124–307 px, none clipped)
@@ -53,6 +55,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-05 · work · 16:9 filmstrip cards, Webix Pass visible top-right · (this commit)
 - 2026-11-05 · hero · white slow stars, WhatsApp bottom-left, no subline, smaller wordmark, mobile hero · (this commit)
 - 2026-11-05 · contact · real email / WhatsApp, floating WhatsApp button · (this commit)
 - 2026-11-05 · about · Rapier lanyard ID badge, About links · (this commit)
