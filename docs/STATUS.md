@@ -1,6 +1,11 @@
 # Status
 
 ## Current state
+- About (2026-11-05): founder's crew pass on a Rapier lanyard in the main canvas (one canvas rule kept), drag via an HTML hit area,
+  physics paused off-screen, still badge under reduced motion. Name/title from `SITE_CONFIG.owner*` (TODO confirm); photo placeholder.
+- Headless CDP check (no screenshots, 2026-11-05): no console errors at 1920×1080 / 1024×768 / 390×844; deck = fan / split / grid,
+  no overlaps, clear of the card, on screen; badge box left third (desktop) / top centre (phone). Not verified: badge sway physics
+  (the software GPU stalls frames), any visual look.
 - Work (2026-11-05): ThreeUI CharacterCarousel filmstrip, vendored byte-exact (hashes verified), mapped to the 6 projects and restyled
   to space (transparent, navy frames, yellow/pink, JetBrains Mono); front card → case study; card tucked in the corner.
 - Hero fixes (2026-11-05): sun disc / flare / god rays removed (orange rim + sky glow kept); ~34 big twinkling stars; service deck
@@ -27,6 +32,7 @@
 - User reviews the hero in the browser; then push.
 
 ## Known issues
+- Badge chunk ~2.3 MB (~860 KB gz; Rapier WASM inlined) — lazy, after Work. Photo: set `SITE_CONFIG.ownerPhoto` once `public/about/me.jpg` exists.
 - Work filmstrip: wheel over the iframe browses the carousel and does not scroll the page (move the pointer off it, or use keys).
 - Work tags/tech from the old panels are not shown in the filmstrip (name, number, type only).
 - Service timelines are TODO (`TIMELINE_TBD` in `webix-data.ts`); "who it's for" / intro copy written from the existing service text — confirm.
@@ -42,6 +48,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-05 · about · Rapier lanyard ID badge, About links · (this commit)
 - 2026-11-05 · work · ThreeUI filmstrip mapped to projects + space restyle · (this commit)
 - 2026-11-05 · hero · no sun flare, big stars, brand service cards + sub-sections, Get started pill, magnifier · (this commit)
 - 2026-11-01 · hero · round 3: self-hosted logo headline, Egypt day/night Earth (8K KTX2, spin), orange sky, services deck · (this commit)

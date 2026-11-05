@@ -5,6 +5,7 @@ import { HERO_GLIDE, PAGE_VH, SECTIONS, sectionIndex, type SectionId } from "@/c
 import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/lib/journey";
+import { badge } from "@/lib/badge";
 import { ContactForm } from "./ContactForm";
 import { ServiceDeck } from "./ServiceDeck";
 import { WorkFilmstrip } from "./WorkFilmstrip";
@@ -154,7 +155,49 @@ function Work() {
   );
 }
 
-/* ───────── About (includes the former hero lines) ───────── */
+/* ───────── About (includes the former hero lines) + the crew-pass badge (three/Badge) ───────── */
+
+/** Grab area over the 3D badge (the canvas takes no pointer events): placed every frame from `badge.box`. */
+function BadgeHit() {
+  const el = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const tick = () => {
+      const d = el.current;
+      if (!d) return;
+      const b = badge.box;
+      d.style.visibility = b.w > 1 ? "visible" : "hidden";
+      d.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
+      d.style.width = `${b.w}px`;
+      d.style.height = `${b.h}px`;
+    };
+    gsap.ticker.add(tick);
+    return () => gsap.ticker.remove(tick);
+  }, []);
+  const point = (e: React.PointerEvent) => Object.assign(badge.pointer, { x: (e.clientX / innerWidth) * 2 - 1, y: 1 - (e.clientY / innerHeight) * 2 });
+  return (
+    <div
+      ref={el}
+      aria-hidden
+      className="badge-hit pointer-events-auto fixed left-0 top-0 z-20"
+      onPointerEnter={(e) => {
+        point(e);
+        badge.hover = true;
+      }}
+      onPointerLeave={() => !badge.held && (badge.hover = false)}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        point(e);
+        badge.held = true;
+      }}
+      onPointerMove={point}
+      onPointerUp={() => {
+        badge.held = false;
+        badge.hover = false;
+      }}
+      onPointerCancel={() => (badge.held = badge.hover = false)}
+    />
+  );
+}
 
 function About() {
   return (
@@ -193,6 +236,18 @@ function About() {
             Explore our work
           </a>
         </div>
+        <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <li>
+            <a href={`mailto:${SITE_CONFIG.email}`} className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
+              <Mail size={16} className="text-sun" aria-hidden /> {SITE_CONFIG.email}
+            </a>
+          </li>
+          <li>
+            <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
+              <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="sr-only">(opens in a new tab)</span>
+            </a>
+          </li>
+        </ul>
       </div>
     </Section>
   );
@@ -317,6 +372,7 @@ export function Sections() {
       <Hero />
       <Work />
       <About />
+      <BadgeHit />
       <Services />
       <Process />
       <Results />

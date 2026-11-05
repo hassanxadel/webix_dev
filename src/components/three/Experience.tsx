@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
 import * as THREE from "three";
@@ -9,12 +9,16 @@ import { Earth, Hubble, Moon, SunLights } from "./Space";
 import { Effects } from "./Effects";
 import { LoupeView } from "./LoupeView";
 import { journeyStore, useJourney } from "@/lib/journey";
+import { sectionIndex } from "@/config/sections";
+
+/** About's lanyard badge (Rapier + MeshLine): loaded only once the visitor reaches Work. */
+const Badge = lazy(() => import("./Badge"));
 
 /** Canvas textures use these faces, so wait for them (briefly) before painting. */
 async function loadFonts() {
   if (!document.fonts) return;
   await Promise.race([
-    Promise.all([document.fonts.load('500 64px "JetBrains Mono"'), document.fonts.load('600 64px "Poppins"'), document.fonts.load('700 64px "Poppins"'), document.fonts.load('400 64px "Inter"')]),
+    Promise.all([document.fonts.load('500 64px "JetBrains Mono"'), document.fonts.load('600 64px "Poppins"'), document.fonts.load('700 64px "Poppins"'), document.fonts.load('400 64px "Inter"'), document.fonts.load('400 64px "Lilita One"')]),
     new Promise((r) => setTimeout(r, 2500)),
   ]);
 }
@@ -56,6 +60,9 @@ function Ready() {
 export default function Experience() {
   const [fonts, setFonts] = useState(false);
   const low = useJourney((s) => s.tier) === "low";
+  const near = useJourney((s) => s.section >= sectionIndex("work"));
+  const [badge, setBadge] = useState(false);
+  useEffect(() => void (near && setBadge(true)), [near]);
 
   useEffect(() => {
     let alive = true;
@@ -98,6 +105,11 @@ export default function Experience() {
         <Ready />
       </Suspense>
       <LoupeView />
+      {badge && (
+        <Suspense fallback={null}>
+          <Badge />
+        </Suspense>
+      )}
       <Effects lite={low} />
     </Canvas>
   );

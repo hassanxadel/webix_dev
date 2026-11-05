@@ -42,6 +42,9 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
   - `LoupeView.tsx` — magnifier: same camera ×2.3 (`MAG`, `src/lib/loupe.ts`) into a square RT, drawn as a screen-space disc (fringe, rim darkening); only while visible, ~30 fps.
   - `WebixPass.tsx` — the card (+ `WInlay` from SVG), `cardState`, and the services deck's 3D half (press tilt; 4 brand-colour slabs
     stacked behind the card; `dealLayout` picks fan / split / grid so nothing overlaps; screen boxes + HTML-face alpha written to `deck`). `src/lib/deck.ts` — the deck's shared state (no three import). `cardArt.ts` — card dims and printed front/back textures.
+  - `Badge.tsx` + `badgeArt.ts` — About: the crew pass on a Rapier lanyard (fixed anchor + 3 rope links + spherical joint, MeshLine strap
+    along a Catmull-Rom; gravity −1.4 + drift force; drag via `src/lib/badge.ts` + the HTML `BadgeHit`; physics paused outside About;
+    reduced motion = still badge, hover tilt). Lazy chunk (Rapier WASM, ~860 KB gz), loaded once the visitor reaches Work.
   - `CameraRig.tsx` — camera framing + idle drift + mouse parallax; the card's single writer (screen-anchored poses, maath damping).
 - `src/styles.css` — tokens + component classes (`.btn-primary`, `.btn-secondary`, `.glass` panel, `.hud`, `.field`, `.space-sky`).
 - Assets: `public/brand/webix-w.svg` (traced W, top-right), `public/brand/webix-wordmark-trim.webp` (hero wordmark, cropped from
@@ -68,12 +71,12 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 |----|---------|--------|
 | hero | h1 "we launch brands into orbit." + subline (logo lettering, −5°) · services deck on the card · Get started pill · magnifier | Headline centred ~15% from the top · Moon orbits behind · hovering/tapping the card deals 4 brand service cards (4 across; 2+2 beside the card if narrower; 2×2 grid below on phones) · clicking one opens `#service-<slug>` · "Get started" pill under the card · magnifier lens (toggle next to the scroll hint) · card slightly below centre (~29% width desktop, ~60% phone) · W top-left · Menu top-right · scroll hint bottom-left · wordmark bottom-right |
 | work | 6 projects in the ThreeUI filmstrip (screenshot, nn, name, type; select the front card → case study) | Logo-lettered heading top-left · filmstrip 26vh→97vh · card tiny in the top-right corner · sr-only project list |
-| about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work | Glass panel |
+| about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work + email / WhatsApp · 3D ID badge on a lanyard | Badge left third (desktop) / top centre (phones), glass panel opposite; card stays in the top-right corner |
 | services | 4 services | Glass panel |
 | process | Discover → Design → Build → Launch | Glass panel |
 | results | Derived stats; testimonials = dev-only placeholder | Glass panel |
 | contact | "Your stop. Let's build it." + links + form | Glass panels |
-During Work the card shrinks into the top-right corner (~35%); from About on it sits in the left third (desktop) / top (phones), panels opposite.
+During Work and About the card is tiny in the top-right corner; from Services on it sits in the left third (desktop) / top (phones), panels opposite.
 
 ## Decisions already made (do not revisit)
 - Theme: photoreal space from real imagery (NASA Blue/Black Marble, CGI Moon Kit, Deep Star Maps, 3D Resources). No procedural stand-ins, clay objects or cartoon sprites. The train theme is gone; don't bring back stations, signage, HUD or Japanese labels.

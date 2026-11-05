@@ -88,9 +88,9 @@ export function CameraRig() {
       return pose;
     };
 
-    // Hero → Work corner over the hero's second half; corner → side as Work hands over to About.
+    // Hero → corner over the hero's second half; it stays in the corner through Work and About (the filmstrip, then the badge), → side after About.
     const p = journey.progress;
-    const workEnd = SECTIONS[sectionIndex("work")].range[1];
+    const workEnd = SECTIONS[sectionIndex("about")].range[1];
     let from = S.hero, to = S.work, w = span(p, ...HERO_GLIDE);
     if (p >= workEnd - 0.01) [from, to, w] = [S.work, S.side, span(p, workEnd - 0.01, workEnd + 0.02)];
     const A = resolve(from, t.a, t.qa);

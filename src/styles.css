@@ -665,3 +665,13 @@
   font-size: clamp(1.9rem, 4.2vw, 3.2rem);
   line-height: 1.1;
 }
+
+/* About: grab area over the 3D badge (Sections BadgeHit). */
+.badge-hit {
+  cursor: grab;
+  touch-action: none;
+  border-radius: 6%;
+}
+.badge-hit:active {
+  cursor: grabbing;
+}
