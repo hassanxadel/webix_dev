@@ -24,6 +24,12 @@ type JourneyState = {
   showing: number;
   workStep: number;
   openProject: number | null;
+  /** Service sub-section on screen (index into SERVICES), or null. */
+  openService: number | null;
+  /** Service the contact form should preselect (a SERVICES name), set by a sub-section's Get started. */
+  servicePreset: string | null;
+  /** Hero magnifier toggle. */
+  loupe: boolean;
   reducedMotion: boolean;
   tier: Tier;
   sceneReady: boolean;
@@ -36,6 +42,9 @@ let state: JourneyState = {
   showing: 0,
   workStep: 0,
   openProject: null,
+  openService: null,
+  servicePreset: null,
+  loupe: false,
   reducedMotion: false,
   tier: "high",
   sceneReady: false,
@@ -130,6 +139,13 @@ export function useJourneyTracker() {
       motion.removeEventListener("change", onMotion);
     };
   }, []);
+}
+
+/** Freezes page scrolling while an overlay (service sub-section) is open. */
+export function lockScroll(locked: boolean) {
+  if (locked) lenis?.stop();
+  else lenis?.start();
+  document.documentElement.style.overflow = locked ? "hidden" : "";
 }
 
 /** Scroll to a point on the page — the card follows the scroll. */

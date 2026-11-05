@@ -4,6 +4,7 @@ import gsap from "gsap";
 import { X } from "lucide-react";
 import { HERO_GLIDE, type SectionId } from "@/config/sections";
 import { journey, travelTo, travelToSection } from "@/lib/journey";
+import { LoupeToggle } from "./Loupe";
 
 const LINKS: { id: SectionId; label: string }[] = [
   { id: "hero", label: "Home" },
@@ -94,14 +95,17 @@ export function Menu() {
         </Dialog.Root>
       </header>
 
-      <div ref={heroOnly} aria-hidden className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end justify-between p-5 sm:p-8">
-        <span className="hud mb-1 flex items-center gap-3 text-[0.62rem] text-paper/60">
+      <div ref={heroOnly} className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end justify-between p-5 sm:p-8">
+        <span className="flex items-center gap-4">
+        <LoupeToggle />
+        <span aria-hidden className="hud mb-1 flex items-center gap-3 text-[0.62rem] text-paper/60">
           <span className="relative h-px w-10 overflow-hidden bg-paper/20">
             <span className="absolute inset-y-0 left-0 w-1/2 animate-[scroll-hint-x_2.4s_ease-in-out_infinite] bg-sun" />
           </span>
           Scroll down to discover
         </span>
-        <img src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[40vw] select-none md:w-[18vw]" />
+        </span>
+        <img aria-hidden src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[40vw] select-none md:w-[18vw]" />
       </div>
     </>
   );

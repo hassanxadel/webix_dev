@@ -13,9 +13,11 @@ export const deck = {
   progress: SERVICES.map(() => ({ v: 0 })),
   /** Pass under the pointer or keyboard focus (-1 = none). */
   hover: -1,
-  /** Pass flying at the camera after a click (-1 = none) and its 0..1 progress. */
-  launch: -1,
-  fly: { v: 0 },
   card: { x: 0, y: 0, w: 0, h: 0 },
+  /** Screen box of each dealt pass; `alpha` = how far its HTML face has faded in over the 3D slab. */
   passes: SERVICES.map(() => ({ x: 0, y: 0, w: 0, h: 0, rot: 0, alpha: 0 })),
+  /** Which layout the passes deal into (chosen to fit the window): 4 across, 2+2 beside the card, or a 2×2 grid below it. */
+  layout: "fan" as "fan" | "split" | "grid",
+  /** Screen box of the pass that was clicked: the service sub-section header grows out of it. */
+  origin: null as DOMRect | null,
 };

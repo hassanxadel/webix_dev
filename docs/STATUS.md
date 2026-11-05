@@ -1,6 +1,10 @@
 # Status
 
 ## Current state
+- Hero fixes (2026-11-05): sun disc / flare / god rays removed (orange rim + sky glow kept); ~34 big twinkling stars; service deck
+  redesigned (brand cards stacked behind the card, fit-to-window layout fan/split/grid, hover forward + dim others), one sub-section
+  per service (`#service-<slug>` overlay, FLIP from the card, Get started → contact preset); "Get started" logo pill under the card;
+  magnifier lens (WebGL ×2.3) with a toggle by the scroll hint.
 - Hero round 3 (2026-11-01): headline font self-hosted (Lilita One) at clamp(48px, 7vw, 112px) ~15% from the top, −5°, bevel;
   subline in the same lettering. Earth: Egypt/Nile/Mediterranean at load, day left / twilight / night right, 8K KTX2 (desktop) /
   4K KTX2 (touch), GEBCO relief, cloud shadows, more city lights, 5-min spin; green airglow removed, orange rim + sky glow.
@@ -22,6 +26,8 @@
 - ThreeUI Work showcase: **blocked** — the bundle lacks `src/shaders/landing-pages/pageTypography.ts` and `pageRecipes.ts` (imported by both components; not public; ThreeUI MCP needs login). Needs the user to supply them (e.g. `docs/vendor/threeui/`). Downloaded bundle hashes: LandingPages.tsx, LandingPageFrame.tsx, threeui.css match; the served HTML (55 KB, media on Supabase) differs from the listed 3.5 MB embedded-media file.
 
 ## Known issues
+- Service timelines are TODO (`TIMELINE_TBD` in `webix-data.ts`); "who it's for" / intro copy written from the existing service text — confirm.
+- Magnifier built from the written spec; the Sketchbook loupe source block was empty in the request.
 - `src/lib/site-config.ts` contact details are placeholders.
 - Work tech tags show only the platform — TODO real stacks in `src/config/projects.ts`.
 - Contact copy still says "Your stop." / "…make a train station feel real…" — kept as content; replace if the user wants new lines.
@@ -33,6 +39,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-05 · hero · no sun flare, big stars, brand service cards + sub-sections, Get started pill, magnifier · (this commit)
 - 2026-11-01 · hero · round 3: self-hosted logo headline, Egypt day/night Earth (8K KTX2, spin), orange sky, services deck · (this commit)
 - 2026-11-01 · hero · Moon orbit around the camera, night Earth (GEBCO relief, city lights, thin rim + airglow), logo-style headline · (this commit)
 - 2026-11-01 · hero · polish: dark Earth, fast twinkle, nebula + pink/gold, Moon/Hubble motion, smaller card, headline · (this commit)

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { Box, Globe, Palette, ShoppingBag, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowRight, Box, Globe, Palette, ShoppingBag, Sparkles, type LucideIcon } from "lucide-react";
 import { HERO_GLIDE } from "@/config/sections";
 import { SERVICES } from "@/lib/webix-data";
 import { deck } from "@/lib/deck";
 import { journey, journeyStore, travelToSection } from "@/lib/journey";
+import { openService } from "./ServiceDetail";
 
 const ICONS: Record<string, LucideIcon> = { Websites: Globe, "E-commerce": ShoppingBag, "3D / Interactive web": Box, Branding: Palette };
 
@@ -14,8 +15,11 @@ const ICONS: Record<string, LucideIcon> = { Websites: Globe, "E-commerce": Shopp
  * the group folds them back after 400 ms, as do Esc and a tap outside. This is
  * the HTML half: a real button over the card and real links over each pass
  * (crisp labels, Tab/Enter), placed every frame from what the card reports in
- * `deck` (lib/deck.ts). Clicking a pass flies it at the camera, then scrolls to
- * Services.
+ * `deck` (lib/deck.ts). Each dealt pass is a brand-coloured card (its HTML
+ * face fades in over the 3D slab, so text is crisp and never shows through the
+ * stack); hovering one brings it forward and dims the rest. Clicking a pass
+ * opens that service's sub-section (#service-<slug>), growing out of the card.
+ * Under the card: the "Get started" pill (to Contact).
  */
 export function ServiceDeck() {
   const [open, setOpenState] = useState(false);
@@ -23,6 +27,8 @@ export function ServiceDeck() {
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const hint = useRef<HTMLParagraphElement>(null);
+  const cta = useRef<HTMLAnchorElement>(null);
+  const list = useRef<HTMLUListElement>(null);
   const links = useRef<(HTMLAnchorElement | null)[]>([]);
   const closeTimer = useRef(0);
   const lastInput = useRef("mouse");
@@ -52,20 +58,19 @@ export function ServiceDeck() {
   };
 
   const launch = (i: number) => {
-    const reduced = journeyStore.get().reducedMotion;
-    deck.launch = i;
-    gsap.fromTo(deck.fly, { v: 0 }, {
-      v: 1,
-      duration: reduced ? 0 : 0.45,
-      ease: "power2.in",
-      overwrite: true,
-      onComplete: () => {
-        travelToSection("services");
-        setOpen(false);
-        deck.launch = -1;
-        deck.fly.v = 0;
-      },
-    });
+    deck.origin = links.current[i]?.getBoundingClientRect() ?? null;
+    openService(i);
+    setOpen(false);
+  };
+  // Which pass is in front; others dim (an attribute on the list, so no React render per hover).
+  const front = (i: number) => {
+    deck.hover = i;
+    list.current?.setAttribute("data-front", String(i));
+  };
+  const unfront = (i: number) => {
+    if (deck.hover !== i) return;
+    deck.hover = -1;
+    list.current?.removeAttribute("data-front");
   };
 
   useEffect(() => setTouch(matchMedia("(hover: none)").matches), []);
@@ -87,20 +92,28 @@ export function ServiceDeck() {
     };
   }, [open]);
 
-  // Every frame: put the hit area, hint and links where the card says things are (hero only).
+  // Every frame: put the hit area, hint, Get started pill and links where the card says things are (hero only).
   useEffect(() => {
     const tick = () => {
       const inHero = journey.progress < HERO_GLIDE[0] * 0.5 && deck.card.w > 0;
       if (!inHero && deck.open) setOpen(false);
-      const b = button.current, h = hint.current;
+      const b = button.current, h = hint.current, c = cta.current;
       if (b) {
         b.style.visibility = inHero ? "visible" : "hidden";
         b.style.transform = `translate3d(${deck.card.x}px, ${deck.card.y}px, 0)`;
         b.style.width = `${deck.card.w}px`;
         b.style.height = `${deck.card.h}px`;
       }
+      // The pill sits centred under the card; it steps aside (fades) only when the phone grid deals below the card.
+      const below = deck.card.y + deck.card.h + Math.max(14, deck.card.h * 0.07);
+      const ctaOn = inHero && !(deck.open && deck.layout === "grid");
+      if (c) {
+        c.style.transform = `translate3d(${deck.card.x + deck.card.w / 2}px, ${below}px, 0) translateX(-50%)`;
+        c.style.opacity = ctaOn ? "1" : "0";
+        c.style.visibility = ctaOn ? "visible" : "hidden";
+      }
       if (h) {
-        h.style.transform = `translate3d(${deck.card.x + deck.card.w / 2}px, ${deck.card.y + deck.card.h + 14}px, 0) translateX(-50%)`;
+        h.style.transform = `translate3d(${deck.card.x + deck.card.w / 2}px, ${below + (c?.offsetHeight ?? 44) + 12}px, 0) translateX(-50%)`;
         h.style.opacity = inHero && !deck.open ? "1" : "0";
       }
       links.current.forEach((a, i) => {
@@ -140,33 +153,46 @@ export function ServiceDeck() {
         // Mouse: hovering already opened it, so a click keeps it open. Touch / keyboard: toggle.
         onClick={() => setOpen(lastInput.current === "mouse" ? true : !deck.open)}
       />
+      <a
+        ref={cta}
+        href="#contact"
+        className="btn-logo pointer-events-auto fixed left-0 top-0 z-30"
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen(false);
+          travelToSection("contact");
+        }}
+      >
+        Get started <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
+      </a>
       <p ref={hint} aria-hidden className="hud deck-hint pointer-events-none fixed left-0 top-0 z-30">
         {touch ? "tap the pass" : "hover the pass"}
       </p>
-      <ul id="hero-services" aria-label="Our services" inert={!open}>
+      <ul ref={list} id="hero-services" aria-label="Our services" inert={!open} data-touch={touch || undefined}>
         {SERVICES.map((s, i) => {
           const Icon = ICONS[s.name] ?? Sparkles;
           return (
             <li key={s.name}>
               <a
                 ref={(el) => void (links.current[i] = el)}
-                href="#services"
-                className="deck-pass pointer-events-auto fixed left-0 top-0 z-30"
-                onPointerEnter={() => (deck.hover = i)}
-                onPointerLeave={() => deck.hover === i && (deck.hover = -1)}
+                href={`#service-${s.slug}`}
+                className={`svc-card svc-${s.face} pointer-events-auto fixed left-0 top-0 z-30`}
+                data-i={i}
+                onPointerEnter={() => front(i)}
+                onPointerLeave={() => unfront(i)}
                 onFocus={() => {
-                  deck.hover = i;
+                  front(i);
                   setOpen(true);
                 }}
-                onBlur={() => deck.hover === i && (deck.hover = -1)}
+                onBlur={() => unfront(i)}
                 onClick={(e) => {
                   e.preventDefault();
                   launch(i);
                 }}
               >
-                <Icon aria-hidden className="deck-icon" />
-                <span className="deck-name">{s.short}</span>
-                <span className="deck-line">{s.line}</span>
+                <Icon aria-hidden className="svc-icon" strokeWidth={2.2} />
+                <span className="svc-title">{s.short}</span>
+                <span className="svc-line">{s.line}</span>
               </a>
             </li>
           );

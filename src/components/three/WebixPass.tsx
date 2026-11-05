@@ -5,6 +5,8 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { CARD, backPrint, frontPrint, frontRoughness, normaliseUVs, roundedRect } from "./cardArt";
 import { journey, journeyStore } from "@/lib/journey";
 import { deck } from "@/lib/deck";
+import { SERVICES } from "@/lib/webix-data";
+import { HERO_GLIDE } from "@/config/sections";
 
 /**
  * Where the card is and how it behaves this frame. The card rig writes it;
@@ -38,28 +40,36 @@ const deviceTilt = { x: 0, y: 0, active: false };
 /* ───────── Services deck (state in lib/deck.ts) ───────── */
 
 const deg = THREE.MathUtils.degToRad;
-/** Service passes are this fraction of the card. */
+/** Dealt passes are this fraction of the card (wide screens), bigger in the phone grid so the text fits. */
 const PASS = 0.45;
+const PASS_GRID = 0.62;
 /** Hovering the card: it tilts back this much and scales to 0.95. */
 const PRESS_TILT = deg(10);
+/** Pass slabs: brand faces with a darker extruded side, like the logo's letters (the HTML face covers them once dealt). */
+const PASS_FACES = { yellow: ["#ffda24", "#e81a2e"], pink: ["#ff007f", "#a8004f"], red: ["#e81a2e", "#8f0c19"], indigo: ["#1a253a", "#070b14"] } as const;
+const PASS_DEPTH = 0.06;
+type Slot = { x: number; y: number; rz: number };
+
 /**
- * Where each pass lands (card units, centre): wide screens fan two left and two
- * right of the card like a hand of cards (x shrinks on narrower windows, so the
- * outer passes tuck behind); tall screens deal a 2×2 grid below the card.
+ * Where the passes land (card-local units), chosen so no pass overlaps another
+ * or the card: four across like a hand of cards if the window is wide enough,
+ * else two stacked on each side of the card, else (phones) a 2x2 grid below.
+ * `ppu` = screen px per card unit (from the card's measured box).
  * shortcut: four slots for the four services; add slots if SERVICES grows.
  */
-const FAN_WIDE = [
-  { x: -1.58, y: -0.17, z: -0.1, rz: deg(14) },
-  { x: -0.94, y: -0.05, z: -0.05, rz: deg(6) },
-  { x: 0.94, y: -0.05, z: -0.05, rz: deg(-6) },
-  { x: 1.58, y: -0.17, z: -0.1, rz: deg(-14) },
-];
-const FAN_TALL = [
-  { x: -0.33, y: -0.61, z: -0.05, rz: deg(3) },
-  { x: 0.33, y: -0.61, z: -0.05, rz: deg(-3) },
-  { x: -0.33, y: -1.01, z: -0.05, rz: deg(3) },
-  { x: 0.33, y: -1.01, z: -0.05, rz: deg(-3) },
-];
+function dealLayout(vw: number, vh: number, ppu: number): { kind: typeof deck.layout; scale: number; slots: Slot[] } {
+  const g = 0.07 * W, pw = PASS * W, ph = PASS * H, fits = (half: number) => half * 2 * ppu <= vw * 0.96;
+  if (vw > vh) {
+    const inner = W / 2 + g + pw / 2, outer = inner + pw + g;
+    if (fits(outer + pw / 2 + 0.03))
+      return { kind: "fan", scale: PASS, slots: [{ x: -outer, y: -0.12, rz: deg(9) }, { x: -inner, y: -0.03, rz: deg(4) }, { x: inner, y: -0.03, rz: deg(-4) }, { x: outer, y: -0.12, rz: deg(-9) }] };
+    const cx = W / 2 + g + pw / 2, dy = ph / 2 + g / 2;
+    if (fits(cx + pw / 2 + 0.03))
+      return { kind: "split", scale: PASS, slots: [{ x: -cx, y: dy, rz: deg(3) }, { x: -cx, y: -dy, rz: deg(-2) }, { x: cx, y: dy, rz: deg(-3) }, { x: cx, y: -dy, rz: deg(2) }] };
+  }
+  const gw = PASS_GRID * W, gh = PASS_GRID * H, cx = gw / 2 + g / 2, y1 = -(H / 2 + g + gh / 2), y2 = y1 - gh - g;
+  return { kind: "grid", scale: PASS_GRID, slots: [{ x: -cx, y: y1, rz: 0 }, { x: cx, y: y1, rz: 0 }, { x: -cx, y: y2, rz: 0 }, { x: cx, y: y2, rz: 0 }] };
+}
 
 /* ───────── The W: a metal enamel inlay built from the traced logo ───────── */
 
@@ -122,7 +132,7 @@ export function WebixPass() {
   const tiltGroup = useRef<THREE.Group>(null);
   const pressGroup = useRef<THREE.Group>(null);
   const passes = useRef<(THREE.Group | null)[]>([]);
-  const deal = useRef({ press: 0, lift: deck.progress.map(() => 0), v: new THREE.Vector3(), c: new THREE.Vector3(), a: new THREE.Vector3() }).current;
+  const deal = useRef({ press: 0, hero: 1, layout: null as ReturnType<typeof dealLayout> | null, lift: deck.progress.map(() => 0), v: new THREE.Vector3(), c: new THREE.Vector3(), a: new THREE.Vector3() }).current;
   const flipGroup = useRef<THREE.Group>(null);
   const frontSide = useRef<THREE.Group>(null);
   const backSide = useRef<THREE.Group>(null);
@@ -141,7 +151,10 @@ export function WebixPass() {
     });
     body.translate(0, 0, -(T - bevel * 2) / 2);
     const face = normaliseUVs(new THREE.ShapeGeometry(roundedRect(W - 0.004, H - 0.004, R - 0.002), 18), W, H);
-    return { body, face };
+    // ~18 px corners once dealt (0.072 of the pass width), thicker than the card.
+    const slab = new THREE.ExtrudeGeometry(roundedRect(W, H, 0.072 * W), { depth: PASS_DEPTH, bevelEnabled: false, curveSegments: 12 });
+    slab.translate(0, 0, -PASS_DEPTH / 2);
+    return { body, face, slab };
   }, []);
 
   const mats = useMemo(() => {
@@ -170,15 +183,13 @@ export function WebixPass() {
       emissiveIntensity: 0.4,
       clearcoat: 1,
     });
-    // Service passes: the same brushed navy metal (no print; their labels are HTML) and pink edge, each
-    // with its own materials so it can fade and glow on its own.
-    const pass = deck.progress.map(() => {
-      const fade = <M extends THREE.Material>(m: M) => Object.assign(m, { transparent: true });
-      return {
-        face: fade(new THREE.MeshPhysicalMaterial({ color: "#1a253a", roughnessMap: front.roughnessMap, metalness: 1, roughness: 0.55, clearcoat: 0.25, clearcoatRoughness: 0.35, envMapIntensity: 1.25 })),
-        core: fade(core.clone()),
-        edge: fade(edge.clone()),
-      };
+    // Service passes: flat brand faces with a darker side (cap, side material groups), each fading on its own.
+    const pass = SERVICES.map(({ face }) => {
+      const [c, side] = PASS_FACES[face];
+      return [
+        new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.18, roughness: 0.5, transparent: true }),
+        new THREE.MeshStandardMaterial({ color: side, roughness: 0.6, transparent: true }),
+      ];
     });
     return { front, back, core, edge, pass };
   }, []);
@@ -245,26 +256,33 @@ export function WebixPass() {
     deal.press += ((deck.open ? 1 : 0) - deal.press) * kd;
     pressGroup.current.rotation.x = -PRESS_TILT * deal.press;
     pressGroup.current.scale.setScalar(1 - 0.05 * deal.press);
-    const tall = size.width <= size.height;
-    const spread = tall ? 1 : THREE.MathUtils.clamp((size.width / size.height - 1) / 0.78, 0.6, 1);
+    // The layout is picked while the deck is closed (and frozen while open, so it never jumps mid-hover).
+    if (!deck.open || !deal.layout) {
+      const ppu = deck.card.w > 0 ? deck.card.w / (W * (1 - 0.05 * deal.press)) : size.height * 0.4;
+      deal.layout = dealLayout(size.width, size.height, ppu);
+      deck.layout = deal.layout.kind;
+    }
+    const { slots, scale: dealt } = deal.layout;
+    // The stack (and its coloured slivers) only exists in the hero.
+    deal.hero += ((journey.progress < HERO_GLIDE[0] * 0.5 ? 1 : 0) - deal.hero) * kd;
     passes.current.forEach((p, i) => {
       if (!p) return;
-      const f = (tall ? FAN_TALL : FAN_WIDE)[i];
       const v = deck.progress[i].v;
       const lift = (deal.lift[i] += ((deck.hover === i ? 1 : 0) - deal.lift[i]) * kd);
-      const fly = deck.launch === i ? deck.fly.v : 0;
-      // Reduced motion: no sliding, the passes fade in place.
-      const m = reducedMotion ? 1 : v;
-      p.position.set(f.x * spread * m, f.y * m, f.z + 0.12 * lift + fly * 2.2);
+      // Reduced motion: no dealing; the slab leaves the stack and the HTML face fades in at its slot.
+      const m = reducedMotion ? (v > 0.001 ? 1 : 0) : v;
+      const f = slots[i];
+      const n = i + 1;
+      const mc = Math.min(Math.max(m, 0), 1);
+      // Stacked: almost card-sized, each a sliver further down-right and further back, hidden behind the one above.
+      p.position.set(THREE.MathUtils.lerp(0.012 * n, f.x, m), THREE.MathUtils.lerp(-0.014 * n, f.y, m), THREE.MathUtils.lerp(-0.012 * n - PASS_DEPTH, -0.03, mc) + 0.18 * lift);
       p.rotation.z = f.rz * m;
-      p.scale.setScalar(PASS * (reducedMotion ? 1 : 0.85 + 0.15 * Math.min(v, 1)) * (1 + 0.08 * lift) * (1 + 0.6 * fly));
-      const alpha = THREE.MathUtils.clamp(v * 2.5, 0, 1) * (1 - fly);
-      p.visible = alpha > 0.002;
-      const pm = mats.pass[i];
-      pm.face.opacity = pm.core.opacity = pm.edge.opacity = alpha;
-      pm.edge.emissive.copy(EDGE_PINK).lerp(EDGE_YELLOW, lift);
-      pm.edge.emissiveIntensity = 0.4 + 2.2 * lift;
-      deck.passes[i].alpha = alpha;
+      p.scale.setScalar(THREE.MathUtils.lerp(0.985, dealt, mc) * (1 + 0.1 * lift));
+      const face = reducedMotion ? Math.min(v, 1) : THREE.MathUtils.smoothstep(Math.min(v, 1), 0.55, 0.95);
+      const slab = (reducedMotion ? 1 - m : 1 - face) * deal.hero;
+      p.visible = slab > 0.002;
+      for (const mat of mats.pass[i]) mat.opacity = slab;
+      deck.passes[i].alpha = face * deal.hero;
     });
 
     // Report the card's and each pass's screen box (CSS px) for the HTML hit area, hint and links.
@@ -282,9 +300,10 @@ export function WebixPass() {
     Object.assign(deck.card, { x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
     passes.current.forEach((p, i) => {
       if (!p) return;
-      const c = toPx(deal.c.set(0, 0, Z_FRONT).applyMatrix4(p.matrixWorld));
-      const a = toPx(deal.a.set(W / 2, 0, Z_FRONT).applyMatrix4(p.matrixWorld));
-      const b = toPx(deal.v.set(0, H / 2, Z_FRONT).applyMatrix4(p.matrixWorld));
+      const zf = PASS_DEPTH / 2;
+      const c = toPx(deal.c.set(0, 0, zf).applyMatrix4(p.matrixWorld));
+      const a = toPx(deal.a.set(W / 2, 0, zf).applyMatrix4(p.matrixWorld));
+      const b = toPx(deal.v.set(0, H / 2, zf).applyMatrix4(p.matrixWorld));
       Object.assign(deck.passes[i], { x: c.x, y: c.y, w: 2 * a.distanceTo(c), h: 2 * b.distanceTo(c), rot: Math.atan2(a.y - c.y, a.x - c.x) });
     });
   });
@@ -312,8 +331,7 @@ export function WebixPass() {
         {/* The service passes, stacked behind the card until the deck opens. */}
         {mats.pass.map((m, i) => (
           <group key={i} ref={(el) => void (passes.current[i] = el)}>
-            <mesh geometry={geo.body} material={[m.core, m.edge]} renderOrder={20} />
-            <mesh geometry={geo.face} material={m.face} position={[0, 0, Z_FRONT]} renderOrder={21} />
+            <mesh geometry={geo.slab} material={m} renderOrder={20} />
           </group>
         ))}
       </group>

@@ -5,8 +5,9 @@ import * as THREE from "three";
 import { WebixPass } from "./WebixPass";
 import { CameraRig } from "./CameraRig";
 import { ShootingStar, StarMap, Stars } from "./Stars";
-import { Earth, Hubble, Moon, SunDisc, SunGlare, SunLights } from "./Space";
+import { Earth, Hubble, Moon, SunLights } from "./Space";
 import { Effects } from "./Effects";
+import { LoupeView } from "./LoupeView";
 import { journeyStore, useJourney } from "@/lib/journey";
 
 /** Canvas textures use these faces, so wait for them (briefly) before painting. */
@@ -54,7 +55,6 @@ function Ready() {
 /** One fixed canvas for the whole site: NASA star sky, twinkling stars, the Earth's limb at sunrise, the Moon, Hubble, and the card. */
 export default function Experience() {
   const [fonts, setFonts] = useState(false);
-  const [sun, setSun] = useState<THREE.Mesh | null>(null);
   const low = useJourney((s) => s.tier) === "low";
 
   useEffect(() => {
@@ -79,8 +79,6 @@ export default function Experience() {
     >
       <PerformanceMonitor onDecline={() => journeyStore.set({ tier: "low" })} />
       <SunLights />
-      <SunDisc ref={setSun} />
-      <SunGlare />
       <Stars low={low} />
       <ShootingStar />
       <Suspense fallback={null}>
@@ -99,7 +97,8 @@ export default function Experience() {
         <CameraRig />
         <Ready />
       </Suspense>
-      <Effects sun={sun} lite={low} />
+      <LoupeView />
+      <Effects lite={low} />
     </Canvas>
   );
 }

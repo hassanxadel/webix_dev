@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Mail, MessageCircle } from "lucide-react";
 import { BUDGETS, buildInquiryMessage, inquirySchema, type Inquiry } from "@/lib/inquiry";
 import { SERVICES } from "@/lib/webix-data";
 import { mailtoLink, whatsappLink } from "@/lib/site-config";
+import { useJourney } from "@/lib/journey";
 
 function Field({ id, label, error, optional, children }: { id: string; label: string; error?: string; optional?: boolean; children: React.ReactNode }) {
   return (
@@ -30,12 +31,21 @@ export function ContactForm() {
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<Inquiry>({
     resolver: zodResolver(inquirySchema),
     defaultValues: { method: "whatsapp", service: "", budget: "" } as Partial<Inquiry>,
   });
   const method = watch("method");
+
+  // Service preset: from a service sub-section's Get started, or a `?service=<slug>` link.
+  const preset = useJourney((s) => s.servicePreset);
+  useEffect(() => {
+    const slug = new URLSearchParams(location.search).get("service");
+    const name = preset ?? SERVICES.find((s) => s.slug === slug)?.name;
+    if (name) setValue("service", name);
+  }, [preset, setValue]);
 
   const onSubmit = (v: Inquiry) => {
     const message = buildInquiryMessage(v);

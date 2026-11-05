@@ -4,6 +4,8 @@ import { Menu } from "@/components/site/Menu";
 import { Loader } from "@/components/site/Loader";
 import { Sections } from "@/components/site/Sections";
 import { CaseStudyDialog } from "@/components/site/CaseStudyDialog";
+import { ServiceDetail } from "@/components/site/ServiceDetail";
+import { Loupe } from "@/components/site/Loupe";
 import { useJourneyTracker } from "@/lib/journey";
 
 const TITLE = "Webix — Websites, E-commerce & 3D Digital Experiences";
@@ -37,6 +39,8 @@ function Page() {
         <Sections />
       </main>
       <CaseStudyDialog />
+      <Loupe />
+      <ServiceDetail />
       <Loader />
     </>
   );

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -429,56 +429,6 @@ export function SunLights() {
       <directionalLight position={[0, -10, 2]} color="#3f7dff" intensity={0.9} />
       <hemisphereLight args={["#1b2a52", "#0a1430", 0.25]} />
     </>
-  );
-}
-
-/** The sun's disc at the sunrise point: the god-rays source (half hidden by the Earth's limb). */
-export const SunDisc = forwardRef<THREE.Mesh>(function SunDisc(_, ref) {
-  return (
-    <mesh ref={ref} position={GLARE_POS}>
-      <sphereGeometry args={[7, 32, 16]} />
-      <meshBasicMaterial color={new THREE.Color("#fff8ee").multiplyScalar(4)} toneMapped={false} />
-    </mesh>
-  );
-});
-
-/** Sunrise burst: a soft white-blue glow and a thin flare along the limb, always facing the camera. */
-export function SunGlare() {
-  const mesh = useRef<THREE.Mesh>(null);
-  const mat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: { uCore: { value: new THREE.Color("#fff6e4") }, uHalo: { value: new THREE.Color("#9cc1ff") }, uGold: { value: new THREE.Color("#ffda24") } },
-        vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-        fragmentShader: /* glsl */ `
-          uniform vec3 uCore, uHalo, uGold; varying vec2 vUv;
-          void main() {
-            vec2 p = (vUv - 0.5) * 2.0;
-            float r = length(p);
-            // Tight: a hot core and a small halo, no wide wash over the Earth.
-            float core = exp(-r * r * 900.0) * 9.0 + exp(-r * r * 160.0) * 0.6;
-            float halo = exp(-r * 20.0) * 0.16;
-            float warm = exp(-r * 9.0) * 0.05; // faint golden glow around the sunrise
-            // Flare along the limb (tilted with it) and a fainter cross streak.
-            vec2 q = mat2(0.985, 0.17, -0.17, 0.985) * p;
-            float streak = exp(-abs(q.y) * 220.0) * exp(-abs(q.x) * 2.6) * 2.2;
-            float cross = exp(-abs(q.x) * 160.0) * exp(-abs(q.y) * 7.0) * 0.35;
-            vec3 c = uCore * (core + streak) + uHalo * (halo + cross) + uGold * warm;
-            gl_FragColor = vec4(c, 1.0);
-            #include <colorspace_fragment>
-          }`,
-        transparent: true,
-        depthTest: false,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      }),
-    [],
-  );
-  useFrame(({ camera }) => mesh.current?.quaternion.copy(camera.quaternion));
-  return (
-    <mesh ref={mesh} position={GLARE_POS} material={mat} renderOrder={15}>
-      <planeGeometry args={[140, 140]} />
-    </mesh>
   );
 }
 

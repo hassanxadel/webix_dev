@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { journey, journeyStore } from "@/lib/journey";
 import { useProgressiveTexture } from "./textures";
-import { GLARE_DIR } from "./Space";
+import { BASE_PITCH, GLARE_DIR } from "./Space";
 
 const deg = THREE.MathUtils.degToRad;
 const dir = (az: number, el: number) => new THREE.Vector3(Math.sin(deg(az)) * Math.cos(deg(el)), Math.sin(deg(el)), -Math.cos(deg(az)) * Math.cos(deg(el)));
@@ -132,6 +132,7 @@ const vertex = /* glsl */ `
   uniform float uTime;
   uniform vec2 uShift;
   uniform float uDpr;
+  uniform float uBig;      // 1 = the big-star layer: full swing to almost off, no slow-down for brightness
   varying float vBright;
   varying float vScale;
   varying vec3 vColor;
@@ -140,10 +141,10 @@ const vertex = /* glsl */ `
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     mv.xy += uShift * (0.3 + aTw.z) * -mv.z;
     gl_Position = projectionMatrix * mv;
-    float w = aTw.y * mix(1.0, 0.5, aMag);                    // bright stars pulse slower
+    float w = aTw.y * mix(1.0, 0.5, aMag * (1.0 - uBig));                    // bright stars pulse slower
     float s = 0.65 * sin(uTime * w + aTw.x) + 0.35 * sin(uTime * w * 2.37 + aTw.x * 3.1);
     float tw = clamp(0.5 + 0.5 * s, 0.0, 1.0);
-    float b = mix(mix(0.05, 0.45, aMag), 1.0, tw * tw);
+    float b = mix(mix(mix(0.05, 0.45, aMag), 0.02, uBig), 1.0, tw * tw);
     // Sparkle: in random 3 s slots, a chosen star flares for about a second.
     float slot = floor(uTime / 3.0 + aTw.w * 7.0);
     float lucky = step(0.6, fract(sin(slot * 12.9898 + aTw.w * 78.233) * 43758.5453)) * aFlags.y;
@@ -216,20 +217,68 @@ function build(count: number) {
   return g;
 }
 
+/**
+ * ~32 big, bright stars in clear sky (rejection-sampled in screen space so none
+ * land on the headline, the card, the W / Menu / wordmark corners or the Earth):
+ * bright core, halo and 4-ray spikes, each with its own 0.4–1.2 s twinkle.
+ */
+function buildBig(count: number) {
+  let seed = 4421;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const halfH = Math.tan(deg(22.5)), halfW = halfH * 1.78;
+  const blocked = (x: number, y: number) =>
+    (Math.abs(x) < 0.6 && y > 0.4 && y < 0.9) || // headline
+    (Math.abs(x) < 0.45 && y > -0.65 && y < 0.3) || // card
+    (Math.abs(x) > 0.75 && y > 0.72) || // W, Menu
+    (Math.abs(x) > 0.55 && y < -0.7) || // scroll hint, wordmark
+    y < -0.25; // the Earth's limb
+  const pos: number[] = [], size: number[] = [], mag: number[] = [], tw: number[] = [], flags: number[] = [], tint: number[] = [];
+  const warm = new THREE.Color("#ffe27a"), pink = new THREE.Color("#ff9fcf"), white = new THREE.Color("#ffffff");
+  while (size.length < count) {
+    const x = rnd() * 2.6 - 1.3, y = rnd() * 1.3 - 0.25;
+    if (blocked(x, y)) continue;
+    const v = new THREE.Vector3(x * halfW, y * halfH, -1).normalize().applyAxisAngle(new THREE.Vector3(1, 0, 0), BASE_PITCH).multiplyScalar(280);
+    pos.push(v.x, v.y, v.z);
+    size.push(46 + rnd() * 30);
+    mag.push(1);
+    const period = 0.4 + rnd() * 0.8; // 0.4–1.2 s, per star
+    tw.push(rnd() * Math.PI * 2, (Math.PI * 2) / period, 1, rnd());
+    flags.push(1, 0);
+    const c = rnd();
+    tint.push(...(c < 0.18 ? pink : c < 0.45 ? warm : white).toArray());
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aSize", new THREE.Float32BufferAttribute(size, 1));
+  g.setAttribute("aMag", new THREE.Float32BufferAttribute(mag, 1));
+  g.setAttribute("aTw", new THREE.Float32BufferAttribute(tw, 4));
+  g.setAttribute("aFlags", new THREE.Float32BufferAttribute(flags, 2));
+  g.setAttribute("aTint", new THREE.Float32BufferAttribute(tint, 3));
+  return g;
+}
+
 export function Stars({ low }: { low: boolean }) {
-  const geo = useMemo(() => build(low ? 600 : 1500), [low]);
+  return (
+    <>
+      <StarLayer geo={useMemo(() => build(low ? 600 : 1500), [low])} big={0} />
+      <StarLayer geo={useMemo(() => buildBig(low ? 24 : 34), [low])} big={1} />
+    </>
+  );
+}
+
+function StarLayer({ geo, big }: { geo: THREE.BufferGeometry; big: number }) {
   // Created once, so the uniforms written every frame below are the ones the GPU reads.
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
         vertexShader: vertex,
         fragmentShader: fragment,
-        uniforms: { uTime: { value: 0 }, uShift: { value: new THREE.Vector2() }, uDpr: { value: 1 } },
+        uniforms: { uTime: { value: 0 }, uShift: { value: new THREE.Vector2() }, uDpr: { value: 1 }, uBig: { value: big } },
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       }),
-    [],
+    [big],
   );
   useEffect(() => () => geo.dispose(), [geo]);
 

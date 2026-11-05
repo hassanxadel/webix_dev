@@ -156,8 +156,20 @@ export type Service = {
   /** One line for the Services panel. */
   line: string;
   description: string;
+  /** What's included (3–6 bullets). */
   items: string[];
+  /** `#service-<slug>` sub-section and `?service=<slug>` contact preset. */
+  slug: string;
+  /** Card face in the hero deck: brand colours rotate yellow → pink → red → indigo. */
+  face: "yellow" | "pink" | "red" | "indigo";
+  /** Sub-section copy. */
+  intro: string;
+  forWho: string;
+  timeline: string;
 };
+
+// TODO: confirm typical timelines with Webix; until then the sub-sections say timelines are set after discovery.
+const TIMELINE_TBD = "Set together after a short discovery call, based on scope.";
 
 export const SERVICES: Service[] = [
   {
@@ -167,6 +179,11 @@ export const SERVICES: Service[] = [
     description:
       "Marketing and company websites, designed and built end to end — user journeys, interface design and clean, maintainable code.",
     items: ["UI/UX design & user journeys", "Marketing & company websites", "Responsive, accessible builds", "Performance and SEO foundations"],
+    slug: "websites",
+    face: "yellow",
+    intro: "A website that explains what you do in seconds and makes it easy to get in touch — designed around your customers, built to stay fast.",
+    forWho: "Companies, studios and service businesses that need a clear, modern home online — or an old site rebuilt properly.",
+    timeline: TIMELINE_TBD,
   },
   {
     name: "E-commerce",
@@ -175,6 +192,11 @@ export const SERVICES: Service[] = [
     description:
       "Shopify stores and online shopping experiences — product pages, collections and checkout that your team can manage day to day.",
     items: ["Shopify store setup & theming", "Product & collection pages", "Cart and checkout experience", "Store migration & cleanup"],
+    slug: "ecommerce",
+    face: "pink",
+    intro: "A Shopify store your team can run day to day: clean product pages, simple collections and a checkout that doesn't get in the way.",
+    forWho: "Brands selling online for the first time, and stores that have outgrown a theme or a messy setup.",
+    timeline: TIMELINE_TBD,
   },
   {
     name: "3D / Interactive web",
@@ -183,6 +205,11 @@ export const SERVICES: Service[] = [
     description:
       "Interactive and real-time 3D web experiences — like the one you're scrolling through right now — built to run in any modern browser.",
     items: ["Three.js & WebGL experiences", "Scroll-driven storytelling", "Product visualisation", "Interactive campaigns"],
+    slug: "3d",
+    face: "red",
+    intro: "Real-time 3D and motion in the browser — product views, scroll stories and launches people remember, running on ordinary phones and laptops.",
+    forWho: "Brands launching a product, campaign or experience that should feel like more than a page.",
+    timeline: TIMELINE_TBD,
   },
   {
     name: "Branding",
@@ -191,6 +218,11 @@ export const SERVICES: Service[] = [
     description:
       "Visual direction that keeps your brand consistent online — from logo usage and colour to how every page looks and sounds.",
     items: ["Visual direction", "Logo & identity assets", "Colour and typography systems", "Online brand guidelines"],
+    slug: "branding",
+    face: "indigo",
+    intro: "A visual identity that looks the same everywhere you show up online — logo usage, colour, type and the rules that hold it together.",
+    forWho: "New businesses defining their look, and established ones whose brand drifted across channels.",
+    timeline: TIMELINE_TBD,
   },
 ];
 
