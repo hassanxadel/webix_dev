@@ -4,7 +4,7 @@
  * the menu and the card choreography all read from this file.
  */
 
-export type SectionId = "hero" | "work" | "about" | "services" | "process" | "results" | "contact" | "me";
+export type SectionId = "hero" | "work" | "about" | "services" | "process" | "contact" | "me";
 
 export type Section = {
   id: SectionId;
@@ -24,7 +24,6 @@ const VH: [SectionId, string, number][] = [
   ["about", "About", 180],
   ["services", "Services", 180],
   ["process", "Process", 180],
-  ["results", "Results", 160],
   ["contact", "Contact", 160],
   ["me", "About Me", 160],
 ];

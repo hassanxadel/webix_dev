@@ -232,11 +232,3 @@ export const PROCESS = [
   { name: "Build", text: "We develop the site, test it across devices and refine every detail until it feels right." },
   { name: "Launch", text: "We deliver the finished experience, go live and make sure your team is ready to run it." },
 ] as const;
-
-/** Results: verifiable facts only — every figure is derived from the project list above. */
-export const RESULT_STATS = [
-  { label: "Live projects", value: PROJECTS.length },
-  { label: "Shopify stores", value: PROJECTS.filter((p) => p.platform.includes("Shopify")).length },
-  { label: "Custom builds", value: PROJECTS.filter((p) => !p.platform.includes("Shopify")).length },
-  { label: "Industries", value: new Set(PROJECTS.map((p) => p.industry.split(" ")[0])).size },
-];

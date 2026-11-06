@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Mail, MessageCircle } from "lucide-react";
 import { HERO_GLIDE, PAGE_VH, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
-import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
+import { PROCESS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/lib/journey";
 import { badge } from "@/lib/badge";
@@ -287,31 +287,6 @@ function Process() {
   );
 }
 
-/* ───────── Results ───────── */
-
-function Results() {
-  return (
-    <Section id="results">
-      <div className="glass w-full max-w-xl p-6 sm:p-9">
-        <Label id="results" />
-        <h2 id="results-title" className="mt-4 text-3xl text-paper sm:text-4xl">
-          Real brands. <span className="text-sun">Real results.</span>
-        </h2>
-        <dl className="mt-7 grid grid-cols-2 gap-3">
-          {RESULT_STATS.map((s) => (
-            <div key={s.label} className="rounded-xl border border-paper/10 p-4">
-              <dt className="hud text-paper/50">{s.label}</dt>
-              <dd className="mt-1 font-mono text-3xl text-sun">{pad2(s.value)}</dd>
-            </div>
-          ))}
-        </dl>
-        {/* TODO: real testimonial — add client quotes here once approved; never invent them. Hidden in production until then. */}
-        {import.meta.env.DEV && <p className="hud mt-4 border border-dashed border-signal/60 p-3 text-signal">Placeholder · testimonials pending (dev only)</p>}
-      </div>
-    </Section>
-  );
-}
-
 /* ───────── About Me: the founder's crew pass on its lanyard (three/Badge) ───────── */
 
 /**
@@ -399,7 +374,6 @@ export function Sections() {
       <About />
       <Services />
       <Process />
-      <Results />
       <Contact />
       <AboutMe />
       <BadgeHit />
