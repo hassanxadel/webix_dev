@@ -48,8 +48,13 @@ export function buildInquiryMessage(v: Inquiry) {
     .join("\n");
 }
 
+/** False when the site was built without the key (not in .env, or not set on the host): the form can only offer its fallbacks. */
+export const FORM_READY = !!import.meta.env.VITE_WEB3FORMS_KEY;
+if (!FORM_READY && import.meta.env.DEV) console.warn("VITE_WEB3FORMS_KEY is missing: add it to .env and restart the dev server.");
+
 /** Posts the inquiry to Web3Forms, which emails it to Webix. `bot` = the hidden honeypot was ticked. */
 export async function sendInquiry(v: Inquiry, bot: boolean) {
+  if (!FORM_READY) throw new Error("Contact form key is missing");
   const res = await fetch("https://api.web3forms.com/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -66,9 +71,11 @@ export async function sendInquiry(v: Inquiry, bot: boolean) {
       service: v.service,
       budget: v.budget,
       message: v.details,
-      botcheck: bot ? "on" : "",
+      // Only when ticked, like an unchecked box in a native form: Web3Forms drops flagged submissions silently, still answering success.
+      ...(bot && { botcheck: "on" }),
     }),
   });
-  const data = (await res.json()) as { success?: boolean };
+  const data = (await res.json()) as { success?: boolean; message?: string };
+  if (import.meta.env.DEV) console.info("Web3Forms:", res.status, data.success, data.message);
   if (!data.success) throw new Error("Web3Forms rejected the inquiry");
 }

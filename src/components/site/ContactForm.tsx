@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Instagram, Loader2 } from "lucide-react";
 import type { z } from "zod";
-import { BUDGETS, buildInquiryMessage, inquirySchema, sendInquiry, type Inquiry } from "@/lib/inquiry";
+import { BUDGETS, buildInquiryMessage, FORM_READY, inquirySchema, sendInquiry, type Inquiry } from "@/lib/inquiry";
 import { SERVICES } from "@/lib/webix-data";
 import { mailtoLink, whatsappLink } from "@/lib/site-config";
 import { useJourney } from "@/lib/journey";
@@ -129,7 +129,7 @@ export function ContactForm() {
       </div>
       {failed && (
         <p role="alert" className="text-sm text-[#ff6b7a] sm:col-span-2">
-          We couldn&apos;t send that. Your details are still here: try again, or send them by{" "}
+          {FORM_READY ? "We couldn't send that. Your details are still here: try again, or send them by" : "Our form isn't connected right now. Your details are still here: send them by"}{" "}
           <a className="underline" href={mailtoLink(`New project inquiry — ${failed.business}`, buildInquiryMessage(failed))}>
             email
           </a>{" "}
@@ -148,7 +148,7 @@ export function ContactForm() {
             </>
           ) : (
             <>
-              {failed ? "Try again" : "Send inquiry"} <ArrowRight size={16} aria-hidden />
+              {failed && FORM_READY ? "Try again" : "Send inquiry"} <ArrowRight size={16} aria-hidden />
             </>
           )}
         </button>
