@@ -1,6 +1,10 @@
 # Status
 
 ## Current state
+- Pre-launch edits (2026-11-06): stars enlarge in the lens (`uZoom`, big stars instanced quads); Work cards +30%, Pass 5vw further left;
+  "Who we are" button + `/about-webix` page + Menu item; Results removed; contact form emails via Web3Forms (Instagram field, EGP
+  budgets; tested with a stubbed fetch only, no real send); About Me is the badge alone, one screen, centred, "SOFTWARE ENGINEER" above
+  the name, the Pass shrinks away. Text-only checks passed at 1920 / 1440 / 1280 / 1024 / 390 / 844×390 as relevant; no console errors.
 - About Me (2026-11-05, later): new last section (Menu: after Contact); the badge moved here from About, centred, two straps, photo,
   opaque lit faces. Box check: badge centred at 31.3vw beside the copy (1920, 1280), 26vw / 69vw above it (1024, 390), photo loaded, no box in Contact / About.
 - Work (2026-11-05, later): filmstrip cards with a 16:9 media area (1280×720 WebP from the top of each site); the Webix Pass top-right,
@@ -41,7 +45,10 @@
 - User reviews the hero in the browser; then push.
 
 ## Known issues
-- Badge chunk ~2.3 MB (~860 KB gz; Rapier WASM inlined) — lazy, once the visitor reaches Contact. About Me bio is a placeholder (TODO).
+- Badge chunk ~2.3 MB (~860 KB gz; Rapier WASM inlined) — lazy, once the visitor reaches Contact.
+- `/about-webix` TODOs (dev-only markers): Webix story, timelines per project type, payment terms, maintenance terms.
+- Star map in the lens is the 4K map upscaled ~4×: soft by resolution, not filtering. An 8K map would need a new asset.
+- No site footer exists (the brief's "same footer"). `VITE_WEB3FORMS_KEY` must also be set on the host at build time.
 - Work filmstrip: wheel over the iframe browses the carousel and does not scroll the page (move the pointer off it, or use keys).
 - Work tags/tech from the old panels are not shown in the filmstrip (name, number, type only).
 - Service timelines are TODO (`TIMELINE_TBD` in `webix-data.ts`); "who it's for" / intro copy written from the existing service text — confirm.
@@ -57,6 +64,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-06 · pre-launch · lens stars, Work sizing, Who we are page, Results removed, Web3Forms, About Me badge only · (these commits)
 - 2026-11-05 · about me · new last section, two-strap badge, photo, visible lighting · (this commit)
 - 2026-11-05 · about · Webix Pass on the right, copy on the left · (this commit)
 - 2026-11-05 · work · 16:9 filmstrip cards, Webix Pass visible top-right · (this commit)

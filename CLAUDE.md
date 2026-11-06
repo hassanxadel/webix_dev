@@ -9,21 +9,22 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 - TanStack Start (React 19, SSR via Nitro), Vite 8, file routing (`src/routes/`, single page `/`). Tailwind v4, shadcn/ui.
 - three **0.182.0 (pinned: ≥0.183 warns about THREE.Clock, which R3F uses)**, @react-three/fiber 9.8, drei 10.7,
   maath (damping), @react-three/postprocessing 3.0.4 + postprocessing 6.39, gsap 3.13, lenis 1.3, react-hook-form + zod.
+- Env: `VITE_WEB3FORMS_KEY` (contact form) in `.env` (git-ignored; `.env.example` documents it). It's read at build time, so hosting needs it too.
 - `npm run dev` (port 5173) · `npm run build` · `npm run lint` · type-check: `npx tsc --noEmit -p .`
   (pre-existing errors in `src/components/ui/*` and `vite.config.ts` are not ours; filter them out).
 
 ## File map
-- `src/routes/index.tsx` — page composition; `src/routes/__root.tsx` — head, fonts, meta.
-- `src/config/sections.ts` — **single source of truth**: 8 sections (range, content window, anchor), PAGE_VH, HERO_GLIDE.
+- `src/routes/index.tsx` — home composition; `src/routes/about-webix.tsx` — the "Who we are" page (CSS star sky, no 3D, same Menu; dev-only `Todo` markers for owner facts); `src/routes/__root.tsx` — head, fonts, meta.
+- `src/config/sections.ts` — **single source of truth**: 7 sections (range, content window, anchor), PAGE_VH (scroll distance: excludes the last, one-screen section), HERO_GLIDE.
 - `src/config/projects.ts` — Work panel data (derived from webix-data; tech tags = platform only, TODO real stacks).
 - `src/lib/journey.ts` — scroll progress store (`journey` mutable + `journeyStore`), Lenis on gsap.ticker, `lockScroll`, `travelTo*`.
-- `src/lib/webix-data.ts` — projects (6, real screenshots), services (4), process (4), RESULT_STATS (derived, no invented numbers).
+- `src/lib/webix-data.ts` — projects (6, real screenshots), services (4), process (4).
 - `src/lib/site-config.ts` — real contact details (single source): email hassanadelh@outlook.com, WhatsApp +966 59 797 6116
-  (`wa.me/966597976116`), handle @webix_dev, owner name/title (TODO confirm), badge photo, city. No Instagram (none given). `src/lib/inquiry.ts` — form schema + message.
+  (`wa.me/966597976116`), handle @webix_dev, owner name/title (TODO confirm), badge photo, city. No Instagram (none given). `src/lib/inquiry.ts` — form schema, EGP budgets, Web3Forms send, fallback message. `src/lib/instagram.ts` — @handle / URL normaliser (self-check: `node --experimental-strip-types scripts/check-instagram.mjs`).
 - `src/shaders/` — **vendored ThreeUI, byte-exact** (SHA-256 checked; `.gitattributes` keeps LF): `character-carousel/CharacterCarousel.tsx`
   (+ one host prop, `source`), `sources/character-filmstrip.html`, `character-wave.html`, `threeui.css`. Never edit the HTML sources.
-- `src/components/site/` — HTML layer: `WorkFilmstrip.tsx` (Work: string transforms on the filmstrip source — projects ×2 in, square
-  WebP 16:9 screenshots `public/work/film/` (1280×720, top of the site), cards widened to clamp(190px,19vw,290px) with a 16:9 media area, theme CSS, a `webix-project` postMessage on selecting the front card → case study), `Sections.tsx` (all sections; glass panels), `ServiceDeck.tsx` (the card's services deck: button over
+- `src/components/site/` — HTML layer: `WorkFilmstrip.tsx` (Work: string transforms on the filmstrip source — projects ×2 in,
+  WebP 16:9 screenshots `public/work/film/` (1280×720, top of the site), cards clamp(247px,24.7vw,377px) (phones 71.5vw ≈ 88vw focused) with a 16:9 media area, theme CSS, a `webix-project` postMessage on selecting the front card → case study), `Sections.tsx` (all sections; glass panels), `ServiceDeck.tsx` (the card's services deck: button over
   the card, a real link over each pass, hint, Esc / tap-outside / 400 ms fold), `Menu.tsx` (W top-left, Menu button + overlay
   top-right, hero "Scroll down to discover" bottom-left + wordmark bottom-right), `SceneLayer.tsx` (CSS sky + lazy canvas), `Loader`, `ContactForm`, `CaseStudyDialog`.
 - `src/components/three/` — WebGL (lazy chunk):
@@ -31,7 +32,7 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
     (card reflections only), card, CameraRig, Effects.
   - `Stars.tsx` — `StarMap` (NASA Deep Star Map on navy, its stars desaturated to white, + noise nebula wisps, faint pink nebula top-right,
     golden glow at the sunrise, 3 small galaxies) + `Stars` (white only #FFFFFF→#EEF3FF: 1500 points (600 on phones), 2–5 s twinkle per
-    star, halo grows with brightness, 2% slow sparkles, spikes on the brightest 3%; + 34 big stars (14 on phones), 4–7 s) + `ShootingStar`.
+    star, halo grows with brightness, 2% slow sparkles, spikes on the brightest 3%; + 34 big stars (14 on phones), 4–7 s, instanced quads so no GPU point-size cap) + `ShootingStar`. All share `starPass` (`src/lib/loupe.ts`): the lens pass sets `uZoom` = MAG.
   - `Space.tsx` — Earth (`EARTH_NADIR` 10°N 28°E under the camera → Egypt/Nile/Mediterranean in view, `EARTH_TILT`; `EARTH_SUN` from
     the left, terminator ~35–40% across, golden twilight band; day = Blue Marble × `SUN_GAIN` with GEBCO relief, ocean glint, cloud
     shadows; night = moonlit `NIGHT_TINT` + Black Marble city lights `#FFB547`→`#FFE2A0`; spins every `EARTH_DAY` s, clouds 1.2×;
@@ -45,8 +46,8 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
     stacked behind the card; `dealLayout` picks fan / split / grid so nothing overlaps; screen boxes + HTML-face alpha written to `deck`). `src/lib/deck.ts` — the deck's shared state (no three import). `cardArt.ts` — card dims and printed front/back textures.
   - `Badge.tsx` + `badgeArt.ts` — About Me: the crew pass worn on a two-strap Rapier lanyard (two fixed anchors above the screen, 0.3 of
     the badge apart; 3 rope links each, collision-filtered; both spherical-jointed to either side of the clip; MeshLine straps along
-    Catmull-Roms with a twist-width; gravity −1.4 + drift; drag via `src/lib/badge.ts` + the HTML `BadgeHit`). Centred; ~31vw beside the
-    copy on wide screens (≥ 1200 px, ≥ 3:2), else above it (≤ 52% of the height; 70vw phones). Opaque printed faces (2048 px print as
+    Catmull-Roms with a twist-width; gravity −1.4 + drift; drag via `src/lib/badge.ts` + the HTML `BadgeHit`). Centred in the viewport;
+    ~34vw (72vw phones), at most 86% of the height. Opaque printed faces (2048 px print as
     its own emissive + key + HDRI), clearcoat sleeve. Only in About Me (hidden + physics paused elsewhere); reduced motion = still badge,
     hover tilt. Photo `public/about/me.webp` (from `src/assets/me.png`, cropped to the subject). Lazy chunk, loaded at Contact.
   - `CameraRig.tsx` — camera framing + idle drift + mouse parallax; the card's single writer (screen-anchored poses, maath damping).
@@ -75,14 +76,13 @@ drifting far above, NASA's real star sky behind with a twinkling star layer. Hov
 | id | Content | Layout |
 |----|---------|--------|
 | hero | h1 "we launch brands into orbit." (logo lettering, −5°; no subline) · services deck on the card · Get started pill · magnifier (desktop only) | Headline centred ~15% from the top · Moon orbits behind · hovering/tapping the card deals 4 brand service cards (4 across; 2+2 beside the card if narrower; 2×2 grid below on phones) · clicking one opens `#service-<slug>` · "Get started" pill under the card · magnifier lens (toggle next to the scroll hint; not on phones / touch) · card slightly below centre (~29% width desktop, ~74vw phone, FOV 68° portrait) · W top-left · Menu top-right · WhatsApp + toggle + scroll hint bottom-left · wordmark bottom-right (11.5vw / 32vw) · touch: ✕ on the card folds the deck · safe-area insets (`.safe-edges`) |
-| work | 6 projects in the ThreeUI filmstrip (16:9 screenshot, nn, name, type; select the front card → case study) | Logo-lettered heading top-left · filmstrip 26vh→97vh · card top-right, fully visible (~24vw desktop, ~27vw phones), above the filmstrip's cards · sr-only project list |
-| about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work | Glass panel on the left (`Section copy="left"`), the Webix Pass on the right, centred (~31vw); phones: card above the copy |
+| work | 6 projects in the ThreeUI filmstrip (16:9 screenshot, nn, name, type; select the front card → case study) | Logo-lettered heading top-left · filmstrip 26vh→97vh · cards +30% · card top-right, 5vw in from the old spot, fully visible (~24vw desktop, ~27vw phones), above the filmstrip's cards · sr-only project list |
+| about | "Your ideas. Our playground." (h2) + "We build digital journeys." + vision copy + Get Started / Explore our work / Who we are (→ `/about-webix`) | Glass panel on the left (`Section copy="left"`), the Webix Pass on the right, centred (~31vw); phones: card above the copy |
 | services | 4 services | Glass panel |
 | process | Discover → Design → Build → Launch | Glass panel |
-| results | Derived stats; testimonials = dev-only placeholder | Glass panel |
-| contact | "Your stop. Let's build it." + links + form | Glass panels |
-| me | "About Me": name (logo lettering), title, short bio (TODO real bio), email / WhatsApp · the 3D crew-pass badge on a two-strap lanyard | Badge centred; copy beside it (right) on wide screens, below it elsewhere; card in the side pose (desktop) / out of frame (phones) |
-Card path: hero centre → Work top-right (~24vw) → About right side, centred (~31vw; phones: above the copy, ~50vw) → from Services on the left third (desktop) / top (phones), panels opposite.
+| contact | "Your stop. Let's build it." + links + form (Web3Forms → owner's email; Instagram optional; EGP budgets) | Glass panels |
+| me | Only the 3D crew-pass badge on its two-strap lanyard (sr-only text for assistive tech) | One screen (100svh, the page ends here); badge centred; the Webix Pass shrinks away as it enters, back on the way up |
+Card path: hero centre → Work top-right (~24vw) → About right side, centred (~31vw; phones: above the copy, ~50vw) → from Services on the left third (desktop) / top (phones), panels opposite → scales to nothing in About Me.
 
 ## Decisions already made (do not revisit)
 - Theme: photoreal space from real imagery (NASA Blue/Black Marble, CGI Moon Kit, Deep Star Maps, 3D Resources). No procedural stand-ins, clay objects or cartoon sprites. The train theme is gone; don't bring back stations, signage, HUD or Japanese labels.
@@ -118,7 +118,9 @@ Card path: hero centre → Work top-right (~24vw) → About right side, centred 
 - Zero budget: free/OSS libraries, Google Fonts, CC0 assets only. No invented testimonials or stats.
 - Card draws over everything via a depth-clear mesh (renderOrder 19); card on layer 1.
 - No `anisotropy` on card materials (NaN artefacts).
-- Menu order: Home · Work · Services · About · Contact · About Me. Page order: Hero → Work → About → Services → Process → Results → Contact → About Me (last).
+- Menu order: Home · Work · Services · About · Contact · About Me · Who we are. Page order: Hero → Work → About → Services → Process → Contact → About Me (last). Results was removed (2026-11-06).
+- Contact form: Web3Forms from the browser (no backend), email required, phone optional, botcheck honeypot; a failure keeps the details and offers Try again + mailto / WhatsApp. No form data in the console.
+- Links from `/about-webix` into the home page are plain `<a href="/#id">` (full load); the home page lands `/#section` on that section's anchor.
 - Work is the ThreeUI CharacterCarousel **filmstrip** (2026-11-05), restyled only via an injected stylesheet + content transforms; its motion,
   rail and input are untouched. Work is 220 vh, no scroll snap. The iframe captures the wheel while the pointer is over it (inherent).
 
