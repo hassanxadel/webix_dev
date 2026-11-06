@@ -15,6 +15,8 @@ export default defineConfig({
       server: {
         entry: "src/server.ts",
       },
+      // Every page is static, so the build writes plain HTML that any free host can serve.
+      prerender: { enabled: true, crawlLinks: true, filter: ({ path }) => !path.includes("#") },
     }),
     react(),
     tailwindcss(),

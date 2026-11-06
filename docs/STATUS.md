@@ -1,6 +1,8 @@
 # Status
 
 ## Current state
+- Pre-launch 2 (2026-11-06): contact form honeypot sent only when ticked, clear error if the key is missing (real browser sends return `success: true`; **arrival in Outlook still to be confirmed by the owner**). One `<Button>` (19 buttons migrated, old classes removed, static error page matched). Work cards ×1.2, phones ≈90vw focused. `/projects` + `/projects/:slug` + Menu item + "View all projects", one data source. Static build (9 pages, 404 page) checked in headless Chrome against the built files.
+  **To launch:** push `main`; Cloudflare Pages → connect the repo, build `npm run build`, output `dist/client`, env `VITE_WEB3FORMS_KEY`. Then send a test inquiry from the live site. Open owner items: owner name/title in `site-config.ts`, gallery images, real tech stacks, the 4 Who we are TODOs, absolute `og:image` URLs once the domain is known.
 - Pre-launch edits (2026-11-06): stars enlarge in the lens (`uZoom`, big stars instanced quads); Work cards +30%, Pass 5vw further left;
   "Who we are" button + `/about-webix` page + Menu item; Results removed; contact form emails via Web3Forms (Instagram field, EGP
   budgets; tested with a stubbed fetch only, no real send); About Me is the badge alone, one screen, centred, "SOFTWARE ENGINEER" above
@@ -64,6 +66,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-06 · launch prep · contact honeypot, one Button, Work cards ×1.2, Projects pages, static build + 404 · (this commit)
 - 2026-11-06 · pre-launch · lens stars, Work sizing, Who we are page, Results removed, Web3Forms, About Me badge only · (these commits)
 - 2026-11-05 · about me · new last section, two-strap badge, photo, visible lighting · (this commit)
 - 2026-11-05 · about · Webix Pass on the right, copy on the left · (this commit)
