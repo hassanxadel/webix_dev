@@ -16,3 +16,9 @@ export const loupe = {
 
 /** Magnification (as in the Sketchbook loupe). */
 export const MAG = 2.3;
+
+/**
+ * Star uniforms shared by every star material. Star sizes are in screen px, so a narrower
+ * FOV alone only moves stars apart: the lens pass sets `zoom` to MAG and `res` to its own area.
+ */
+export const starPass = { zoom: { value: 1 }, res: { value: [1, 1] } };

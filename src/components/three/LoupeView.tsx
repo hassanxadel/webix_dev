@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { loupe, MAG } from "@/lib/loupe";
+import { loupe, MAG, starPass } from "@/lib/loupe";
 import { CARD_LAYER } from "./WebixPass";
 
 /**
  * The magnifier's view: the same scene from the same camera with a narrower
  * FOV (×MAG), aimed down the ray under the lens, into a small square render
  * target; drawn back as a screen-space disc inside the main scene, so bloom,
- * ACES and grain treat it like everything else. Glass: rim darkening and a
+ * ACES and grain treat it like everything else; stars enlarge with it (`starPass`)
+ * on the same twinkle clock. Glass: rim darkening and a
  * colour fringe toward the edge (the dome highlights are CSS, over it).
  * Runs only while the lens is on screen; ~30 fps unless the lens moves.
  */
@@ -68,10 +69,15 @@ export function LoupeView() {
     if (t - st.last > 1 / 30 || loupe.moved !== st.moved) {
       st.last = t;
       st.moved = loupe.moved;
+      starPass.zoom.value = MAG;
+      starPass.res.value[0] = starPass.res.value[1] = loupe.r * 2;
       gl.setRenderTarget(target);
       gl.clear();
       gl.render(scene, zoom);
       gl.setRenderTarget(null);
+      starPass.zoom.value = 1;
+      starPass.res.value[0] = size.width;
+      starPass.res.value[1] = size.height;
     }
     mat.uniforms.uCentre.value.set(nx, ny);
     mat.uniforms.uRadius.value.set((loupe.r / size.width) * 2, (loupe.r / size.height) * 2);

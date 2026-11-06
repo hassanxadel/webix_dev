@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { journey, journeyStore } from "@/lib/journey";
+import { starPass } from "@/lib/loupe";
 import { useProgressiveTexture } from "./textures";
 import { BASE_PITCH, GLARE_DIR } from "./Space";
 
@@ -135,12 +136,23 @@ const vertex = /* glsl */ `
   uniform vec2 uShift;
   uniform float uDpr;
   uniform float uBig;      // 1 = the big-star layer: full swing to almost off, no slow-down for brightness
+  uniform float uZoom;     // the magnifier's ×MAG in its pass, 1 otherwise
+  uniform float uMaxPoint; // this GPU's gl_PointSize limit
+  #ifdef QUAD
+  attribute vec3 aPos;     // per instance; position = the quad's corner
+  uniform vec2 uRes;       // the pass's size, CSS px
+  varying vec2 vCoord;
+  #endif
   varying float vBright;
   varying float vScale;
   varying vec3 vColor;
   varying float vSpikes;
   void main() {
+    #ifdef QUAD
+    vec4 mv = modelViewMatrix * vec4(aPos, 1.0);
+    #else
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    #endif
     mv.xy += uShift * (0.3 + aTw.z) * -mv.z;
     gl_Position = projectionMatrix * mv;
     float w = aTw.y;                    // bright stars pulse slower
@@ -155,7 +167,12 @@ const vertex = /* glsl */ `
     vScale = (0.55 + 0.45 * b) * (1.0 + 0.5 * flare);          // the halo breathes with brightness
     vColor = aTint;
     vSpikes = aFlags.x;
-    gl_PointSize = aSize * vScale * uDpr;
+    #ifdef QUAD
+    vCoord = position.xy + 0.5;
+    gl_Position.xy += position.xy * aSize * vScale * uZoom * 2.0 / uRes * gl_Position.w;
+    #else
+    gl_PointSize = min(aSize * vScale * uDpr * uZoom, uMaxPoint);
+    #endif
   }
 `;
 const fragment = /* glsl */ `
@@ -163,8 +180,14 @@ const fragment = /* glsl */ `
   varying float vScale;
   varying vec3 vColor;
   varying float vSpikes;
+  #ifdef QUAD
+  varying vec2 vCoord;
+  #define COORD vCoord
+  #else
+  #define COORD gl_PointCoord
+  #endif
   void main() {
-    vec2 d = gl_PointCoord - 0.5;
+    vec2 d = COORD - 0.5;
     float r = length(d) * 2.0;
     float core = exp(-r * r * 60.0 * vScale * vScale);         // the core keeps its pixel size
     float halo = exp(-r * r * 7.0) * 0.35;
@@ -244,13 +267,18 @@ function buildBig(count: number) {
     flags.push(1, 0);
     tint.push(...white.clone().lerp(cool, rnd()).toArray());
   }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute("aSize", new THREE.Float32BufferAttribute(size, 1));
-  g.setAttribute("aMag", new THREE.Float32BufferAttribute(mag, 1));
-  g.setAttribute("aTw", new THREE.Float32BufferAttribute(tw, 4));
-  g.setAttribute("aFlags", new THREE.Float32BufferAttribute(flags, 2));
-  g.setAttribute("aTint", new THREE.Float32BufferAttribute(tint, 3));
+  // Instanced camera-facing quads, not points: magnified they can outgrow a GPU's point-size limit.
+  const g = new THREE.InstancedBufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute([-0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0], 3));
+  g.setIndex([0, 1, 2, 0, 2, 3]);
+  const each = (name: string, data: number[], n: number) => g.setAttribute(name, new THREE.InstancedBufferAttribute(new Float32Array(data), n));
+  each("aPos", pos, 3);
+  each("aSize", size, 1);
+  each("aMag", mag, 1);
+  each("aTw", tw, 4);
+  each("aFlags", flags, 2);
+  each("aTint", tint, 3);
+  g.instanceCount = count;
   return g;
 }
 
@@ -265,29 +293,36 @@ export function Stars({ few }: { few: boolean }) {
 }
 
 function StarLayer({ geo, big }: { geo: THREE.BufferGeometry; big: number }) {
+  const maxPoint = useThree(({ gl }) => {
+    const c = gl.getContext();
+    return c.getParameter(c.ALIASED_POINT_SIZE_RANGE)[1] as number;
+  });
   // Created once, so the uniforms written every frame below are the ones the GPU reads.
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
         vertexShader: vertex,
         fragmentShader: fragment,
-        uniforms: { uTime: { value: 0 }, uShift: { value: new THREE.Vector2() }, uDpr: { value: 1 }, uBig: { value: big } },
+        defines: big ? { QUAD: 1 } : {},
+        uniforms: { uTime: { value: 0 }, uShift: { value: new THREE.Vector2() }, uDpr: { value: 1 }, uBig: { value: big }, uMaxPoint: { value: maxPoint }, uZoom: starPass.zoom, uRes: starPass.res },
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       }),
-    [big],
+    [big, maxPoint],
   );
   useEffect(() => () => geo.dispose(), [geo]);
 
-  useFrame(({ viewport }, dt) => {
+  useFrame(({ viewport, size }, dt) => {
     const u = mat.uniforms;
+    starPass.res.value[0] = size.width;
+    starPass.res.value[1] = size.height;
     u.uTime.value += dt * speed();
     u.uShift.value.set(journey.pointerX * -0.002, journey.pointerY * 0.0014 + journey.progress * 0.01);
     u.uDpr.value = viewport.dpr;
   });
 
-  return <points geometry={geo} material={mat} frustumCulled={false} renderOrder={-10} />;
+  return big ? <mesh geometry={geo} material={mat} frustumCulled={false} renderOrder={-10} /> : <points geometry={geo} material={mat} frustumCulled={false} renderOrder={-10} />;
 }
 
 /** A rare, thin shooting star (every ~6–12 s), fast and subtle, behind the Earth and Moon. */
