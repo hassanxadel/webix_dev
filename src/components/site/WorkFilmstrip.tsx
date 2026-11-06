@@ -47,12 +47,12 @@ html, body { background: transparent !important; }
 .stage::after { background: none; }
 /* 16:9 media: a wider, landscape card (only its size changes; the rail, spacing and motion are the source's). */
 /* The focused card is ×1.23 and about as tall as this width is wide, so 80vh of this frame keeps it from clipping on short windows. */
-.card { width: min(clamp(247px, 24.7vw, 377px), 80vh); aspect-ratio: 1.24; }
+.card { width: min(clamp(296px, 29.64vw, 452px), 80vh); aspect-ratio: 1.24; }
 .portrait { inset: 7px 7px auto 7px; aspect-ratio: 16 / 9; }
 /* Footer: the space under the media (card height − 3 gaps − (124% of the height − 14px) × 9/16). */
 .footer { top: calc(69.75% + 6.125px); height: auto; }
-/* Phones: 71.5vw × the focus scale of 1.23 ≈ 88vw on screen. */
-@media (max-width: 650px) { .card { width: min(71.5vw, 338px); } }
+/* Phones: 73vw × the focus scale of 1.23 ≈ 90vw on screen. */
+@media (max-width: 650px) { .card { width: min(73vw, 405px); } }
 .card {
   border-color: rgba(255, 218, 36, 0.32);
   border-radius: 8px;
