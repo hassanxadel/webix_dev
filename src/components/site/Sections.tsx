@@ -14,10 +14,8 @@ import { WORK } from "@/config/projects";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const heightOf = (id: SectionId) => {
-  const i = sectionIndex(id);
-  const s = SECTIONS[i];
-  // The last section gets one extra screen so the page can scroll all the way to progress 1.
-  return `${(s.range[1] - s.range[0]) * PAGE_VH + (i === SECTIONS.length - 1 ? 100 : 0)}vh`;
+  const s = SECTIONS[sectionIndex(id)];
+  return `${(s.range[1] - s.range[0]) * PAGE_VH}vh`;
 };
 
 /**
@@ -287,46 +285,16 @@ function Process() {
   );
 }
 
-/* ───────── About Me: the founder's crew pass on its lanyard (three/Badge) ───────── */
+/* ───────── About Me: only the crew pass on its lanyard (three/Badge, in the main canvas) ───────── */
 
-/**
- * Last section. The badge hangs centred (3D, in the main canvas); the copy sits
- * beside it on wide screens (≥ 1200 px, ≥ 3:2) and below it elsewhere.
- */
 function AboutMe() {
-  const index = sectionIndex("me");
-  const showing = useJourney((st) => st.showing);
   return (
-    <section id="me" tabIndex={-1} aria-labelledby="me-title" className="relative outline-none" style={{ height: heightOf("me") }}>
-      <div className="sticky top-0 h-svh overflow-hidden">
-        <div className="section-copy relative h-full" data-on={showing === index}>
-          <div className="me-copy">
-            <div className="glass p-6 sm:p-8">
-              <Label id="me" />
-              <h2 id="me-title" className="me-title mt-4">
-                <LogoWord w={SITE_CONFIG.owner.split(" ")[0]} /> <LogoWord w={SITE_CONFIG.owner.split(" ").slice(1).join(" ")} variant="ix" />
-              </h2>
-              <p className="mt-2 font-heading text-lg font-semibold text-sun">{SITE_CONFIG.ownerTitle}</p>
-              {/* TODO: a real bio from the owner; this restates only what the site already says. */}
-              <p className="mt-4 leading-relaxed text-paper/70">
-                I run Webix: we design and build websites, Shopify stores, real-time 3D for the web and brand identities, from {SITE_CONFIG.city}.
-              </p>
-              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                <li>
-                  <a href={`mailto:${SITE_CONFIG.email}`} className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
-                    <Mail size={16} className="text-sun" aria-hidden /> {SITE_CONFIG.email}
-                  </a>
-                </li>
-                <li>
-                  <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
-                    <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="hud text-[0.65rem] text-paper/55">{SITE_CONFIG.handle}</span>{" "}
-                    <span className="sr-only">(opens in a new tab)</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+    <section id="me" tabIndex={-1} aria-labelledby="me-title" className="relative h-svh outline-none">
+      <div className="sr-only">
+        <h2 id="me-title">About Me</h2>
+        <p>
+          {SITE_CONFIG.owner}, {SITE_CONFIG.ownerTitle}. <a href={`mailto:${SITE_CONFIG.email}`}>{SITE_CONFIG.email}</a>
+        </p>
       </div>
     </section>
   );

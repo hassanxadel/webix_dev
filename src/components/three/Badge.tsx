@@ -32,34 +32,27 @@ const SEGMENT = { type: "dynamic" as const, canSleep: true, colliders: false as 
 const CLIP = 0.14;
 const SPREAD = 0.3;
 
-/**
- * Where the badge hangs (world space, from the camera framing): centred.
- * Wide screens (≥ 1200 px, ≥ 3:2): ~30% of the width and up to 82% of the
- * height, the copy beside it; otherwise the copy is below, so it takes ~34% of
- * the width (70% on phones) and at most 52% of the height, top-anchored.
- */
+/** Where the badge hangs (world space, from the camera framing): centred in the viewport; ~34% of the width (72% on phones), at most 86% of the height. */
 function useLayout() {
   const { size } = useThree();
   const aspect = Math.round((size.width / size.height) * 20) / 20;
-  const beside = size.width >= 1200 && aspect >= 1.5;
   const tall = size.width <= size.height;
   return useMemo(() => {
     const d = 2.6;
     const halfH = d * Math.tan(THREE.MathUtils.degToRad(fovFor(size.width, size.height) / 2));
     const halfW = halfH * aspect;
-    let bw = (beside ? 0.32 : tall ? 0.7 : 0.34) * 2 * halfW;
+    let bw = (tall ? 0.72 : 0.34) * 2 * halfW;
     let bh = bw * (BADGE.height / BADGE.width);
-    const maxH = (beside ? 0.82 : 0.52) * 2 * halfH;
+    const maxH = 0.86 * 2 * halfH;
     if (bh > maxH) [bh, bw] = [maxH, maxH * (BADGE.width / BADGE.height)];
     const scale = bw / BADGE.width;
     const at = (x: number, y: number) => new THREE.Vector3(x, y, -d).applyAxisAngle(X, BASE_PITCH);
-    // Beside: vertically centred (a touch low, under the strap); below: the badge's top at 10% from the top of the screen.
-    const cy = beside ? -0.04 * halfH : 0.8 * halfH - bh / 2;
-    const rest = at(0, cy);
+    // A touch low, so the badge and its clasp together are centred.
+    const rest = at(0, -0.015 * scale);
     const top = at(0, halfH * 1.12);
     const anchors = [at(-SPREAD * bw * 0.5, top.y), at(SPREAD * bw * 0.5, top.y)] as const;
-    return { beside, scale, rest, anchors };
-  }, [beside, tall, aspect, size.width, size.height]);
+    return { scale, rest, anchors };
+  }, [tall, aspect, size.width, size.height]);
 }
 type Layout = ReturnType<typeof useLayout>;
 
@@ -284,7 +277,7 @@ export default function Badge() {
   }, [on]);
   useEffect(() => () => void (badge.box.w = 0), []);
   // Rebuilt (fresh bodies) when the framing changes.
-  const key = `${layout.beside}-${layout.scale.toFixed(3)}-${layout.rest.y.toFixed(3)}`;
+  const key = `${layout.scale.toFixed(3)}-${layout.rest.y.toFixed(3)}`;
   return (
     <group visible={on}>
       {reduced ? (

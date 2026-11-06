@@ -124,7 +124,12 @@ export function badgeFront() {
       x.fillRect(rx, py + 170 + i * 46, 330 - i * 70, 22);
     });
 
-    // Name, title, email.
+    // Role, name, title, email.
+    x.fillStyle = YELLOW;
+    x.font = '700 46px "JetBrains Mono", monospace';
+    x.letterSpacing = "10px";
+    x.fillText("SOFTWARE ENGINEER", L, 1262);
+    x.letterSpacing = "0px";
     x.fillStyle = PAPER;
     x.font = '400 150px "Lilita One", "Poppins", sans-serif';
     x.fillText(SITE_CONFIG.owner, L, 1390, W - L * 2);

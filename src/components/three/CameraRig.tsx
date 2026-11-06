@@ -18,11 +18,11 @@ const POSES = {
   // Hero: centre, floating above the Earth's limb. Work: top-right, fully visible above the filmstrip's cards (~24vw). About: right side,
   // centred (~30vw), the copy on the left; phones: above the copy.
   // After Work: left third on desktop (angled toward the panels), top on phones.
-  wide: { hero: P(0, -0.1, 2.6, 0.82), work: P(0.6, 0.52, 2.6, 0.72, 0.04, -0.2, 0, 0.8, 1), about: P(0.6, 0, 2.6, 0.9, 0.03, -0.3, 0, 0.7, 1), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8), me: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8) },
+  wide: { hero: P(0, -0.1, 2.6, 0.82), work: P(0.6, 0.52, 2.6, 0.72, 0.04, -0.2, 0, 0.8, 1), about: P(0.6, 0, 2.6, 0.9, 0.03, -0.3, 0, 0.7, 1), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8), me: P(-0.64, 0.02, 2.4, 0.001, 0.04, 0.42, 0, 0.55, 0.8) },
   // Short windows (phones in landscape): the card a little higher, under a one-line headline, with room for Get started below.
-  short: { hero: P(0, 0.08, 2.6, 0.82), work: P(0.64, 0.62, 2.6, 0.5, 0.04, -0.2, 0, 0.8, 1), about: P(0.6, 0, 2.6, 0.8, 0.03, -0.3, 0, 0.7, 1), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8), me: P(-0.7, 0.02, 2.4, 0.6, 0.04, 0.42, 0, 0.55, 0.8) },
+  short: { hero: P(0, 0.08, 2.6, 0.82), work: P(0.64, 0.62, 2.6, 0.5, 0.04, -0.2, 0, 0.8, 1), about: P(0.6, 0, 2.6, 0.8, 0.03, -0.3, 0, 0.7, 1), side: P(-0.64, 0.02, 2.4, 0.74, 0.04, 0.42, 0, 0.55, 0.8), me: P(-0.64, 0.02, 2.4, 0.001, 0.04, 0.42, 0, 0.55, 0.8) },
   // Phones (portrait, FOV 68°): the card ~74vw wide, centred above the middle so the service grid fits below it.
-  tall: { hero: P(0, 0.16, 2.6, 1.0), work: P(0.56, 0.74, 2.6, 0.36, 0.04, -0.2, 0, 0.8, 1), about: P(0, 0.66, 2.6, 0.68, 0.03, 0, 0, 0.7, 1), side: P(0, 0.7, 2.4, 0.49, 0.04, 0.3, 0, 0.55, 0.8), me: P(0, 1.5, 2.4, 0.49, 0.04, 0.3, 0, 0.55, 0.8) },
+  tall: { hero: P(0, 0.16, 2.6, 1.0), work: P(0.56, 0.74, 2.6, 0.36, 0.04, -0.2, 0, 0.8, 1), about: P(0, 0.66, 2.6, 0.68, 0.03, 0, 0, 0.7, 1), side: P(0, 0.7, 2.4, 0.49, 0.04, 0.3, 0, 0.55, 0.8), me: P(0, 0.7, 2.4, 0.001, 0.04, 0.3, 0, 0.55, 0.8) },
 };
 
 /** Vertical FOV per window shape: 45° wide; 68° portrait (wider than 60° so more of the Moon's loop crosses the narrow frame; the limb stays in the bottom ~37%). */
@@ -96,12 +96,13 @@ export function CameraRig() {
     };
 
     // Hero → Work (top-right) over the hero's second half; → About (right side) as Work hands over; → side after About;
-    // → About Me (wide: the side pose, clear of the centred badge; phones: up out of frame, the badge takes the top).
+    // → About Me (it shrinks away in place: the section is only the badge; back again on the way up).
     const p = journey.progress;
     const end = (id: SectionId) => SECTIONS[sectionIndex(id)].range[1];
     const hop = (at: number) => span(p, at - 0.01, at + 0.02);
     let from = S.hero, to = S.work, w = span(p, ...HERO_GLIDE);
-    if (p >= end("contact") - 0.01) [from, to, w] = [S.side, S.me, hop(end("contact"))];
+    const me = SECTIONS[sectionIndex("me")].range[0];
+    if (p >= me - 0.01) [from, to, w] = [S.side, S.me, hop(me)];
     else if (p >= end("about") - 0.01) [from, to, w] = [S.about, S.side, hop(end("about"))];
     else if (p >= end("work") - 0.01) [from, to, w] = [S.work, S.about, hop(end("work"))];
     const A = resolve(from, t.a, t.qa);

@@ -722,35 +722,6 @@
   box-shadow: 0 4px 12px rgb(5 11 30 / 0.45);
 }
 
-/* About Me: copy beside the centred badge on wide screens, below it elsewhere. */
-.me-copy {
-  position: absolute;
-  inset: 64svh 0 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 0 1.25rem 1.5rem;
-}
-.me-copy > .glass {
-  max-width: 36rem;
-  margin: 0 auto;
-}
-@media (min-width: 1200px) and (min-aspect-ratio: 3 / 2) {
-  .me-copy {
-    inset: 0 4% 0 68%;
-    display: flex;
-    align-items: center;
-    overflow: visible;
-    padding: 0;
-  }
-  .me-copy > .glass {
-    margin: 0;
-  }
-}
-.me-title {
-  font-size: clamp(2rem, 3.4vw, 3rem);
-  line-height: 1.05;
-}
-
 /* Pages without the 3D scene: the NASA star map as a plain image over the CSS sky; white stars only. */
 .page-stars {
   background: url("/space/stars-2k.webp") center / cover;

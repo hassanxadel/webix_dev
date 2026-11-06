@@ -230,6 +230,7 @@ export function WebixPass() {
     g.position.copy(cardState.position);
     g.quaternion.copy(cardState.quaternion);
     g.scale.setScalar(cardState.scale);
+    g.visible = cardState.scale > 0.012; // gone in About Me
 
     // Pointer (or device) tilt, max 18° in the hero (scaled by cardState.tilt elsewhere), damped (~0.08 per frame at 60 fps); touch gets a gentle sway.
     const touchSway = !deviceTilt.active && matchMedia("(hover: none)").matches;
