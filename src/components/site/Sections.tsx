@@ -8,6 +8,7 @@ import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/lib/journey";
 import { badge } from "@/lib/badge";
 import { ContactForm } from "./ContactForm";
+import { Button } from "./Button";
 import { ServiceDeck } from "./ServiceDeck";
 import { WorkFilmstrip } from "./WorkFilmstrip";
 import { WORK } from "@/config/projects";
@@ -206,29 +207,31 @@ function About() {
           We combine thoughtful design and modern web technology to help businesses present their brands, reach customers, and grow online.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
-          <a
-            href="#contact"
-            className="btn-primary"
-            onClick={(e) => {
-              e.preventDefault();
-              travelToSection("contact");
-            }}
-          >
-            Get Started <ArrowRight size={16} aria-hidden />
-          </a>
-          <a
-            href="#work"
-            className="btn-secondary"
-            onClick={(e) => {
-              e.preventDefault();
-              travelToSection("work");
-            }}
-          >
-            Explore our work
-          </a>
-          <Link to="/about-webix" className="btn-logo">
-            Who we are
-          </Link>
+          <Button asChild>
+            <a
+              href="#contact"
+              onClick={(e) => {
+                e.preventDefault();
+                travelToSection("contact");
+              }}
+            >
+              Get Started <ArrowRight size={16} aria-hidden />
+            </a>
+          </Button>
+          <Button asChild variant="secondary">
+            <a
+              href="#work"
+              onClick={(e) => {
+                e.preventDefault();
+                travelToSection("work");
+              }}
+            >
+              Explore our work
+            </a>
+          </Button>
+          <Button asChild>
+            <Link to="/about-webix">Who we are</Link>
+          </Button>
         </div>
       </div>
     </Section>

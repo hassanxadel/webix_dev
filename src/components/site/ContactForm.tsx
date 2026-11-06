@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Instagram, Loader2 } from "lucide-react";
+import { ArrowRight, Instagram } from "lucide-react";
 import type { z } from "zod";
 import { BUDGETS, buildInquiryMessage, FORM_READY, inquirySchema, sendInquiry, type Inquiry } from "@/lib/inquiry";
 import { SERVICES } from "@/lib/webix-data";
 import { mailtoLink, whatsappLink } from "@/lib/site-config";
 import { useJourney } from "@/lib/journey";
+import { Button } from "./Button";
 
 function Field({ id, label, error, optional, children }: { id: string; label: string; error?: string; optional?: boolean; children: React.ReactNode }) {
   return (
@@ -67,9 +68,9 @@ export function ContactForm() {
       <div role="status" className="py-10 text-center">
         <p className="hud text-sun">Sent</p>
         <h3 className="mt-4 text-2xl text-paper">Thanks! We&apos;ll reply within 24 hours.</h3>
-        <button type="button" onClick={() => setSent(false)} className="btn-secondary mt-7">
+        <Button variant="secondary" onClick={() => setSent(false)} className="mt-7">
           Write another inquiry
-        </button>
+        </Button>
       </div>
     );
 
@@ -141,17 +142,9 @@ export function ContactForm() {
         </p>
       )}
       <div className="flex justify-end sm:col-span-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-60">
-          {isSubmitting ? (
-            <>
-              Sending <Loader2 size={16} className="animate-spin" aria-hidden />
-            </>
-          ) : (
-            <>
-              {failed && FORM_READY ? "Try again" : "Send inquiry"} <ArrowRight size={16} aria-hidden />
-            </>
-          )}
-        </button>
+        <Button type="submit" loading={isSubmitting}>
+          {isSubmitting ? "Sending" : failed && FORM_READY ? "Try again" : "Send inquiry"} {!isSubmitting && <ArrowRight size={16} aria-hidden />}
+        </Button>
       </div>
     </form>
   );

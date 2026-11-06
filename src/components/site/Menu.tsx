@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { HERO_GLIDE, type SectionId } from "@/config/sections";
 import { journey, travelTo, travelToSection } from "@/lib/journey";
 import { LoupeToggle } from "./Loupe";
+import { Button } from "./Button";
 import { whatsappLink } from "@/lib/site-config";
 
 const LINKS: { id: SectionId; label: string }[] = [
@@ -80,20 +81,24 @@ export function Menu() {
           <img src="/brand/webix-w.svg" alt="" width={1000} height={724} className="h-10 w-auto sm:h-11" />
         </a>
         <Dialog.Root open={open} onOpenChange={setOpen}>
-          <Dialog.Trigger className="hud pointer-events-auto flex items-center gap-3 py-2 text-paper/85 transition-colors hover:text-sun">
-            <span className="flex flex-col gap-[5px]" aria-hidden>
-              <span className="h-px w-6 bg-current" />
-              <span className="h-px w-4 bg-current" />
-            </span>
-            Menu
+          <Dialog.Trigger asChild>
+            <Button variant="ghost" size="sm" className="pointer-events-auto">
+              <span className="flex flex-col gap-[5px]" aria-hidden>
+                <span className="h-px w-5 bg-current" />
+                <span className="h-px w-3 bg-current" />
+              </span>
+              Menu
+            </Button>
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-[60] bg-[#0b1638]/80 backdrop-blur-xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
             <Dialog.Content className="fixed inset-0 z-[61] flex flex-col p-5 outline-none sm:p-8 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0">
               <Dialog.Title className="sr-only">Menu</Dialog.Title>
               <Dialog.Description className="sr-only">Jump to a section of the page.</Dialog.Description>
-              <Dialog.Close className="hud ml-auto flex w-fit items-center gap-3 py-2 text-paper/85 transition-colors hover:text-sun">
-                <X size={18} aria-hidden /> Close
+              <Dialog.Close asChild>
+                <Button variant="ghost" size="sm" className="ml-auto w-fit">
+                  <X size={18} aria-hidden /> Close
+                </Button>
               </Dialog.Close>
               <nav aria-label="Main" className="my-auto">
                 <ul className="space-y-2 sm:space-y-4">

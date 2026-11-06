@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { HERO_GLIDE } from "@/config/sections";
 import { journey, journeyStore, useJourney } from "@/lib/journey";
 import { loupe } from "@/lib/loupe";
+import { Button } from "./Button";
 
 /** Glass radius: ~11% of the short side, 64–120 px. */
 const radius = () => Math.min(120, Math.max(64, Math.min(innerWidth, innerHeight) * 0.11));
@@ -16,15 +17,15 @@ export function LoupeToggle() {
   // Phones / touch: no magnifier (and no toggle).
   if (useJourney((s) => s.mobile)) return null;
   return (
-    <button
-      type="button"
+    <Button
+      variant="icon"
       aria-pressed={on}
       aria-label={on ? "Hide the magnifier" : "Show a magnifier to look at the Moon and stars"}
       onClick={() => journeyStore.set({ loupe: !on })}
-      className="loupe-toggle pointer-events-auto"
+      className="pointer-events-auto"
     >
-      <Search size={15} strokeWidth={2.4} aria-hidden />
-    </button>
+      <Search size={17} strokeWidth={2.4} aria-hidden />
+    </Button>
   );
 }
 

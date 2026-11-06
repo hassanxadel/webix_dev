@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Box, Check, Clock, Globe, Palette, ShoppingBag, 
 import { SERVICES } from "@/lib/webix-data";
 import { deck } from "@/lib/deck";
 import { journeyStore, lockScroll, travelToSection, useJourney } from "@/lib/journey";
+import { Button } from "./Button";
 
 const ICONS: Record<string, LucideIcon> = { Websites: Globe, "E-commerce": ShoppingBag, "3D / Interactive web": Box, Branding: Palette };
 const HASH = "#service-";
@@ -120,9 +121,9 @@ export function ServiceDetail() {
     <div role="dialog" aria-modal="true" aria-labelledby="service-title" className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain" data-lenis-prevent>
       <div ref={shade} aria-hidden className="fixed inset-0 bg-night/75 backdrop-blur-md" onClick={() => close()} />
       <div className="relative mx-auto max-w-3xl px-5 pb-16 pt-6 sm:px-8 sm:pt-10">
-        <button ref={back} type="button" onClick={() => close()} className="btn-secondary mb-6 !px-4 !py-2.5">
+        <Button ref={back} variant="ghost" size="sm" onClick={() => close()} className="mb-6">
           <ArrowLeft size={16} aria-hidden /> Back
-        </button>
+        </Button>
         <div ref={head} className={`svc-card svc-hero svc-${s.face}`}>
           <Icon aria-hidden className="svc-icon" strokeWidth={2.2} />
           <p className="hud svc-kicker">Service {String(shown + 1).padStart(2, "0")} / {String(SERVICES.length).padStart(2, "0")}</p>
@@ -155,20 +156,21 @@ export function ServiceDetail() {
             <p className="mt-3 leading-relaxed text-paper/70">{s.timeline}</p>
           </div>
           <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
-            <a
-              href={`?service=${s.slug}#contact`}
-              className="btn-logo"
-              onClick={(e) => {
-                e.preventDefault();
-                journeyStore.set({ servicePreset: s.name });
-                close(() => {
-                  history.replaceState(null, "", `${location.pathname}?service=${s.slug}`);
-                  travelToSection("contact");
-                });
-              }}
-            >
-              Get started <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
-            </a>
+            <Button asChild>
+              <a
+                href={`?service=${s.slug}#contact`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  journeyStore.set({ servicePreset: s.name });
+                  close(() => {
+                    history.replaceState(null, "", `${location.pathname}?service=${s.slug}`);
+                    travelToSection("contact");
+                  });
+                }}
+              >
+                Get started <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
+              </a>
+            </Button>
             <p className="text-sm text-paper/55">We&apos;ll preselect {s.name} in the contact form.</p>
           </div>
         </div>

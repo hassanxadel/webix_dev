@@ -1,4 +1,5 @@
 import { ArrowUpRight, Instagram } from "lucide-react";
+import { Button } from "@/components/site/Button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PROJECTS } from "@/lib/webix-data";
 import { journeyStore, useJourney } from "@/lib/journey";
@@ -62,15 +63,19 @@ export function CaseStudyDialog() {
             </div>
 
             <div className="mt-9 flex flex-wrap gap-3 border-t border-paper/10 pt-6">
-              <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-primary">
-                Visit the live site <ArrowUpRight size={16} aria-hidden />
-                <span className="sr-only">(opens in a new tab)</span>
-              </a>
-              {p.instagram && (
-                <a href={p.instagram} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-                  <Instagram size={16} aria-hidden /> Instagram
+              <Button asChild>
+                <a href={p.url} target="_blank" rel="noopener noreferrer">
+                  Visit the live site <ArrowUpRight size={16} aria-hidden />
                   <span className="sr-only">(opens in a new tab)</span>
                 </a>
+              </Button>
+              {p.instagram && (
+                <Button asChild variant="ghost">
+                  <a href={p.instagram} target="_blank" rel="noopener noreferrer">
+                    <Instagram size={16} aria-hidden /> Instagram
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                </Button>
               )}
             </div>
           </div>

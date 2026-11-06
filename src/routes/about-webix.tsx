@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Mail, MessageCircle } from "lucide-react";
 import { Menu } from "@/components/site/Menu";
+import { Button } from "@/components/site/Button";
 import { PROCESS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 
@@ -95,9 +96,11 @@ function AboutWebix() {
       </div>
       <Menu />
       <main className="relative z-10 mx-auto grid max-w-3xl gap-6 px-5 pb-28 pt-28 sm:px-8">
-        <Link to="/" className="hud inline-flex w-fit items-center gap-2 text-paper/80 hover:text-sun">
-          <ArrowLeft size={16} aria-hidden /> Back to home
-        </Link>
+        <Button asChild variant="ghost" size="sm" className="w-fit">
+          <Link to="/">
+            <ArrowLeft size={16} aria-hidden /> Back to home
+          </Link>
+        </Button>
         <h1 className="work-title">
           <span className="logo-type" data-text="Who">
             Who
@@ -187,9 +190,11 @@ function AboutWebix() {
 
         <Block id="start" title="Ready when you are">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
-            <a href="/#contact" className="btn-logo">
-              Start a project <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
-            </a>
+            <Button asChild>
+              <a href="/#contact">
+                Start a project <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
+              </a>
+            </Button>
             <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-paper/80 hover:text-paper">
               <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp <span className="sr-only">(opens in a new tab)</span>
             </a>

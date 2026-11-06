@@ -6,6 +6,7 @@ import { SERVICES } from "@/lib/webix-data";
 import { deck } from "@/lib/deck";
 import { journey, journeyStore, travelToSection } from "@/lib/journey";
 import { openService } from "./ServiceDetail";
+import { Button } from "./Button";
 
 const ICONS: Record<string, LucideIcon> = { Websites: Globe, "E-commerce": ShoppingBag, "3D / Interactive web": Box, Branding: Palette };
 
@@ -159,22 +160,23 @@ export function ServiceDeck() {
         // Mouse: hovering already opened it, so a click keeps it open. Touch / keyboard: toggle.
         onClick={() => setOpen(lastInput.current === "mouse" ? true : !deck.open)}
       />
-      <a
-        ref={cta}
-        href="#contact"
-        className="btn-logo pointer-events-auto fixed left-0 top-0 z-30"
-        onClick={(e) => {
-          e.preventDefault();
-          setOpen(false);
-          travelToSection("contact");
-        }}
-      >
-        Get started <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
-      </a>
+      <Button asChild className="pointer-events-auto fixed left-0 top-0 z-30">
+        <a
+          ref={cta}
+          href="#contact"
+          onClick={(e) => {
+            e.preventDefault();
+            setOpen(false);
+            travelToSection("contact");
+          }}
+        >
+          Get started <ArrowRight aria-hidden size={18} strokeWidth={2.6} />
+        </a>
+      </Button>
       {touch && (
-        <button ref={shut} type="button" aria-label="Fold the services" className="deck-close pointer-events-auto fixed left-0 top-0 z-[32]" onClick={() => setOpen(false)}>
+        <Button ref={shut} variant="icon" aria-label="Fold the services" className="pointer-events-auto fixed left-0 top-0 z-[32]" onClick={() => setOpen(false)}>
           <X size={18} strokeWidth={2.6} aria-hidden />
-        </button>
+        </Button>
       )}
       <p ref={hint} aria-hidden className="hud deck-hint pointer-events-none fixed left-0 top-0 z-30">
         {touch ? "tap the pass" : "hover the pass"}

@@ -129,56 +129,91 @@
     text-transform: uppercase;
   }
 
-  .btn-primary {
+  /* The one button (site/Button.tsx): a rounded Webix pill with an extruded bottom edge. `translate`, not transform,
+     so the lift also works on the hero pill, whose transform is written every frame. */
+  .btn {
+    --face: #ffda24;
+    --ink: #1a253a;
+    --line: #0b0f1a;
+    --edge: #e81a2e;
+    --ex: 5px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    padding: 0.95rem 1.6rem;
-    border-radius: 2px;
-    background: var(--yellow);
-    color: var(--indigo);
-    font-family: var(--font-sans);
-    font-weight: 600;
-    font-size: 0.8125rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    gap: 0.5em;
+    min-height: 2.75rem;
+    padding: 0.75em 1.6em;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    background: var(--face);
+    color: var(--ink);
+    font-family: "Lilita One", var(--font-heading);
+    font-weight: 400;
+    font-size: 1.15rem;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow:
+      0 var(--ex) 0 var(--edge),
+      0 calc(var(--ex) + 2px) 0 var(--line);
     transition:
-      box-shadow 0.3s ease,
-      transform 0.3s ease,
-      background 0.3s ease;
+      translate 120ms ease,
+      box-shadow 120ms ease,
+      background-color 120ms ease,
+      opacity 120ms ease;
   }
-  .btn-primary:hover {
-    background: #ffe252;
-    box-shadow: 0 0 28px -4px rgb(255 218 36 / 0.55);
-    transform: translateY(-1px);
+  .btn svg {
+    flex-shrink: 0;
   }
-  .btn-primary svg {
-    transition: transform 0.3s ease;
+  .btn:hover:not(:disabled) {
+    --ex: 7px;
+    translate: 0 -2px;
   }
-  .btn-primary:hover svg {
-    transform: translateX(3px);
+  .btn:active:not(:disabled) {
+    --ex: 1px;
+    translate: 0 4px;
   }
-
+  .btn:focus-visible {
+    outline: 3px solid #f4f1ea;
+    outline-offset: 4px;
+  }
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
   .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    padding: 0.95rem 1.6rem;
-    border-radius: 2px;
-    border: 1px solid rgb(244 241 234 / 0.85);
-    background: transparent;
-    color: var(--text);
-    font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 0.8125rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    transition: background 0.3s ease;
+    --face: #1a253a;
+    --ink: #f4f1ea;
+    --line: #ffda24;
+    --edge: #ff007f;
   }
-  .btn-secondary:hover {
-    background: rgb(244 241 234 / 0.08);
+  .btn-ghost {
+    --face: transparent;
+    --ink: #ffda24;
+    --line: #ffda24;
+    box-shadow: none;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: rgb(255 218 36 / 0.12);
+  }
+  .btn-sm {
+    font-size: 1rem;
+    padding: 0.6em 1.25em;
+  }
+  .btn-lg {
+    font-size: 1.35rem;
+  }
+  .btn-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+  }
+  /* A toggle that's off (the magnifier): the same circle, unlit. */
+  .btn-icon[aria-pressed="false"] {
+    --face: #1a253a;
+    --ink: #f4f1ea;
+    --line: #ffda24;
   }
 
   /* Floating glass panel: dark-blue translucent, 1px border, soft radius — never a flat bright box. */
@@ -516,47 +551,6 @@
   line-height: 1.5;
 }
 
-/* "Get started": a pill lettered like the logo — yellow face, indigo text, thick dark outline, red extruded edge. */
-.btn-logo {
-  display: inline-flex;
-  align-items: center;
-  min-height: 46px;
-  gap: 0.5rem;
-  padding: 0.6rem 1.45rem 0.55rem;
-  border: 3px solid #0b0f1a;
-  border-radius: 999px;
-  background: #ffda24;
-  color: #1a253a;
-  font-family: "Lilita One", var(--font-heading);
-  font-size: 1.15rem;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  box-shadow:
-    0 4px 0 0 #e81a2e,
-    0 4px 0 3px #0b0f1a;
-  transition:
-    translate 0.16s ease,
-    box-shadow 0.16s ease,
-    opacity 0.3s ease;
-}
-.btn-logo:hover {
-  translate: 0 -3px;
-  box-shadow:
-    0 7px 0 0 #c4121f,
-    0 7px 0 3px #0b0f1a;
-}
-.btn-logo:active {
-  translate: 0 3px;
-  box-shadow:
-    0 1px 0 0 #c4121f,
-    0 1px 0 3px #0b0f1a;
-}
-.btn-logo:focus-visible {
-  outline: 2px solid #f4f1ea;
-  outline-offset: 6px;
-}
-
 /* Hero magnifier (site/Loupe.tsx; the zoomed view under the glass is WebGL, three/LoupeView.tsx). */
 .loupe {
   --r: 90px;
@@ -618,32 +612,6 @@
     repeating-linear-gradient(0deg, rgb(11 15 26 / 0.28) 0 2px, transparent 2px 9px),
     linear-gradient(90deg, #8a5a00, #ffda24 35%, #fff3b0 50%, #e0a400 70%, #7a4c00);
   border: 2px solid #0b0f1a;
-}
-.loupe-toggle {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgb(244 241 234 / 0.35);
-  border-radius: 50%;
-  color: #f4f1ea;
-  background: rgb(10 20 48 / 0.55);
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
-}
-.loupe-toggle:hover {
-  border-color: #ffda24;
-}
-.loupe-toggle[aria-pressed="true"] {
-  background: #ffda24;
-  border-color: #ffda24;
-  color: #1a253a;
-}
-.loupe-toggle:focus-visible {
-  outline: 2px solid #ffda24;
-  outline-offset: 3px;
 }
 
 /* Work: the ThreeUI filmstrip over the scene (site/WorkFilmstrip.tsx); its frame paints #d8c9ad inline, so clear it. */
@@ -707,19 +675,6 @@
 .wa-fab:focus-visible {
   outline: 2px solid #f4f1ea;
   outline-offset: 5px;
-}
-
-/* Touch: folds the hero deck (ServiceDeck). 44 px tap target on the card's corner. */
-.deck-close {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 2px solid #0b0f1a;
-  border-radius: 50%;
-  background: #f4f1ea;
-  color: #1a253a;
-  box-shadow: 0 4px 12px rgb(5 11 30 / 0.45);
 }
 
 /* Pages without the 3D scene: the NASA star map as a plain image over the CSS sky; white stars only. */

@@ -11,9 +11,9 @@ export function renderErrorPage(): string {
       h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
       p { color: #4b5563; margin: 0 0 1.5rem; }
       .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-      a, button { padding: 0.5rem 1rem; border-radius: 0.375rem; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-      .primary { background: #111; color: #fff; }
-      .secondary { background: #fff; color: #111; border-color: #d1d5db; }
+      a, button { padding: 0.75em 1.6em; border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; border: 2px solid #0b0f1a; box-shadow: 0 5px 0 #e81a2e, 0 7px 0 #0b0f1a; }
+      .primary { background: #ffda24; color: #1a253a; }
+      .secondary { background: #1a253a; color: #f4f1ea; }
     </style>
   </head>
   <body>
