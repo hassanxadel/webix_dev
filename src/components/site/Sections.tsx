@@ -125,7 +125,7 @@ function Work() {
         <div className="section-copy relative h-full" data-on={showing === index}>
           <div className="mx-auto max-w-[1440px] px-5 pt-[13vh] sm:px-8">
             <Label id="work" />
-            <h2 id="work-title" className="work-title mt-3 max-w-[calc(100%-36vw)] md:max-w-none">
+            <h2 id="work-title" className="work-title mt-3 max-w-[calc(100%-42vw)] md:max-w-none">
               <LogoWord w="Real" /> <LogoWord w="brands." /> <LogoWord w="Real" /> <LogoWord w="work." variant="ix" />
             </h2>
             <p className="hud mt-3 text-paper/55">Move, scroll or use the arrow keys · select the card in front to open it</p>
