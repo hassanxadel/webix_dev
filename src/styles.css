@@ -750,3 +750,10 @@
   font-size: clamp(2rem, 3.4vw, 3rem);
   line-height: 1.05;
 }
+
+/* Pages without the 3D scene: the NASA star map as a plain image over the CSS sky; white stars only. */
+.page-stars {
+  background: url("/space/stars-2k.webp") center / cover;
+  filter: grayscale(1);
+  mix-blend-mode: screen;
+}

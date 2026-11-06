@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import gsap from "gsap";
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, Mail, MessageCircle } from "lucide-react";
 import { HERO_GLIDE, PAGE_VH, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
 import { PROCESS, RESULT_STATS, SERVICES } from "@/lib/webix-data";
@@ -227,6 +228,9 @@ function About() {
           >
             Explore our work
           </a>
+          <Link to="/about-webix" className="btn-logo">
+            Who we are
+          </Link>
         </div>
       </div>
     </Section>

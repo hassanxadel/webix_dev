@@ -99,6 +99,10 @@ export function useJourneyTracker() {
     // Lenis eases wheel input into the long, cinematic scroll; reduced motion keeps native scrolling.
     if (!reduced) lenis = new Lenis({ lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9 });
 
+    // Deep links (/#contact from another page) land on the section's anchor, where its panel shows, not on its top edge.
+    const linked = SECTIONS.find((x) => `#${x.id}` === window.location.hash);
+    if (linked) window.scrollTo(0, linked.anchor * journeyPx());
+
     // One scroll system: Lenis, driven by GSAP's ticker (the same ticker every per-frame DOM writer uses).
     gsap.ticker.lagSmoothing(0);
     const tick = (seconds: number) => {

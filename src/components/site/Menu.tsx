@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import { Link, useLocation } from "@tanstack/react-router";
 import gsap from "gsap";
 import { X } from "lucide-react";
 import { HERO_GLIDE, type SectionId } from "@/config/sections";
@@ -16,6 +17,9 @@ const LINKS: { id: SectionId; label: string }[] = [
   { id: "me", label: "About Me" },
 ];
 
+const MENU_LINK = "group flex items-baseline gap-5 font-heading text-5xl font-bold text-paper transition-colors hover:text-sun sm:text-7xl";
+const MENU_NO = "hud text-sm text-paper/40 group-hover:text-sun";
+
 /**
  * Site chrome: the Webix W top-left (back to top) and a "Menu" button
  * top-right (full-screen overlay with the links), on every section. The hero
@@ -26,6 +30,8 @@ const LINKS: { id: SectionId; label: string }[] = [
  */
 export function Menu() {
   const [open, setOpen] = useState(false);
+  // Other pages: section links load the home page; the hero's hint and wordmark don't exist there.
+  const home = useLocation({ select: (l) => l.pathname === "/" });
   const heroOnly = useRef<HTMLDivElement>(null);
   const fab = useRef<HTMLAnchorElement>(null);
   const row = useRef<HTMLSpanElement>(null);
@@ -62,10 +68,11 @@ export function Menu() {
     <>
       <header className="safe-edges pointer-events-none fixed inset-x-0 top-0 z-40 flex items-start justify-between">
         <a
-          href="#hero"
-          aria-label="Webix — back to top"
+          href={home ? "#hero" : "/"}
+          aria-label={home ? "Webix — back to top" : "Webix — home"}
           className="pointer-events-auto"
           onClick={(e) => {
+            if (!home) return;
             e.preventDefault();
             travelTo(0);
           }}
@@ -93,18 +100,25 @@ export function Menu() {
                   {LINKS.map((l, i) => (
                     <li key={l.id}>
                       <a
-                        href={`#${l.id}`}
+                        href={home ? `#${l.id}` : `/#${l.id}`}
                         onClick={(e) => {
+                          if (!home) return;
                           e.preventDefault();
                           go(l.id)();
                         }}
-                        className="group flex items-baseline gap-5 font-heading text-5xl font-bold text-paper transition-colors hover:text-sun sm:text-7xl"
+                        className={MENU_LINK}
                       >
-                        <span className="hud text-sm text-paper/40 group-hover:text-sun">{String(i + 1).padStart(2, "0")}</span>
+                        <span className={MENU_NO}>{String(i + 1).padStart(2, "0")}</span>
                         {l.label}
                       </a>
                     </li>
                   ))}
+                  <li>
+                    <Link to="/about-webix" onClick={() => setOpen(false)} className={MENU_LINK}>
+                      <span className={MENU_NO}>{String(LINKS.length + 1).padStart(2, "0")}</span>
+                      Who we are
+                    </Link>
+                  </li>
                 </ul>
               </nav>
             </Dialog.Content>
@@ -112,18 +126,20 @@ export function Menu() {
         </Dialog.Root>
       </header>
 
-      <div ref={heroOnly} className="safe-edges pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end justify-between">
-        <span ref={row} className="flex items-center gap-4">
-        <LoupeToggle />
-        <span aria-hidden className="hud mb-1 flex items-center gap-3 text-[0.62rem] text-paper/60">
-          <span className="relative h-px w-10 overflow-hidden bg-paper/20">
-            <span className="absolute inset-y-0 left-0 w-1/2 animate-[scroll-hint-x_2.4s_ease-in-out_infinite] bg-sun" />
+      {home && (
+        <div ref={heroOnly} className="safe-edges pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end justify-between">
+          <span ref={row} className="flex items-center gap-4">
+          <LoupeToggle />
+          <span aria-hidden className="hud mb-1 flex items-center gap-3 text-[0.62rem] text-paper/60">
+            <span className="relative h-px w-10 overflow-hidden bg-paper/20">
+              <span className="absolute inset-y-0 left-0 w-1/2 animate-[scroll-hint-x_2.4s_ease-in-out_infinite] bg-sun" />
+            </span>
+            Scroll down to discover
           </span>
-          Scroll down to discover
-        </span>
-        </span>
-        <img aria-hidden src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[32vw] select-none md:w-[11.5vw]" />
-      </div>
+          </span>
+          <img aria-hidden src="/brand/webix-wordmark-trim.webp" alt="" width={1175} height={571} className="w-[32vw] select-none md:w-[11.5vw]" />
+        </div>
+      )}
 
       {/* WhatsApp: bottom-left, same left edge as the toggle; lifted above it while the hero row shows. */}
       <a ref={fab} href={whatsappLink()} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" className="wa-fab safe-corner fixed bottom-0 left-0 z-30">
