@@ -18,7 +18,12 @@ const LINKS: { id: SectionId; label: string }[] = [
   { id: "me", label: "About Me" },
 ];
 
-const MENU_LINK = "group flex items-baseline gap-5 font-heading text-5xl font-bold text-paper transition-colors hover:text-sun sm:text-7xl";
+const PAGES = [
+  { to: "/projects", label: "Projects" },
+  { to: "/about-webix", label: "Who we are" },
+] as const;
+
+const MENU_LINK = "group flex items-baseline gap-5 font-heading text-[clamp(2rem,min(12vw,8.4vh),4.5rem)] font-bold leading-none text-paper transition-colors hover:text-sun";
 const MENU_NO = "hud text-sm text-paper/40 group-hover:text-sun";
 
 /**
@@ -92,7 +97,7 @@ export function Menu() {
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-[60] bg-[#0b1638]/80 backdrop-blur-xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
-            <Dialog.Content className="fixed inset-0 z-[61] flex flex-col p-5 outline-none sm:p-8 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0">
+            <Dialog.Content data-lenis-prevent className="fixed inset-0 z-[61] flex flex-col overflow-y-auto p-5 outline-none sm:p-8 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0">
               <Dialog.Title className="sr-only">Menu</Dialog.Title>
               <Dialog.Description className="sr-only">Jump to a section of the page.</Dialog.Description>
               <Dialog.Close asChild>
@@ -118,12 +123,14 @@ export function Menu() {
                       </a>
                     </li>
                   ))}
-                  <li>
-                    <Link to="/about-webix" onClick={() => setOpen(false)} className={MENU_LINK}>
-                      <span className={MENU_NO}>{String(LINKS.length + 1).padStart(2, "0")}</span>
-                      Who we are
-                    </Link>
-                  </li>
+                  {PAGES.map((p, i) => (
+                    <li key={p.to}>
+                      <Link to={p.to} onClick={() => setOpen(false)} className={MENU_LINK}>
+                        <span className={MENU_NO}>{String(LINKS.length + i + 1).padStart(2, "0")}</span>
+                        {p.label}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </nav>
             </Dialog.Content>

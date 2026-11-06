@@ -2,17 +2,18 @@
  * Work — one floating panel per project, in order. Derived from the real project
  * list in lib/webix-data.ts; nothing here is invented.
  */
-import { PROJECTS } from "@/lib/webix-data";
+import { PROJECTS, type Project } from "@/lib/webix-data";
 
 export type WorkProject = {
   id: string;
   name: string;
   type: string;
+  category: Project["category"];
   /** One line. */
   description: string;
   /** Tech tags. TODO: replace with each project's real stack (only the platform is known today). */
   tech: string[];
-  /** Screenshot shown through the window (≤250 KB). */
+  /** 16:9 WebP screenshot (top of the site), for the carousel, /projects and the detail page. */
   image: string;
   url: string;
   /** Index into PROJECTS, for the case-study dialog. */
@@ -23,9 +24,10 @@ export const WORK: WorkProject[] = PROJECTS.map((p, index) => ({
   id: p.slug,
   name: p.name,
   type: p.type,
+  category: p.category,
   description: p.summary,
   tech: p.platform.split("·").map((t) => t.trim()),
-  image: p.image,
+  image: `/work/film/${p.slug}.webp`,
   url: p.url,
   index,
 }));

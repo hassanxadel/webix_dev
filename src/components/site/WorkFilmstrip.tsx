@@ -22,7 +22,7 @@ const short = (type: string) => (/commerce/i.test(type) ? "E-commerce" : type.sp
 const CARDS = [...WORK, ...WORK].map((w) => ({
   name: w.name,
   role: short(w.type),
-  image: `/work/film/${w.id}.webp`,
+  image: w.image,
   no: String(w.index + 1).padStart(2, "0"),
   project: w.index,
 }));

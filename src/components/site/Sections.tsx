@@ -9,6 +9,7 @@ import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/
 import { badge } from "@/lib/badge";
 import { ContactForm } from "./ContactForm";
 import { Button } from "./Button";
+import { LogoWord } from "./LogoWord";
 import { ServiceDeck } from "./ServiceDeck";
 import { WorkFilmstrip } from "./WorkFilmstrip";
 import { WORK } from "@/config/projects";
@@ -59,15 +60,6 @@ function Label({ id }: { id: SectionId }) {
 }
 
 /* ───────── Hero: the headline (top centre) over the card; W, Menu, wordmark and hint live in Menu.tsx ───────── */
-
-/** A word lettered like the Webix logo (`.logo-type` in styles.css); `ix` = the logo's yellow "ix" colours. */
-function LogoWord({ w, variant }: { w: string; variant?: "ix" }) {
-  return (
-    <span className={variant ? `logo-type logo-type-${variant}` : "logo-type"} data-text={w}>
-      {w}
-    </span>
-  );
-}
 
 function Hero() {
   const ready = useJourney((s) => s.sceneReady);
@@ -131,6 +123,13 @@ function Work() {
             <p className="hud mt-3 text-paper/55">Move, scroll or use the arrow keys · select the card in front to open it</p>
           </div>
           <WorkFilmstrip />
+          <div className="work-more pointer-events-none absolute inset-x-0 bottom-[3.5vh] z-10 flex justify-center px-5 sm:px-8">
+            <Button asChild className="pointer-events-auto">
+              <Link to="/projects">
+                View all projects <ArrowRight size={16} aria-hidden />
+              </Link>
+            </Button>
+          </div>
           {/* The same projects outside the frame, for assistive tech. */}
           <ol className="sr-only">
             {WORK.map((w) => (

@@ -624,6 +624,34 @@
   line-height: 1.1;
 }
 
+/* Short, wide windows: the focused card fills the band, so the Work pill sits in the corner instead of under it. */
+@media (min-width: 651px) and (max-height: 520px) {
+  .work-more {
+    justify-content: flex-end;
+  }
+}
+
+/* /projects cards and their tech tags. */
+.project-card {
+  transition:
+    translate 200ms ease,
+    box-shadow 200ms ease;
+}
+.project-card:hover,
+.project-card:focus-within {
+  translate: 0 -4px;
+  box-shadow:
+    0 0 0 1px rgb(255 218 36 / 0.55),
+    0 16px 44px rgb(255 218 36 / 0.14);
+}
+.tag {
+  border: 1px solid rgb(244 241 234 / 0.18);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.75rem;
+  color: rgb(244 241 234 / 0.75);
+}
+
 /* About Me: grab area over the 3D badge (Sections BadgeHit). */
 .badge-hit {
   cursor: grab;

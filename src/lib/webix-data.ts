@@ -12,9 +12,13 @@ export type Project = {
   industry: string;
   type: string;
   platform: string;
+  /** /projects filter; the pills show only categories that have a project. */
+  category: "E-commerce" | "Corporate" | "3D / Interactive";
   url: string;
   instagram?: string;
   image: string;
+  /** Extra screenshots for /projects/:slug (paths under public/). Empty = no gallery section. */
+  gallery: string[];
   /** Neon accent for the project's lightbox in the 3D scene. */
   accent: string;
   summary: string;
@@ -31,9 +35,11 @@ export const PROJECTS: Project[] = [
     industry: "Fashion",
     type: "Fashion e-commerce website",
     platform: "Custom build · Vercel",
+    category: "E-commerce",
     url: "https://valgara-website.vercel.app/",
     instagram: "https://www.instagram.com/valgara_eg/",
     image: "/work/valgara.jpg",
+    gallery: [],
     accent: "#FFDA24",
     summary: "An online storefront for a fashion label with a bold statement: “Not made to blend in.”",
     objective:
@@ -52,9 +58,11 @@ export const PROJECTS: Project[] = [
     industry: "Fashion",
     type: "Multi-brand fashion e-commerce store",
     platform: "Shopify",
+    category: "E-commerce",
     url: "https://styledroppp.myshopify.com/",
     instagram: "https://www.instagram.com/styledrop.eg/",
     image: "/work/styledrop.jpg",
+    gallery: [],
     accent: "#FF007F",
     summary: "A Shopify store for multi-brand fashion, built around new drops and same-day delivery.",
     objective:
@@ -73,8 +81,10 @@ export const PROJECTS: Project[] = [
     industry: "Construction",
     type: "Construction industry website",
     platform: "Custom build · Vercel",
+    category: "Corporate",
     url: "https://premium-website-olive.vercel.app/home_construct_core/code.html",
     image: "/work/construct-core.jpg",
+    gallery: [],
     accent: "#FF007F",
     summary: "A premium website for a construction firm, pairing architectural imagery with an engineered visual language.",
     objective:
@@ -93,8 +103,10 @@ export const PROJECTS: Project[] = [
     industry: "Construction & industrial",
     type: "Construction and industrial website",
     platform: "Custom build · Vercel",
+    category: "Corporate",
     url: "https://professional-website-vert.vercel.app/",
     image: "/work/steel-stone.jpg",
+    gallery: [],
     accent: "#FFDA24",
     summary: "A professional site for a construction and industrial business, built to turn visitors into leads.",
     objective:
@@ -113,8 +125,10 @@ export const PROJECTS: Project[] = [
     industry: "Construction",
     type: "Construction industry website",
     platform: "Custom build · Vercel",
+    category: "Corporate",
     url: "https://basic-website-dun.vercel.app/",
     image: "/work/buildcrop.jpg",
+    gallery: [],
     accent: "#FFDA24",
     summary: "A clean, corporate website for a construction company serving government, commercial and residential projects.",
     objective:
@@ -133,9 +147,11 @@ export const PROJECTS: Project[] = [
     industry: "Fashion & retail",
     type: "Fashion and retail e-commerce store",
     platform: "Shopify",
+    category: "E-commerce",
     url: "https://ma-atelier-2.myshopify.com/",
     instagram: "https://www.instagram.com/ma.thestore/",
     image: "/work/ma-the-store.jpg",
+    gallery: [],
     accent: "#FF007F",
     summary: "An editorial Shopify storefront for a Cairo fashion house selling dresses and accessories.",
     objective:

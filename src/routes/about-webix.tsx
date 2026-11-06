@@ -1,7 +1,6 @@
-import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Mail, MessageCircle } from "lucide-react";
-import { Menu } from "@/components/site/Menu";
+import { Block, PageShell, Pairs, Todo } from "@/components/site/PageShell";
 import { Button } from "@/components/site/Button";
 import { PROCESS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
@@ -58,44 +57,10 @@ const FAQ = [
   ["What happens after launch?", "We make sure your team is ready to run it, then stay available for fixes, updates and support."],
 ];
 
-/** A fact the owner must fill in: visible in development only, so it can never ship. */
-function Todo({ children }: { children: ReactNode }) {
-  return import.meta.env.DEV ? <p className="hud mt-3 border border-dashed border-signal/60 p-3 text-signal">TODO: {children}</p> : null;
-}
-
-function Block({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return (
-    <section aria-labelledby={id} className="glass p-6 sm:p-8">
-      <h2 id={id} className="text-2xl text-paper sm:text-3xl">
-        {title}
-      </h2>
-      <div className="mt-4 leading-relaxed text-paper/70">{children}</div>
-    </section>
-  );
-}
-
-function Pairs({ items }: { items: string[][] }) {
-  return (
-    <dl className="grid gap-4 sm:grid-cols-2">
-      {items.map(([k, v]) => (
-        <div key={k}>
-          <dt className="font-heading font-semibold text-paper">{k}</dt>
-          <dd className="mt-1 text-sm">{v}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
 /** Everything a client needs to know before starting a project. Links into the home page are full loads, so it mounts its scene fresh. */
 function AboutWebix() {
   return (
-    <>
-      <div aria-hidden className="space-sky fixed inset-0">
-        <div className="page-stars absolute inset-0" />
-      </div>
-      <Menu />
-      <main className="relative z-10 mx-auto grid max-w-3xl gap-6 px-5 pb-28 pt-28 sm:px-8">
+    <PageShell className="max-w-3xl">
         <Button asChild variant="ghost" size="sm" className="w-fit">
           <Link to="/">
             <ArrowLeft size={16} aria-hidden /> Back to home
@@ -203,7 +168,6 @@ function AboutWebix() {
             </a>
           </div>
         </Block>
-      </main>
-    </>
+    </PageShell>
   );
 }
