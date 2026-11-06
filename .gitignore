@@ -35,6 +35,7 @@ dist-ssr
 shots/
 screenshots/
 *.screenshot.png
+!docs/screenshots/
 
 # Local env (secrets stay out of git; .env.example documents the variables)
 .env

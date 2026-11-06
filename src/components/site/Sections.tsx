@@ -313,7 +313,7 @@ function Contact() {
           <h2 id="contact-title" className="mt-4 text-3xl text-paper sm:text-4xl">
             Your stop. <span className="text-sun">Let&apos;s build it.</span>
           </h2>
-          <p className="mt-3 leading-relaxed text-paper/65">If we can make a train station feel real in a browser, imagine what we can do for your store.</p>
+          <p className="mt-3 leading-relaxed text-paper/65">If we can make orbit feel real in a browser, imagine what we can do for your store.</p>
           <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <li>
               <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
