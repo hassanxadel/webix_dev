@@ -1,0 +1,11 @@
+// Cloudflare Workers serves the prerendered pages as static files; there is no server code.
+// Without this file, `wrangler deploy` auto-converts the project to an SSR Worker, whose Vite plugin breaks the build.
+{
+  "name": "webix-dev",
+  "compatibility_date": "2026-11-04",
+  "assets": {
+    "directory": "./dist/client",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

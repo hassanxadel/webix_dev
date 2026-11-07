@@ -41,3 +41,6 @@ screenshots/
 .env
 .env.*
 !.env.example
+
+# Cloudflare Wrangler local state
+.wrangler

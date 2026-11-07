@@ -66,6 +66,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-07 · launch · `wrangler.jsonc`: Cloudflare Workers serves `dist/client` as static assets (stops Wrangler auto-converting to SSR); checked with wrangler 4.158.0 dry run + local serve · (this commit)
 - 2026-11-07 · launch · Cloudflare build fix: prerender one page at a time (2-CPU builder died on a parallel fetch; reproduced with a 10 ms connect timeout), Node pinned in `.node-version` · (this commit)
 - 2026-11-06 · launch prep · contact honeypot, one Button, Work cards ×1.2, Projects pages, static build + 404 · (this commit)
 - 2026-11-06 · pre-launch · lens stars, Work sizing, Who we are page, Results removed, Web3Forms, About Me badge only · (these commits)
