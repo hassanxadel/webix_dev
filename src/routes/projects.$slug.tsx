@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Instagram } from "lucide-react";
 import { Button } from "@/components/site/Button";
 import { Lightbox } from "@/components/site/Lightbox";
 import { LogoWord } from "@/components/site/LogoWord";
-import { Block, PageShell, Pairs, Todo } from "@/components/site/PageShell";
+import { Block, PageShell, Pairs } from "@/components/site/PageShell";
 import { WORK } from "@/config/projects";
 import { PROJECTS } from "@/lib/webix-data";
 import { SITE_URL } from "@/lib/site-config";
@@ -42,7 +42,7 @@ function Bullets({ items }: { items: string[] }) {
   );
 }
 
-/** One project, from the same data as the Work carousel and /projects. Missing facts stay dev-only TODOs. */
+/** One project, from the same data as the Work carousel and /projects. Results, a client quote and the gallery show only once added to the data. */
 function ProjectPage() {
   const index = Route.useLoaderData();
   const p = PROJECTS[index];
@@ -79,9 +79,14 @@ function ProjectPage() {
             items={[
               ["Client", p.name],
               ["Industry", p.industry],
+              ["Timeline", p.timeline],
             ]}
           />
         </div>
+      </Block>
+
+      <Block id="challenge" title="The challenge">
+        <p>{p.challenge}</p>
       </Block>
 
       <Block id="did" title="What we did">
@@ -89,7 +94,20 @@ function ProjectPage() {
           <Bullets items={p.services} />
           <Bullets items={p.features} />
         </div>
-        <Todo>add the results and a client quote once the client confirms them.</Todo>
+      </Block>
+
+      <Block id="outcome" title="The outcome">
+        <p>{p.outcome}</p>
+        {p.results && p.results.length > 0 && (
+          <div className="mt-4">
+            <Bullets items={p.results} />
+          </div>
+        )}
+        {p.testimonial && (
+          <blockquote className="mt-5 border-l-2 border-sun pl-4 italic text-paper/80">
+            “{p.testimonial.quote}” <span className="not-italic text-paper/55">— {p.testimonial.author}</span>
+          </blockquote>
+        )}
       </Block>
 
       <Block id="decisions" title="Design decisions">
@@ -104,10 +122,9 @@ function ProjectPage() {
             </li>
           ))}
         </ul>
-        <Todo>add the project's real stack (only the platform is known today).</Todo>
       </Block>
 
-      {p.gallery.length > 0 ? (
+      {p.gallery.length > 0 && (
         <Block id="gallery" title="Gallery">
           <ul className="grid gap-4 sm:grid-cols-2">
             {p.gallery.map((src, i) => (
@@ -119,8 +136,6 @@ function ProjectPage() {
             ))}
           </ul>
         </Block>
-      ) : (
-        <Todo>add extra screenshots to this project's gallery in src/lib/webix-data.ts.</Todo>
       )}
 
       <div className="flex flex-wrap gap-3">

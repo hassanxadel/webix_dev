@@ -11,7 +11,7 @@ export type WorkProject = {
   category: Project["category"];
   /** One line. */
   description: string;
-  /** Tech tags. TODO: replace with each project's real stack (only the platform is known today). */
+  /** Tech tags: the real stack, read from the live site. */
   tech: string[];
   /** 16:9 WebP screenshot (top of the site), for the carousel, /projects and the detail page. */
   image: string;
@@ -26,7 +26,7 @@ export const WORK: WorkProject[] = PROJECTS.map((p, index) => ({
   type: p.type,
   category: p.category,
   description: p.summary,
-  tech: p.platform.split("·").map((t) => t.trim()),
+  tech: p.stack,
   image: `/work/film/${p.slug}.webp`,
   url: p.url,
   index,

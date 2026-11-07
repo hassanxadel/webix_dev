@@ -5,6 +5,7 @@ import { Button } from "@/components/site/Button";
 import { LogoWord } from "@/components/site/LogoWord";
 import { PageShell } from "@/components/site/PageShell";
 import { WORK } from "@/config/projects";
+import { SITE_URL } from "@/lib/site-config";
 
 const TITLE = "Our work — Webix";
 const DESCRIPTION = "Websites and Shopify stores Webix has designed and built for fashion, retail and construction brands.";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/projects/")({
       { name: "description", content: DESCRIPTION },
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/brand/webix-wordmark.png` },
     ],
   }),
   component: Projects,

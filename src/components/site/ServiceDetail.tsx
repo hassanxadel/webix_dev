@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { ArrowLeft, ArrowRight, Box, Check, Clock, Globe, Palette, ShoppingBag, Sparkles, Users, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Box, Check, Clock, Globe, Palette, ShoppingBag, Sparkles, Tag, Users, type LucideIcon } from "lucide-react";
+import { QUOTE_NOTE } from "@/config/business";
 import { SERVICES } from "@/lib/webix-data";
 import { deck } from "@/lib/deck";
 import { journeyStore, lockScroll, travelToSection, useJourney } from "@/lib/journey";
@@ -155,6 +156,14 @@ export function ServiceDetail() {
               <Clock size={14} aria-hidden /> Typical timeline
             </p>
             <p className="mt-3 leading-relaxed text-paper/70">{s.timeline}</p>
+          </div>
+          <div className="sm:col-span-2">
+            <p className="hud flex items-center gap-2 text-sun">
+              <Tag size={14} aria-hidden /> Starting price
+            </p>
+            <p className="mt-3 leading-relaxed text-paper/70">
+              {s.price}. {QUOTE_NOTE}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
             <Button asChild>

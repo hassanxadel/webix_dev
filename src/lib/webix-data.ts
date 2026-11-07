@@ -6,6 +6,8 @@
  * they are confirmed with the client.
  */
 
+import { priceFor, timelineFor } from "@/config/business";
+
 export type Project = {
   slug: string;
   name: string;
@@ -26,6 +28,17 @@ export type Project = {
   services: string[];
   decisions: string[];
   features: string[];
+  /** Real stack, read from the live site (framework, theme, hosting). */
+  stack: string[];
+  challenge: string;
+  /** Typical timeline for a project of this scope (from config/business.ts), not a tracked duration. */
+  timeline: string;
+  /** Qualitative only: no numbers that aren't confirmed. */
+  outcome: string;
+  /** Add confirmed results (e.g. a launch metric the client approved) here; the block stays hidden while empty. */
+  results?: string[];
+  /** Add a real, approved client quote here; hidden while empty. Never invent one. */
+  testimonial?: { quote: string; author: string };
 };
 
 export const PROJECTS: Project[] = [
@@ -51,6 +64,10 @@ export const PROJECTS: Project[] = [
       "One clear call to action — Shop Now — directly under the brand statement.",
     ],
     features: ["Shop and product browsing", "Cart access from every page", "Responsive, mobile-first layout"],
+    stack: ["React", "Vite", "Lucide icons", "Vercel"],
+    challenge: "A young fashion label needed an online home with as much attitude as its clothes, one that leads visitors straight to the products instead of looking like a template.",
+    timeline: "Typical for this scope: 2–4 weeks.",
+    outcome: "A bold, mobile-first storefront that carries the brand’s attitude and keeps Shop Now one tap away on every page.",
   },
   {
     slug: "styledrop",
@@ -74,6 +91,10 @@ export const PROJECTS: Project[] = [
       "Navigation split by Shop, New In, Women, Men and Brands to match how people browse.",
     ],
     features: ["Shopify collections and brand pages", "Search, wishlist and cart", "Trust badges for delivery and secure checkout"],
+    stack: ["Shopify", "Dawn theme, customised", "Liquid"],
+    challenge: "Multi-brand fashion means many products, brands and weekly drops; shoppers need to find what is new fast, and the team needs to run it all without a developer.",
+    timeline: "Typical for this scope: 3–5 weeks.",
+    outcome: "A Shopify store the StyleDrop team runs from the dashboard, with new drops, brands and delivery offers up front.",
   },
   {
     slug: "construct-core",
@@ -96,6 +117,10 @@ export const PROJECTS: Project[] = [
       "A persistent “Get a Quote” button and a floating contact shortcut.",
     ],
     features: ["Projects and gallery sections", "About and contact pages", "Quote request entry points"],
+    stack: ["HTML", "Tailwind CSS", "Google Fonts", "Vercel"],
+    challenge: "Construction firms often look alike online; this one needed to come across as precise and established, and turn visitors into quote requests.",
+    timeline: "Typical for this scope: 2–4 weeks.",
+    outcome: "A premium, image-led site where a quote request is always one click away.",
   },
   {
     slug: "steel-stone",
@@ -118,6 +143,10 @@ export const PROJECTS: Project[] = [
       "A strong left-aligned hero with a yellow rule guiding the eye to the actions.",
     ],
     features: ["Projects and gallery pages", "Lead and quote request actions", "Click-to-call contact"],
+    stack: ["HTML", "Tailwind CSS", "Google Fonts", "Vercel"],
+    challenge: "An industrial business with different kinds of enquiries, new leads and ready-to-quote clients, needed a site that routes each one to the right action.",
+    timeline: "Typical for this scope: 2–4 weeks.",
+    outcome: "A lead-focused site with separate paths for leads, quotes and calls, in a palette drawn from the trade.",
   },
   {
     slug: "buildcrop",
@@ -140,6 +169,10 @@ export const PROJECTS: Project[] = [
       "Service cards that keep each offering easy to scan.",
     ],
     features: ["Services overview", "Projects and gallery pages", "Contact section"],
+    stack: ["HTML", "Tailwind CSS", "Google Fonts", "Vercel"],
+    challenge: "A company serving government, commercial and residential clients needed one clear, trustworthy site that explains what it does and invites enquiries.",
+    timeline: "Typical for this scope: 1–2 weeks.",
+    outcome: "A clean corporate site where each service is easy to scan and every page ends in a way to get in touch.",
   },
   {
     slug: "ma-the-store",
@@ -163,6 +196,10 @@ export const PROJECTS: Project[] = [
       "Generous spacing that lets the photography breathe.",
     ],
     features: ["Catalog, Accessories and Dresses collections", "Search, account and cart", "Shopify checkout"],
+    stack: ["Shopify", "Custom MA² theme", "Liquid"],
+    challenge: "A boutique fashion house wanted its online store to feel as calm and premium as its shop, while keeping two product lines easy to browse and buy.",
+    timeline: "Typical for this scope: 3–5 weeks.",
+    outcome: "An editorial, boutique-feeling Shopify store with dresses and accessories each one tap from the home page.",
   },
 ];
 
@@ -182,10 +219,10 @@ export type Service = {
   intro: string;
   forWho: string;
   timeline: string;
+  /** Starting prices, from config/business.ts. */
+  price: string;
 };
 
-// TODO: confirm typical timelines with Webix; until then the sub-sections say timelines are set after discovery.
-const TIMELINE_TBD = "Set together after a short discovery call, based on scope.";
 
 export const SERVICES: Service[] = [
   {
@@ -199,7 +236,8 @@ export const SERVICES: Service[] = [
     face: "yellow",
     intro: "A website that explains what you do in seconds and makes it easy to get in touch — designed around your customers, built to stay fast.",
     forWho: "Companies, studios and service businesses that need a clear, modern home online — or an old site rebuilt properly.",
-    timeline: TIMELINE_TBD,
+    timeline: timelineFor("websites"),
+    price: priceFor("websites"),
   },
   {
     name: "E-commerce",
@@ -212,7 +250,8 @@ export const SERVICES: Service[] = [
     face: "pink",
     intro: "A Shopify store your team can run day to day: clean product pages, simple collections and a checkout that doesn't get in the way.",
     forWho: "Brands selling online for the first time, and stores that have outgrown a theme or a messy setup.",
-    timeline: TIMELINE_TBD,
+    timeline: timelineFor("ecommerce"),
+    price: priceFor("ecommerce"),
   },
   {
     name: "3D / Interactive web",
@@ -225,7 +264,8 @@ export const SERVICES: Service[] = [
     face: "red",
     intro: "Real-time 3D and motion in the browser — product views, scroll stories and launches people remember, running on ordinary phones and laptops.",
     forWho: "Brands launching a product, campaign or experience that should feel like more than a page.",
-    timeline: TIMELINE_TBD,
+    timeline: timelineFor("3d"),
+    price: priceFor("3d"),
   },
   {
     name: "Branding",
@@ -238,7 +278,8 @@ export const SERVICES: Service[] = [
     face: "indigo",
     intro: "A visual identity that looks the same everywhere you show up online — logo usage, colour, type and the rules that hold it together.",
     forWho: "New businesses defining their look, and established ones whose brand drifted across channels.",
-    timeline: TIMELINE_TBD,
+    timeline: timelineFor("branding"),
+    price: priceFor("branding"),
   },
 ];
 

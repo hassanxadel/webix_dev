@@ -7,7 +7,6 @@ export const SITE_URL = "https://webix-dev.18p1726.workers.dev";
 
 export const SITE_CONFIG = {
   brand: "Webix",
-  // TODO: confirm name and title (given as "[CONFIRM: …]" in the brief).
   owner: "Hassan Adel",
   ownerTitle: "Founder & Lead Developer, Webix",
   /** Badge photo (About Me): src/assets/me.png, cropped to the subject → public/about/me.webp. */

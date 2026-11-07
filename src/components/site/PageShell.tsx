@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Footer } from "./Footer";
 import { Menu } from "./Menu";
 
 /** A page outside the journey: the CSS star sky and the Menu, no 3D. */
@@ -9,14 +10,10 @@ export function PageShell({ className, children }: { className: string; children
         <div className="page-stars absolute inset-0" />
       </div>
       <Menu />
-      <main className={`relative z-10 mx-auto grid gap-6 px-5 pb-28 pt-28 sm:px-8 ${className}`}>{children}</main>
+      <main className={`relative z-10 mx-auto grid gap-6 px-5 pb-12 pt-28 sm:px-8 ${className}`}>{children}</main>
+      <Footer className={`relative z-10 mx-auto border-t border-paper/10 px-5 pb-24 pt-6 sm:px-8 ${className}`} />
     </>
   );
-}
-
-/** A fact the owner must fill in: visible in development only, so it can never ship. */
-export function Todo({ children }: { children: ReactNode }) {
-  return import.meta.env.DEV ? <p className="hud mt-3 border border-dashed border-signal/60 p-3 text-signal">TODO: {children}</p> : null;
 }
 
 export function Block({ id, title, children }: { id: string; title: string; children: ReactNode }) {
