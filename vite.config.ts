@@ -16,7 +16,8 @@ export default defineConfig({
         entry: "src/server.ts",
       },
       // Every page is static, so the build writes plain HTML that any free host can serve.
-      prerender: { enabled: true, crawlLinks: true, filter: ({ path }) => !path.includes("#") },
+      // One page at a time: a render blocks Node, so a parallel fetch misses its 250 ms connect window and the build dies (small CI machines).
+      prerender: { enabled: true, crawlLinks: true, concurrency: 1, filter: ({ path }) => !path.includes("#") },
     }),
     react(),
     tailwindcss(),
