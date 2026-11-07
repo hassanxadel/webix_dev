@@ -1,8 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import filmstrip from "@/shaders/character-carousel/sources/character-filmstrip.html?raw";
 import { CharacterCarousel } from "@/shaders/character-carousel/CharacterCarousel";
 import { WORK } from "@/config/projects";
 import { journeyStore } from "@/lib/journey";
+import { Button } from "./Button";
 import "@/shaders/threeui.css";
 
 /**
@@ -12,11 +14,15 @@ import "@/shaders/threeui.css";
  * the profiles (media = project screenshot, 16:9 WebP; footer = number,
  * name, type), the embedded JPEGs dropped, a theme stylesheet added (transparent
  * stage, navy frames, warm-white text, yellow / pink accents, JetBrains Mono,
- * faint grain), and one message out: clicking the card already in front asks the
- * page to open that project's case study. Motion, rail and input are untouched.
+ * faint grain), and messages both ways: clicking the card already in front asks the
+ * page to open that project's case study; the frame reports the project in front
+ * (dots) and takes steps from the page's buttons. The rail stays horizontal at every
+ * width (the source turns vertical under 650 px), mouse hover still scrubs it, and
+ * touch gets a horizontal swipe (vertical swipes scroll the page).
  */
 
 const MESSAGE = "webix-project";
+const ACTIVE = "webix-active";
 const short = (type: string) => (/commerce/i.test(type) ? "E-commerce" : type.split(" ")[0]);
 // Twice round, so the looping rail never shows the same card at both ends.
 const CARDS = [...WORK, ...WORK].map((w) => ({
@@ -53,6 +59,8 @@ html, body { background: transparent !important; }
 .footer { top: calc(69.75% + 6.125px); height: auto; }
 /* Phones: 73vw × the focus scale of 1.23 ≈ 90vw on screen. */
 @media (max-width: 650px) { .card { width: min(73vw, 405px); } }
+/* Every width: horizontal rail. A vertical swipe scrolls the page; a horizontal one turns the rail (swipe handler below). */
+.stage, .stage[class] { touch-action: pan-y; min-height: 0; }
 .card {
   border-color: rgba(255, 218, 36, 0.32);
   border-radius: 8px;
@@ -97,24 +105,88 @@ doc = swap(
 doc = swap(doc, "<title>Character Filmstrip</title>", "<title>Webix projects</title>");
 doc = swap(doc, '<h1 class="sr-only">Character Filmstrip</h1>', '<h1 class="sr-only">Webix projects</h1>');
 doc = swap(doc, "browse the portraits.", "browse the projects. Select the card in front to open it.");
+doc = swap(doc, "const compact = innerWidth < 650;", "const compact = false;");
+// Hover scrubbing is for the mouse; on touch it would snap back when the finger lifts.
+doc = swap(doc, 'stage.addEventListener("pointermove", (event) => {', 'stage.addEventListener("pointermove", (event) => {\n        if (event.pointerType !== "mouse") return;');
+doc = swap(doc, "state.target = state.base + (innerWidth < 650 ? ny * 2.2 : nx * 3.1);", "state.target = state.base + nx * 3.1;");
+doc = swap(
+  doc,
+  "      let previousTime = performance.now();",
+  `      // Webix: touch swipe (clearly horizontal only), steps / jumps from the page, and the project in front reported for the dots.
+      let swipe = null;
+      let swiped = false;
+      let shownProject = -1;
+      function step(by) { state.base += by; state.target = state.base; state.active = false; state.lastInput = performance.now(); }
+      stage.addEventListener("pointerdown", (event) => { swiped = false; if (event.pointerType !== "mouse") swipe = { x: event.clientX, y: event.clientY }; });
+      stage.addEventListener("pointercancel", () => { swipe = null; });
+      stage.addEventListener("pointerup", (event) => {
+        if (!swipe) return;
+        const dx = event.clientX - swipe.x, dy = event.clientY - swipe.y;
+        swipe = null;
+        if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped = true; step(dx < 0 ? 1 : -1); }
+      });
+      // The click a browser may fire after a swipe must not also move the rail or open the card in front.
+      stage.addEventListener("click", (event) => { if (swiped) { swiped = false; event.stopPropagation(); event.preventDefault(); } }, true);
+      addEventListener("message", (event) => {
+        if (event.source !== parent || !event.data) return;
+        const d = event.data;
+        if (d.type === "webix-step" && (d.by === 1 || d.by === -1)) step(d.by);
+        if (d.type === "webix-go" && Number.isInteger(d.index)) {
+          let best = -1;
+          profiles.forEach((p, i) => { if (p.project === d.index && (best < 0 || Math.abs(wrappedDelta(i, state.phase)) < Math.abs(wrappedDelta(best, state.phase)))) best = i; });
+          if (best >= 0) moveTo(best);
+        }
+      });
+      let previousTime = performance.now();`,
+);
+doc = swap(
+  doc,
+  "        state.phase += (state.target - state.phase) * ease;",
+  `        state.phase += (state.target - state.phase) * ease;
+        const shown = profiles[nearestIndex()].project;
+        if (shown !== shownProject) { shownProject = shown; parent.postMessage({ type: "${ACTIVE}", index: shown }, "*"); }`,
+);
 doc = swap(doc, "</head>", `${THEME}</head>`);
 const SOURCE = doc;
 
 export function WorkFilmstrip() {
-  // The only message the frame sends; validated before it opens anything.
+  const band = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const frame = () => band.current?.querySelector("iframe")?.contentWindow;
+  const send = (data: object) => frame()?.postMessage(data, "*");
+
+  // Messages from our own frame only, validated before they open or change anything.
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       const d = e.data as { type?: unknown; index?: unknown } | null;
-      if (d?.type !== MESSAGE || !Number.isInteger(d.index) || (d.index as number) < 0 || (d.index as number) >= WORK.length) return;
-      journeyStore.set({ openProject: d.index as number });
+      const i = d?.index;
+      if (e.source !== frame() || typeof i !== "number" || !Number.isInteger(i) || i < 0 || i >= WORK.length) return;
+      if (d?.type === MESSAGE) journeyStore.set({ openProject: i });
+      if (d?.type === ACTIVE) setActive(i);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
   return (
-    <div className="work-film absolute inset-x-0 bottom-[3vh] top-[26vh]">
-      <CharacterCarousel variant="filmstrip" source={SOURCE} speed={1.0} scale={1.0} opacity={1.0} hue={0} saturation={1.0} brightness={1.0} />
-    </div>
+    <>
+      <div ref={band} className="work-film absolute inset-x-0 bottom-[3vh] top-[26vh]">
+        <CharacterCarousel variant="filmstrip" source={SOURCE} speed={1.0} scale={1.0} opacity={1.0} hue={0} saturation={1.0} brightness={1.0} />
+      </div>
+      {/* Phones: step buttons and position dots under the rail (desktop has hover, wheel and keys). */}
+      <div className="work-controls absolute inset-x-0 bottom-[calc(3.5vh+62px)] z-10 flex items-center justify-center gap-4 md:hidden" data-active={active}>
+        <Button variant="icon" aria-label="Previous project" onClick={() => send({ type: "webix-step", by: -1 })}>
+          <ArrowLeft size={18} strokeWidth={2.6} aria-hidden />
+        </Button>
+        <span className="flex gap-2" aria-hidden>
+          {WORK.map((w) => (
+            <span key={w.id} className={`h-2 rounded-full transition-all ${w.index === active ? "w-5 bg-sun" : "w-2 bg-paper/35"}`} />
+          ))}
+        </span>
+        <Button variant="icon" aria-label="Next project" onClick={() => send({ type: "webix-step", by: 1 })}>
+          <ArrowRight size={18} strokeWidth={2.6} aria-hidden />
+        </Button>
+      </div>
+    </>
   );
 }

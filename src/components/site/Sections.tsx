@@ -120,7 +120,10 @@ function Work() {
             <h2 id="work-title" className="work-title mt-3 max-w-[calc(100%-42vw)] md:max-w-none">
               <LogoWord w="Real" /> <LogoWord w="brands." /> <LogoWord w="Real" /> <LogoWord w="work." variant="ix" />
             </h2>
-            <p className="hud mt-3 text-paper/55">Move, scroll or use the arrow keys · select the card in front to open it</p>
+            <p className="hud mt-3 text-paper/55">
+              <span className="md:hidden">Swipe or use the arrows · tap the card in front to open it</span>
+              <span className="hidden md:inline">Move, scroll or use the arrow keys · select the card in front to open it</span>
+            </p>
           </div>
           <WorkFilmstrip />
           <div className="work-more pointer-events-none absolute inset-x-0 bottom-[3.5vh] z-10 flex justify-center px-5 sm:px-8">
