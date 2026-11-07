@@ -2,6 +2,9 @@
  * Webix's contact details: the inquiry form, Contact and About sections, the
  * ID badge, the floating WhatsApp button and every Get started CTA read them here.
  */
+/** The live address. Social previews need absolute image URLs; change this when a custom domain is added. */
+export const SITE_URL = "https://webix-dev.18p1726.workers.dev";
+
 export const SITE_CONFIG = {
   brand: "Webix",
   // TODO: confirm name and title (given as "[CONFIRM: …]" in the brief).

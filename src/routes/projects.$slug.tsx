@@ -7,6 +7,7 @@ import { LogoWord } from "@/components/site/LogoWord";
 import { Block, PageShell, Pairs, Todo } from "@/components/site/PageShell";
 import { WORK } from "@/config/projects";
 import { PROJECTS } from "@/lib/webix-data";
+import { SITE_URL } from "@/lib/site-config";
 
 export const Route = createFileRoute("/projects/$slug")({
   loader: ({ params }) => {
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/projects/$slug")({
         { name: "description", content: p.summary },
         { property: "og:title", content: title },
         { property: "og:description", content: p.summary },
-        { property: "og:image", content: WORK[loaderData].image },
+        { property: "og:image", content: `${SITE_URL}${WORK[loaderData].image}` },
       ],
     };
   },

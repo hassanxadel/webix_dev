@@ -7,6 +7,7 @@ import { CaseStudyDialog } from "@/components/site/CaseStudyDialog";
 import { ServiceDetail } from "@/components/site/ServiceDetail";
 import { Loupe } from "@/components/site/Loupe";
 import { useJourneyTracker } from "@/lib/journey";
+import { SITE_URL } from "@/lib/site-config";
 
 const TITLE = "Webix — Websites, E-commerce & 3D Digital Experiences";
 const DESCRIPTION =
@@ -19,8 +20,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: DESCRIPTION },
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
-      { property: "og:image", content: "/brand/webix-wordmark.png" },
-      { name: "twitter:image", content: "/brand/webix-wordmark.png" },
+      { property: "og:image", content: `${SITE_URL}/brand/webix-wordmark.png` },
+      { name: "twitter:image", content: `${SITE_URL}/brand/webix-wordmark.png` },
     ],
   }),
   component: Page,

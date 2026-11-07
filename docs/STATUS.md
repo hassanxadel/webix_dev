@@ -66,6 +66,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-07 · launch · live at https://webix-dev.18p1726.workers.dev (all pages, 404, assets, no console errors); absolute og/twitter images via `SITE_URL`. Open: `VITE_WEB3FORMS_KEY` missing from Cloudflare build variables (live form not connected) · (this commit)
 - 2026-11-07 · launch · `wrangler.jsonc`: Cloudflare Workers serves `dist/client` as static assets (stops Wrangler auto-converting to SSR); checked with wrangler 4.158.0 dry run + local serve · (this commit)
 - 2026-11-07 · launch · Cloudflare build fix: prerender one page at a time (2-CPU builder died on a parallel fetch; reproduced with a 10 ms connect timeout), Node pinned in `.node-version` · (this commit)
 - 2026-11-06 · launch prep · contact honeypot, one Button, Work cards ×1.2, Projects pages, static build + 404 · (this commit)
