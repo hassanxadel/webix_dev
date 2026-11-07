@@ -74,8 +74,22 @@ export function useJourney<T>(selector: (s: JourneyState) => T): T {
   );
 }
 
+/**
+ * CSS 100vh in px. Section heights are in `vh`, which on phones is the large viewport and does not change
+ * when the address bar shows / hides; window.innerHeight does, and used here it shifted the progress
+ * mid-scroll (About Me dropped out of its window and the badge left). Measured once per resize, never per frame.
+ */
+let vh100 = 0;
+function measureVh() {
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;top:0;width:0;height:100vh;visibility:hidden;pointer-events:none";
+  document.body.append(probe);
+  vh100 = probe.offsetHeight || window.innerHeight;
+  probe.remove();
+}
+
 /** Height of the scrollable page in pixels (progress 0..1 maps onto it). */
-const journeyPx = () => (window.innerHeight * PAGE_VH) / 100;
+const journeyPx = () => ((vh100 || window.innerHeight) * PAGE_VH) / 100;
 
 function derive(p: number): Partial<JourneyState> {
   let section = 0;
@@ -95,6 +109,8 @@ export function useJourneyTracker() {
     const phone = window.matchMedia("(max-width: 768px), (pointer: coarse)");
     const reduced = motion.matches;
     journeyStore.set({ reducedMotion: reduced, mobile: phone.matches, tier: window.matchMedia("(max-width: 767px)").matches ? "low" : "high" });
+    measureVh();
+    window.addEventListener("resize", measureVh);
 
     // Lenis eases wheel input into the long, cinematic scroll; reduced motion keeps native scrolling.
     if (!reduced) lenis = new Lenis({ lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9 });
@@ -127,6 +143,7 @@ export function useJourneyTracker() {
       lenis?.destroy();
       lenis = null;
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("resize", measureVh);
       motion.removeEventListener("change", onMotion);
       phone.removeEventListener("change", onPhone);
     };

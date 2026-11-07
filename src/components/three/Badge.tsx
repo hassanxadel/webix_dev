@@ -35,11 +35,15 @@ const SPREAD = 0.3;
 /** Where the badge hangs (world space, from the camera framing): centred in the viewport; ~34% of the width (72% on phones), at most 86% of the height. */
 function useLayout() {
   const { size } = useThree();
-  const aspect = Math.round((size.width / size.height) * 20) / 20;
-  const tall = size.width <= size.height;
+  // Phones: the address bar showing / hiding changes the height by < 150 px while scrolling; keep the framing (and the bodies) through it.
+  const stable = useRef(size);
+  if (size.width !== stable.current.width || Math.abs(size.height - stable.current.height) >= 150) stable.current = size;
+  const { width, height } = stable.current;
+  const aspect = Math.round((width / height) * 20) / 20;
+  const tall = width <= height;
   return useMemo(() => {
     const d = 2.6;
-    const halfH = d * Math.tan(THREE.MathUtils.degToRad(fovFor(size.width, size.height) / 2));
+    const halfH = d * Math.tan(THREE.MathUtils.degToRad(fovFor(width, height) / 2));
     const halfW = halfH * aspect;
     let bw = (tall ? 0.72 : 0.34) * 2 * halfW;
     let bh = bw * (BADGE.height / BADGE.width);
@@ -51,8 +55,8 @@ function useLayout() {
     const rest = at(0, -0.015 * scale);
     const top = at(0, halfH * 1.12);
     const anchors = [at(-SPREAD * bw * 0.5, top.y), at(SPREAD * bw * 0.5, top.y)] as const;
-    return { scale, rest, anchors };
-  }, [tall, aspect, size.width, size.height]);
+    return { scale, rest, anchors, halfH };
+  }, [tall, aspect, width, height]);
 }
 type Layout = ReturnType<typeof useLayout>;
 
@@ -188,6 +192,8 @@ function Lanyard({ layout, p }: { layout: Layout; p: Parts }) {
       const tilt = badge.hover ? badge.pointer.x - ((badge.box.x + badge.box.w / 2) / size.width) * 2 + 1 : 0;
       const k = m * scale * scale;
       card.current.addTorque({ x: badge.hover ? -badge.pointer.y * k * 0.0015 : 0, y: Math.sin(t * 0.27) * k * 0.0006 + tilt * k * 0.002, z: 0 }, true);
+      // Safety net: more than 35% of the view height from its rest spot (e.g. after a hard fling), steer it back.
+      if (st.v.copy(rest).sub(pos).length() > layout.halfH * 0.7) card.current.setLinvel({ x: st.v.x * 2, y: st.v.y * 2, z: st.v.z * 2 }, true);
     }
     // Straps: each chain's two upper links eased (as in the pattern), then a curve anchor → links → clip.
     chains.forEach((links, c) => {
@@ -267,11 +273,63 @@ function StillBadge({ layout, p }: { layout: Layout; p: Parts }) {
   );
 }
 
+/**
+ * Phones: no free physics. The badge stays at the centre and floats in place
+ * (±8 px bob, ±3° sway); the straps are curves from the anchors to the clasp,
+ * redrawn as it moves; a tap gives a small wobble that settles.
+ */
+function FloatBadge({ layout, p }: { layout: Layout; p: Parts }) {
+  const g = useRef<THREE.Group>(null);
+  const { camera, size } = useThree();
+  const clipY = p.h / 2 + CLIP * p.h * 0.5;
+  const st = useRef({ wobble: 0, held: false, clip: new THREE.Vector3(), mid: new THREE.Vector3() }).current;
+  const curves = useMemo(() => [0, 1].map(() => new THREE.CatmullRomCurve3([0, 1, 2].map(() => new THREE.Vector3()))), []);
+  useEffect(() => {
+    p.band.resolution.set(size.width, size.height);
+  }, [p, size]);
+  useFrame(({ clock }, dt) => {
+    if (!g.current || journeyStore.get().showing !== ME()) return;
+    if (badge.held && !st.held) st.wobble = 1;
+    st.held = badge.held;
+    st.wobble = Math.max(0, st.wobble - dt * 0.8);
+    const t = clock.elapsedTime;
+    const px = (2 * layout.halfH) / size.height; // world units per CSS px at the badge's depth
+    g.current.position.copy(layout.rest);
+    g.current.position.y += Math.sin(t * 1.5) * 8 * px;
+    g.current.rotation.set(0, THREE.MathUtils.degToRad(Math.sin(t * 0.6) * 3), THREE.MathUtils.degToRad(Math.sin(t * 0.9) * 3 + st.wobble * Math.sin(t * 13) * 5));
+    g.current.updateWorldMatrix(true, false);
+    layout.anchors.forEach((a, c) => {
+      const s = c ? 1 : -1;
+      st.clip.set(s * 0.014 * layout.scale, clipY, 0).applyMatrix4(g.current!.matrixWorld);
+      // A slight outward bow, so each strap reads as a band hanging round the neck.
+      st.mid.copy(a).lerp(st.clip, 0.5);
+      st.mid.x += s * 0.04 * layout.scale;
+      const pts = curves[c].points;
+      pts[0].copy(a);
+      pts[1].copy(st.mid);
+      pts[2].copy(st.clip);
+      p.lines[c].setPoints(curves[c].getPoints(24), twist(c * 1.3));
+    });
+    reportBox(g.current, p.w, p.h, camera, size);
+  });
+  return (
+    <>
+      <group ref={g} position={layout.rest}>
+        <BadgeMesh p={p} scale={layout.scale} />
+      </group>
+      {p.lines.map((l, i) => (
+        <mesh key={i} geometry={l} material={p.band} />
+      ))}
+    </>
+  );
+}
+
 export default function Badge() {
   const layout = useLayout();
   const p = useBadgeParts(layout.scale);
   const on = useJourney((s) => s.showing === sectionIndex("me"));
   const reduced = useJourney((s) => s.reducedMotion);
+  const mobile = useJourney((s) => s.mobile);
   useEffect(() => {
     if (!on) badge.box.w = 0;
   }, [on]);
@@ -282,6 +340,8 @@ export default function Badge() {
     <group visible={on}>
       {reduced ? (
         <StillBadge key={key} layout={layout} p={p} />
+      ) : mobile ? (
+        <FloatBadge key={key} layout={layout} p={p} />
       ) : (
         <Physics key={key} gravity={[0, -1.4, 0]} timeStep={1 / 60} paused={!on}>
           <Lanyard layout={layout} p={p} />

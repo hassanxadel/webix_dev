@@ -661,6 +661,11 @@
 .badge-hit:active {
   cursor: grabbing;
 }
+@media (max-width: 768px), (pointer: coarse) {
+  .badge-hit {
+    touch-action: pan-y;
+  }
+}
 
 /* Fixed chrome stays inside the safe area (notches, home bar): 20 px (32 px from 640 px) or the inset, whichever is larger. */
 :root {
