@@ -1,6 +1,7 @@
 # Status
 
 ## Current state
+- Mobile + content (2026-11-07): Work rail horizontal on phones (swipe, prev/next + dots); About / Services / Process / Contact fit one screen on phones; `/contact` page with the shared form; About Me badge floats in place on phones (cause of the drop: progress used `innerHeight` vs `vh` heights + resize-triggered physics rebuilds); `config/business.ts` with prices, timelines, payment terms and support plans (owner to review); every TODO filled (story, Why Webix, FAQ, project challenge / outcome / stack, meta, og:image); footer. **Redeploy** (push) and keep `VITE_WEB3FORMS_KEY` as a Cloudflare build variable.
 - Pre-launch 2 (2026-11-06): contact form honeypot sent only when ticked, clear error if the key is missing (real browser sends return `success: true`; **arrival in Outlook still to be confirmed by the owner**). One `<Button>` (19 buttons migrated, old classes removed, static error page matched). Work cards ×1.2, phones ≈90vw focused. `/projects` + `/projects/:slug` + Menu item + "View all projects", one data source. Static build (9 pages, 404 page) checked in headless Chrome against the built files.
   **To launch:** push `main`; Cloudflare Pages → connect the repo, build `npm run build`, output `dist/client`, env `VITE_WEB3FORMS_KEY`. Then send a test inquiry from the live site. Open owner items: owner name/title in `site-config.ts`, gallery images, real tech stacks, the 4 Who we are TODOs, absolute `og:image` URLs once the domain is known.
 - Pre-launch edits (2026-11-06): stars enlarge in the lens (`uZoom`, big stars instanced quads); Work cards +30%, Pass 5vw further left;
@@ -66,6 +67,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-07 · mobile + content · horizontal rail + swipe, compact phone panels, /contact, floating phone badge + vh progress fix, business.ts, all TODOs filled, footer · 4c31778 907fda6 d49e471 e011c18 bea3dba
 - 2026-11-07 · launch · live at https://webix-dev.18p1726.workers.dev (all pages, 404, assets, no console errors); absolute og/twitter images via `SITE_URL`. Open: `VITE_WEB3FORMS_KEY` missing from Cloudflare build variables (live form not connected) · (this commit)
 - 2026-11-07 · launch · `wrangler.jsonc`: Cloudflare Workers serves `dist/client` as static assets (stops Wrangler auto-converting to SSR); checked with wrangler 4.158.0 dry run + local serve · (this commit)
 - 2026-11-07 · launch · Cloudflare build fix: prerender one page at a time (2-CPU builder died on a parallel fetch; reproduced with a 10 ms connect timeout), Node pinned in `.node-version` · (this commit)

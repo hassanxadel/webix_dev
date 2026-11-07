@@ -342,7 +342,7 @@ function AboutMe() {
   return (
     <section id="me" tabIndex={-1} aria-labelledby="me-title" className="relative h-svh outline-none">
       {/* The page ends here: a slim footer line, clear of the WhatsApp button on the left. */}
-      <Footer className="safe-edges absolute inset-x-0 bottom-0 z-20 flex justify-end pb-3 pl-[5.5rem]" />
+      <Footer className="absolute inset-x-0 bottom-0 z-20 flex justify-end pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[5.5rem] pr-[max(var(--edge),env(safe-area-inset-right))]" />
       <div className="sr-only">
         <h2 id="me-title">About Me</h2>
         <p>
