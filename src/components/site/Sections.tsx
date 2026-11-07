@@ -11,6 +11,7 @@ import { ContactForm } from "./ContactForm";
 import { Button } from "./Button";
 import { LogoWord } from "./LogoWord";
 import { ServiceDeck } from "./ServiceDeck";
+import { openService, SERVICE_ICONS } from "./ServiceDetail";
 import { WorkFilmstrip } from "./WorkFilmstrip";
 import { WORK } from "@/config/projects";
 
@@ -44,10 +45,10 @@ function Section({ id, children, copy = "right" }: { id: SectionId; children: Re
     >
       <div className="sticky top-0 h-svh overflow-hidden">
         <div
-          className={`section-copy mx-auto flex h-full max-w-[1440px] items-start px-5 pb-6 pt-[34vh] sm:px-8 md:items-center md:py-24 ${copy === "left" ? "md:pr-[40%] lg:pl-16" : "md:pl-[38%] lg:pr-16"}`}
+          className={`section-copy mx-auto flex h-full max-w-[1440px] items-start px-5 pb-6 pt-[30vh] sm:px-8 md:items-center md:py-24 ${copy === "left" ? "md:pr-[40%] lg:pl-16" : "md:pl-[38%] lg:pr-16"}`}
           data-on={showing === index}
         >
-          {/* Phones: the card sits above, so long panels scroll inside the space left below it. */}
+          {/* Phones: the card sits above; each panel has a compact phone version that fits the space below it. */}
           <div className="max-h-full w-full overflow-y-auto overscroll-contain md:overflow-visible">{children}</div>
         </div>
       </div>
@@ -196,11 +197,23 @@ function BadgeHit() {
 function About() {
   return (
     <Section id="about" copy="left">
-      <div className="glass w-full max-w-2xl p-6 sm:p-9">
+      <div className="glass w-full max-w-2xl p-5 sm:p-9">
         <Label id="about" />
-        <h2 id="about-title" className="mt-4 text-[2.2rem] leading-[1.05] text-paper sm:text-5xl">
+        <h2 id="about-title" className="mt-3 text-[1.75rem] leading-[1.05] text-paper sm:mt-4 sm:text-5xl">
           Your ideas. <span className="block text-sun">Our playground.</span>
         </h2>
+        {/* Phones: the short version; the full story is on /about-webix. */}
+        <p className="mt-3 text-[15px] leading-[1.45] text-paper/75 md:hidden">
+          We design and build modern websites, online stores and 3D experiences for ambitious brands in Egypt and the Gulf.
+        </p>
+        <div className="mt-5 md:hidden">
+          <Button asChild>
+            <Link to="/about-webix">
+              Who we are <ArrowRight size={16} aria-hidden />
+            </Link>
+          </Button>
+        </div>
+        <div className="hidden md:block">
         <p className="mt-3 text-lg font-medium text-paper/85">We build digital journeys.</p>
         <p className="mt-7 font-heading text-xl font-semibold leading-snug text-paper sm:text-2xl">
           We design and build modern websites, e-commerce stores and <span className="text-sun">3D digital experiences for ambitious brands.</span>
@@ -235,6 +248,7 @@ function About() {
             <Link to="/about-webix">Who we are</Link>
           </Button>
         </div>
+        </div>
       </div>
     </Section>
   );
@@ -245,12 +259,33 @@ function About() {
 function Services() {
   return (
     <Section id="services">
-      <div className="glass w-full max-w-xl p-6 sm:p-9">
+      <div className="glass w-full max-w-xl p-5 sm:p-9">
         <Label id="services" />
-        <h2 id="services-title" className="mt-4 text-3xl text-paper sm:text-4xl">
+        <h2 id="services-title" className="mt-3 text-[1.75rem] text-paper sm:mt-4 sm:text-4xl">
           What we build.
         </h2>
-        <ol className="mt-6 space-y-5">
+        {/* Phones: one tile per service (icon + name); a tap opens its sub-section. */}
+        <ul className="mt-4 grid grid-cols-2 gap-3 md:hidden">
+          {SERVICES.map((svc, i) => {
+            const Icon = SERVICE_ICONS[svc.name];
+            return (
+              <li key={svc.slug}>
+                <a
+                  href={`#service-${svc.slug}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openService(i);
+                  }}
+                  className="flex min-h-[5.25rem] flex-col justify-between rounded-xl border border-paper/15 bg-indigo/60 p-3 text-paper transition-colors hover:border-sun/70"
+                >
+                  {Icon && <Icon size={22} strokeWidth={2.2} className="text-sun" aria-hidden />}
+                  <span className="mt-2 font-heading text-[15px] font-semibold leading-tight">{svc.name}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+        <ol className="mt-6 hidden space-y-5 md:block">
           {SERVICES.map((svc, i) => (
             <li key={svc.name} className="flex gap-4">
               <span className="hud pt-1 text-sun">{pad2(i + 1)}</span>
@@ -271,12 +306,22 @@ function Services() {
 function Process() {
   return (
     <Section id="process">
-      <div className="glass w-full max-w-2xl p-6 sm:p-9">
+      <div className="glass w-full max-w-2xl p-5 sm:p-9">
         <Label id="process" />
-        <h2 id="process-title" className="mt-4 text-3xl text-paper sm:text-4xl">
+        <h2 id="process-title" className="mt-3 text-[1.75rem] text-paper sm:mt-4 sm:text-4xl">
           Our process
         </h2>
-        <ol className="mt-6 grid gap-6 sm:grid-cols-2">
+        {/* Phones: number, name and one short line per step. */}
+        <ol className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 md:hidden">
+          {PROCESS.map((s, i) => (
+            <li key={s.name}>
+              <p className="hud text-sun">{pad2(i + 1)}</p>
+              <p className="mt-1 font-heading text-base font-semibold text-paper">{s.name}</p>
+              <p className="mt-0.5 text-[14px] leading-[1.4] text-paper/65">{s.short}</p>
+            </li>
+          ))}
+        </ol>
+        <ol className="mt-6 hidden gap-6 sm:grid-cols-2 md:grid">
           {PROCESS.map((s, i) => (
             <li key={s.name}>
               <p className="hud text-sun">{pad2(i + 1)}</p>

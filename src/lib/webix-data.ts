@@ -243,8 +243,8 @@ export const SERVICES: Service[] = [
 ];
 
 export const PROCESS = [
-  { name: "Discover", text: "We learn how your business works, who your customers are and what the website needs to achieve." },
-  { name: "Design", text: "We set the visual direction and shape the user experience, then refine it with you before building." },
-  { name: "Build", text: "We develop the site, test it across devices and refine every detail until it feels right." },
-  { name: "Launch", text: "We deliver the finished experience, go live and make sure your team is ready to run it." },
+  { name: "Discover", short: "Your goals, customers and scope.", text: "We learn how your business works, who your customers are and what the website needs to achieve." },
+  { name: "Design", short: "Look and flow, approved by you.", text: "We set the visual direction and shape the user experience, then refine it with you before building." },
+  { name: "Build", short: "Fast, responsive, tested on every device.", text: "We develop the site, test it across devices and refine every detail until it feels right." },
+  { name: "Launch", short: "We go live and hand it over.", text: "We deliver the finished experience, go live and make sure your team is ready to run it." },
 ] as const;

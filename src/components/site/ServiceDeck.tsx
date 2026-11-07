@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { ArrowRight, Box, Globe, Palette, ShoppingBag, Sparkles, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, Sparkles, X } from "lucide-react";
 import { HERO_GLIDE } from "@/config/sections";
 import { SERVICES } from "@/lib/webix-data";
 import { deck } from "@/lib/deck";
 import { journey, journeyStore, travelToSection } from "@/lib/journey";
-import { openService } from "./ServiceDetail";
+import { openService, SERVICE_ICONS } from "./ServiceDetail";
 import { Button } from "./Button";
 
-const ICONS: Record<string, LucideIcon> = { Websites: Globe, "E-commerce": ShoppingBag, "3D / Interactive web": Box, Branding: Palette };
 
 /**
  * The card's job in the hero: the Webix Pass is a deck. Hovering it (tapping on
@@ -183,7 +182,7 @@ export function ServiceDeck() {
       </p>
       <ul ref={list} id="hero-services" aria-label="Our services" inert={!open} data-touch={touch || undefined}>
         {SERVICES.map((s, i) => {
-          const Icon = ICONS[s.name] ?? Sparkles;
+          const Icon = SERVICE_ICONS[s.name] ?? Sparkles;
           return (
             <li key={s.name}>
               <a

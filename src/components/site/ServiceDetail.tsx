@@ -6,7 +6,8 @@ import { deck } from "@/lib/deck";
 import { journeyStore, lockScroll, travelToSection, useJourney } from "@/lib/journey";
 import { Button } from "./Button";
 
-const ICONS: Record<string, LucideIcon> = { Websites: Globe, "E-commerce": ShoppingBag, "3D / Interactive web": Box, Branding: Palette };
+/** One line icon per service: the hero deck, these sub-sections and the phone Services tiles. */
+export const SERVICE_ICONS: Record<string, LucideIcon> = { Websites: Globe, "E-commerce": ShoppingBag, "3D / Interactive web": Box, Branding: Palette };
 const HASH = "#service-";
 const fromHash = () => SERVICES.findIndex((s) => location.hash === HASH + s.slug);
 
@@ -115,7 +116,7 @@ export function ServiceDetail() {
 
   if (shown === null) return null;
   const s = SERVICES[shown];
-  const Icon = ICONS[s.name] ?? Sparkles;
+  const Icon = SERVICE_ICONS[s.name] ?? Sparkles;
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="service-title" className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain" data-lenis-prevent>
