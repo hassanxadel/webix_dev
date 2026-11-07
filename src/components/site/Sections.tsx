@@ -353,12 +353,15 @@ function AboutMe() {
 /* ───────── Contact ───────── */
 
 function Contact() {
+  // A service picked in a sub-section travels to the form page as ?service=<slug>.
+  const preset = useJourney((s) => s.servicePreset);
+  const slug = SERVICES.find((s) => s.name === preset)?.slug;
   return (
     <Section id="contact">
       <div className="grid w-full max-w-3xl gap-6">
-        <div className="glass p-6 sm:p-8">
+        <div className="glass p-5 sm:p-8">
           <Label id="contact" />
-          <h2 id="contact-title" className="mt-4 text-3xl text-paper sm:text-4xl">
+          <h2 id="contact-title" className="mt-3 text-[1.75rem] leading-[1.1] text-paper sm:mt-4 sm:text-4xl">
             Your stop. <span className="text-sun">Let&apos;s build it.</span>
           </h2>
           <p className="mt-3 leading-relaxed text-paper/65">If we can make orbit feel real in a browser, imagine what we can do for your store.</p>
@@ -375,8 +378,14 @@ function Contact() {
               </a>
             </li>
           </ul>
+          {/* Phones: the form has its own page, so this card fits one screen. */}
+          <Button asChild className="mt-5 md:hidden">
+            <a href={slug ? `/contact?service=${slug}` : "/contact"}>
+              Start an inquiry <ArrowRight size={16} aria-hidden />
+            </a>
+          </Button>
         </div>
-        <div className="glass p-5 sm:p-7 md:max-h-[calc(100vh-22rem)] md:overflow-y-auto">
+        <div className="glass hidden p-5 sm:p-7 md:block md:max-h-[calc(100vh-22rem)] md:overflow-y-auto">
           <ContactForm />
         </div>
       </div>

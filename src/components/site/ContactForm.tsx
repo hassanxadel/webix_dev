@@ -94,7 +94,7 @@ export function ContactForm() {
         <Field id="instagram" label="Instagram brand page" optional error={err("instagram")}>
           <div className="relative">
             <Instagram size={16} aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-paper/50" />
-            <input id="instagram" className="field !pl-10" placeholder="@yourbrand or instagram.com/yourbrand" {...register("instagram")} {...aria("instagram")} />
+            <input id="instagram" className="field !pl-10" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@yourbrand or instagram.com/yourbrand" {...register("instagram")} {...aria("instagram")} />
           </div>
         </Field>
       </div>
