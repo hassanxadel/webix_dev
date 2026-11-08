@@ -4,7 +4,7 @@ import { easing } from "maath";
 import * as THREE from "three";
 import { CARD_LAYER, cardState } from "./WebixPass";
 import { BASE_PITCH } from "./Space";
-import { HERO_GLIDE, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
+import { CARD_HOP, HERO_GLIDE, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
 import { journey, journeyStore } from "@/lib/journey";
 
 /**
@@ -99,12 +99,12 @@ export function CameraRig() {
     // → About Me (it shrinks away in place: the section is only the badge; back again on the way up).
     const p = journey.progress;
     const end = (id: SectionId) => SECTIONS[sectionIndex(id)].range[1];
-    const hop = (at: number) => span(p, at - 0.01, at + 0.02);
+    const hop = (at: number) => span(p, at - CARD_HOP[0], at + CARD_HOP[1]);
     let from = S.hero, to = S.work, w = span(p, ...HERO_GLIDE);
     const me = SECTIONS[sectionIndex("me")].range[0];
-    if (p >= me - 0.01) [from, to, w] = [S.side, S.me, hop(me)];
-    else if (p >= end("about") - 0.01) [from, to, w] = [S.about, S.side, hop(end("about"))];
-    else if (p >= end("work") - 0.01) [from, to, w] = [S.work, S.about, hop(end("work"))];
+    if (p >= me - CARD_HOP[0]) [from, to, w] = [S.side, S.me, hop(me)];
+    else if (p >= end("about") - CARD_HOP[0]) [from, to, w] = [S.about, S.side, hop(end("about"))];
+    else if (p >= end("work") - CARD_HOP[0]) [from, to, w] = [S.work, S.about, hop(end("work"))];
     const A = resolve(from, t.a, t.qa);
     const B = resolve(to, t.b, t.qb);
     t.a.lerp(t.b, w);

@@ -176,7 +176,7 @@ export function WorkFilmstrip() {
       {/* Phones: step buttons and position dots under the rail (desktop has hover, wheel and keys). */}
       <div className="work-controls absolute inset-x-0 bottom-[calc(3.5vh+62px)] z-10 flex items-center justify-center gap-4 md:hidden" data-active={active}>
         <Button variant="icon" aria-label="Previous project" onClick={() => send({ type: "webix-step", by: -1 })}>
-          <ArrowLeft size={18} strokeWidth={2.6} aria-hidden />
+          <ArrowLeft size={16} strokeWidth={2.6} aria-hidden />
         </Button>
         <span className="flex gap-2" aria-hidden>
           {WORK.map((w) => (
@@ -184,7 +184,7 @@ export function WorkFilmstrip() {
           ))}
         </span>
         <Button variant="icon" aria-label="Next project" onClick={() => send({ type: "webix-step", by: 1 })}>
-          <ArrowRight size={18} strokeWidth={2.6} aria-hidden />
+          <ArrowRight size={16} strokeWidth={2.6} aria-hidden />
         </Button>
       </div>
     </>

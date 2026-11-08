@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import Lenis from "lenis";
 import gsap from "gsap";
-import { PAGE_VH, SECTIONS, type SectionId } from "@/config/sections";
+import { PAGE_VH, PHONE_QUERY, SECTIONS, type SectionId } from "@/config/sections";
 
 /**
  * Journey state, in two layers:
@@ -130,6 +130,8 @@ export function useJourneyTracker() {
     gsap.ticker.add(tick);
 
     const onPointer = (e: PointerEvent) => {
+      // A finger is not a cursor: its last position stayed in the camera parallax and pushed the scene (and the badge) sideways.
+      if (e.pointerType === "touch") return;
       journey.pointerX = (e.clientX / window.innerWidth) * 2 - 1;
       journey.pointerY = (e.clientY / window.innerHeight) * 2 - 1;
     };
@@ -161,10 +163,12 @@ export function lockScroll(locked: boolean) {
 export function travelTo(progress: number) {
   const y = progress * journeyPx();
   const distance = Math.abs(window.scrollY - y) / window.innerHeight;
-  if (lenis && !journeyStore.get().reducedMotion) {
+  const reduced = journeyStore.get().reducedMotion;
+  // Touch phones snap to sections in CSS, and Lenis's per-frame scrollTo would be pulled to every snap point on the way.
+  if (lenis && !reduced && !window.matchMedia(`${PHONE_QUERY} and (pointer: coarse)`).matches) {
     lenis.scrollTo(y, { duration: Math.min(4.5, Math.max(1.2, distance * 0.22)), easing: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2) });
   } else {
-    window.scrollTo({ top: y, behavior: "auto" });
+    window.scrollTo({ top: y, behavior: reduced ? "auto" : "smooth" });
   }
 }
 

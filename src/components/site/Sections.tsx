@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import gsap from "gsap";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Mail, MessageCircle } from "lucide-react";
-import { HERO_GLIDE, PAGE_VH, SECTIONS, sectionIndex, type SectionId } from "@/config/sections";
+import { HERO_GLIDE, SECTIONS, sectionIndex, sectionVh, type SectionId } from "@/config/sections";
 import { PROCESS, SERVICES } from "@/lib/webix-data";
 import { SITE_CONFIG, whatsappLink } from "@/lib/site-config";
 import { journey, journeyStore, travelTo, travelToSection, useJourney } from "@/lib/journey";
@@ -17,10 +17,8 @@ import { Footer } from "./Footer";
 import { WORK } from "@/config/projects";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
-const heightOf = (id: SectionId) => {
-  const s = SECTIONS[sectionIndex(id)];
-  return `${(s.range[1] - s.range[0]) * PAGE_VH}vh`;
-};
+/** The desktop height; below `md`, .journey-section makes every section one screen. */
+const heightOf = (id: SectionId) => ({ "--section-h": `${sectionVh(id)}vh` }) as CSSProperties;
 
 /**
  * One section. Its height is its share of the scroll; the panel sits in a
@@ -37,8 +35,8 @@ function Section({ id, children, copy = "right" }: { id: SectionId; children: Re
       id={id}
       tabIndex={-1}
       aria-labelledby={`${id}-title`}
-      className="relative outline-none"
-      style={{ height: heightOf(id) }}
+      className="journey-section relative outline-none"
+      style={heightOf(id)}
       // Keyboard users tabbing into a section travel there, so focus is never on hidden copy.
       onFocusCapture={() => {
         if (journeyStore.get().showing !== index) travelTo(s.anchor);
@@ -90,7 +88,7 @@ function Hero() {
   }, []);
 
   return (
-    <section id="hero" aria-labelledby="hero-title" className="relative" style={{ height: heightOf("hero") }}>
+    <section id="hero" aria-labelledby="hero-title" className="journey-section relative" style={heightOf("hero")}>
       {/* Below the W / Menu row (safe-area aware): ~16% from the top on desktop, under the row on phones (.hero-head). */}
       <div ref={fade} className="hero-head pointer-events-none fixed inset-x-0 z-30 px-3 sm:px-8">
         <div className="hero-headline text-center" data-in={shown}>
@@ -114,18 +112,15 @@ function Work() {
   const index = sectionIndex("work");
   const showing = useJourney((st) => st.showing);
   return (
-    <section id="work" tabIndex={-1} aria-labelledby="work-title" className="relative outline-none" style={{ height: heightOf("work") }}>
+    <section id="work" tabIndex={-1} aria-labelledby="work-title" className="journey-section relative outline-none" style={heightOf("work")}>
       <div className="sticky top-0 h-svh overflow-hidden">
         <div className="section-copy relative h-full" data-on={showing === index}>
           <div className="mx-auto max-w-[1440px] px-5 pt-[13vh] sm:px-8">
             <Label id="work" />
-            <h2 id="work-title" className="work-title mt-3 max-w-[calc(100%-42vw)] md:max-w-none">
-              <LogoWord w="Real" /> <LogoWord w="brands." /> <LogoWord w="Real" /> <LogoWord w="work." variant="ix" />
+            <h2 id="work-title" className="work-title mt-3">
+              <LogoWord w="Real" /> <LogoWord w="brands." /> <br className="md:hidden" /> <LogoWord w="Real" /> <LogoWord w="work." variant="ix" />
             </h2>
-            <p className="hud mt-3 text-paper/55">
-              <span className="md:hidden">Swipe or use the arrows · tap the card in front to open it</span>
-              <span className="hidden md:inline">Move, scroll or use the arrow keys · select the card in front to open it</span>
-            </p>
+            <p className="hud mt-3 hidden text-paper/55 md:block">Move, scroll or use the arrow keys · select the card in front to open it</p>
           </div>
           <WorkFilmstrip />
           <div className="work-more pointer-events-none absolute inset-x-0 bottom-[3.5vh] z-10 flex justify-center px-5 sm:px-8">
