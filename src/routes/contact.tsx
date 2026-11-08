@@ -42,7 +42,8 @@ function ContactPage() {
       <div className="glass p-5 sm:p-7">
         <ContactForm />
       </div>
-      <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+      {/* Phones: indented past the fixed WhatsApp button. */}
+      <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm max-md:pl-14">
         <li>
           <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-paper/80 hover:text-paper">
             <MessageCircle size={16} className="text-sun" aria-hidden /> WhatsApp {SITE_CONFIG.whatsappDisplay} <span className="sr-only">(opens in a new tab)</span>

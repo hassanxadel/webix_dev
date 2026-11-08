@@ -72,7 +72,8 @@ export function Menu() {
 
   return (
     <>
-      <header className="safe-edges pointer-events-none fixed inset-x-0 top-0 z-40 flex items-start justify-between">
+      {/* Other pages scroll under this row: on phones it gets a bar, so the W and Menu never sit on the content. */}
+      <header className={`safe-edges pointer-events-none fixed inset-x-0 top-0 z-40 flex items-start justify-between ${home ? "" : "max-md:bg-night/85 max-md:backdrop-blur-md"}`}>
         <a
           href={home ? "#hero" : "/"}
           aria-label={home ? "Webix — back to top" : "Webix — home"}

@@ -1,6 +1,7 @@
 # Status
 
 ## Current state
+- Mobile polish (2026-11-08): phones scroll naturally, one screen per section (`layoutPhone` in `config/sections.ts`; 700vh, was 1180vh), snap proximity on touch phones; Work heading on two lines, phone hint gone, smaller controls with 44 px tap areas; touch no longer feeds the camera parallax (cause of the badge sitting 13% left); phone header bar on other pages, /contact links clear of WhatsApp. **The live form stays "not connected" until `VITE_WEB3FORMS_KEY` is added as a Cloudflare build variable.** Headless checks cannot simulate iOS momentum or the address bar: check swipe feel on a real phone.
 - Mobile + content (2026-11-07): Work rail horizontal on phones (swipe, prev/next + dots); About / Services / Process / Contact fit one screen on phones; `/contact` page with the shared form; About Me badge floats in place on phones (cause of the drop: progress used `innerHeight` vs `vh` heights + resize-triggered physics rebuilds); `config/business.ts` with prices, timelines, payment terms and support plans (owner to review); every TODO filled (story, Why Webix, FAQ, project challenge / outcome / stack, meta, og:image); footer. **Redeploy** (push) and keep `VITE_WEB3FORMS_KEY` as a Cloudflare build variable.
 - Pre-launch 2 (2026-11-06): contact form honeypot sent only when ticked, clear error if the key is missing (real browser sends return `success: true`; **arrival in Outlook still to be confirmed by the owner**). One `<Button>` (19 buttons migrated, old classes removed, static error page matched). Work cards ×1.2, phones ≈90vw focused. `/projects` + `/projects/:slug` + Menu item + "View all projects", one data source. Static build (9 pages, 404 page) checked in headless Chrome against the built files.
   **To launch:** push `main`; Cloudflare Pages → connect the repo, build `npm run build`, output `dist/client`, env `VITE_WEB3FORMS_KEY`. Then send a test inquiry from the live site. Open owner items: owner name/title in `site-config.ts`, gallery images, real tech stacks, the 4 Who we are TODOs, absolute `og:image` URLs once the domain is known.
@@ -67,6 +68,7 @@
 - Real-GPU performance and reduced-motion behaviour not yet verified by the user.
 
 ## Log (newest first, keep ≤10)
+- 2026-11-08 · mobile polish · one-screen phone sections + snap, Work heading / controls, badge centred (touch out of parallax), phone header bar, /contact links · 61e0246 (and this commit)
 - 2026-11-07 · mobile + content · horizontal rail + swipe, compact phone panels, /contact, floating phone badge + vh progress fix, business.ts, all TODOs filled, footer · 4c31778 907fda6 d49e471 e011c18 bea3dba
 - 2026-11-07 · launch · live at https://webix-dev.18p1726.workers.dev (all pages, 404, assets, no console errors); absolute og/twitter images via `SITE_URL`. Open: `VITE_WEB3FORMS_KEY` missing from Cloudflare build variables (live form not connected) · (this commit)
 - 2026-11-07 · launch · `wrangler.jsonc`: Cloudflare Workers serves `dist/client` as static assets (stops Wrangler auto-converting to SSR); checked with wrangler 4.158.0 dry run + local serve · (this commit)
@@ -76,18 +78,3 @@
 - 2026-11-05 · about me · new last section, two-strap badge, photo, visible lighting · (this commit)
 - 2026-11-05 · about · Webix Pass on the right, copy on the left · (this commit)
 - 2026-11-05 · work · 16:9 filmstrip cards, Webix Pass visible top-right · (this commit)
-- 2026-11-05 · hero · white slow stars, WhatsApp bottom-left, no subline, smaller wordmark, mobile hero · (this commit)
-- 2026-11-05 · contact · real email / WhatsApp, floating WhatsApp button · (this commit)
-- 2026-11-05 · about · Rapier lanyard ID badge, About links · (this commit)
-- 2026-11-05 · work · ThreeUI filmstrip mapped to projects + space restyle · (this commit)
-- 2026-11-05 · hero · no sun flare, big stars, brand service cards + sub-sections, Get started pill, magnifier · (this commit)
-- 2026-11-01 · hero · round 3: self-hosted logo headline, Egypt day/night Earth (8K KTX2, spin), orange sky, services deck · (this commit)
-- 2026-11-01 · hero · Moon orbit around the camera, night Earth (GEBCO relief, city lights, thin rim + airglow), logo-style headline · (this commit)
-- 2026-11-01 · hero · polish: dark Earth, fast twinkle, nebula + pink/gold, Moon/Hubble motion, smaller card, headline · (this commit)
-- 2026-11-01 · hero · photoreal Earth limb + Moon + Hubble + NASA star map, twinkle layer, god rays; card float ±0.06/5 s · (this commit)
-- 2026-10-31 · hero · realistic moon/planet/stars, twinkle fix (reduced motion no longer freezes it), W/Menu/wordmark/hint moved · (this commit)
-- 2026-10-31 · all · space redesign: sky + stars + clay objects, Menu/W/wordmark hero, glass panels, train theme removed · (this commit)
-- 2026-10-31 · 01→02 · persistent card, departure transition, Work through train windows, reorder · (this commit)
-- 2026-10-26 · repo · CLAUDE.md, STATUS.md, read-deny rules, screenshot tooling removed · (this commit)
-- 2026-10-25 · 01 hero · photo plate + card-only WebGL, traced W enamel inlay, minimal copy, reader-tap scroll-out · 221f1b6
-- 2026-10-25 · 03–07 · world, train, tunnels, billboards, split-flap, terminal; camera path; tiers · 4dcdc83
